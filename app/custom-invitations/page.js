@@ -1,12 +1,17 @@
+import Form from '@/components/Form';
 import { img } from '@/lib/data';
 export const metadata = { title: 'Custom Invitations' };
 export default function Invites() {
   return (<main>
     <section className="pagehead"><div className="wrap"><p className="eyebrow">Custom invitations</p><h1>Design with us.</h1>
-      <p className="lead">Corporate events, weddings, birthdays, you name it! We take care of designing and printing.</p></div></section>
-    <section className="section" style={{paddingTop:24}}><div className="wrap"><div className="gal">{['55fd8e1e6e','ac911ad304','3c20fb04cd'].map((s,i)=><img key={i} src={img(s)} alt="Custom invitation" loading="lazy" />)}</div></div></section>
-    <section className="section soft"><div className="wrap"><h2>Want to get your invite customised?</h2>
-      <p className="lead">Each invite is curated based on your requirements. To get an estimate, let us know what you are looking for and we will get back to you.</p>
-      <form><label>Name<input name="name" /></label><label>Email<input type="email" name="email" /></label><label>Phone<input name="phone" /></label><label>What do you have in mind?<textarea name="message" /></label><button className="btn" disabled>Send (forms go live soon)</button></form></div></section>
+      <p className="lead">For corporate events, weddings, birthdays and more. We take care of the design and the printing.</p></div></section>
+    <section className="section"><div className="wrap"><div className="gal" style={{marginTop:0}}>{['55fd8e1e6e', 'ac911ad304', '3c20fb04cd'].map(s => <figure key={s}><img src={img(s)} alt="Custom invitation by Thin Black Brush" loading="lazy" /></figure>)}</div></div></section>
+    <section className="section soft"><div className="wrap"><div className="head"><h2>Want a custom invite?</h2>
+      <p className="lead">Each invitation is designed around your needs. Tell us what you have in mind and we will send you an estimate.</p></div>
+      <Form kind="invitation" submit="Send" done="Thank you for getting in touch. We will get back to you at the earliest." fields={[
+        { name: 'name', label: 'Name', required: true }, { name: 'email', label: 'Email', type: 'email', required: true }, { name: 'phone', label: 'Phone', type: 'tel', required: true },
+        { name: 'event', label: 'Event type', type: 'select', required: true, options: ['Wedding', 'Corporate event', 'Birthday', 'Other'] },
+        { name: 'date', label: 'Event date', type: 'date' },
+        { name: 'message', label: 'What do you have in mind?', type: 'textarea', required: true }]} /></div></section>
   </main>);
 }

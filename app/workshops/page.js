@@ -1,19 +1,17 @@
 import Link from 'next/link';
-import { rupees, isPast, fmtDate } from '@/lib/data';
+import { isPast, fmtDate } from '@/lib/data';
 import { getWorkshops } from '@/lib/db';
-export const revalidate = 60;
 export const metadata = { title: 'Workshops' };
-const Card = ({ w, past }) => (<Link href={`/workshops/${w.slug}`} className="card"><div className="ph"><img src={w.image} alt={w.title} loading="lazy" /></div>
-  <div className="body"><span className={`tag ${past?'off':''}`}>{past?'Ended':'Open for booking'}</span><h3>{w.title}</h3><p className="price">{fmtDate(w.starts_at)} · {w.venue}</p><p className="price">{rupees(w.price)} per person</p></div></Link>);
+export const revalidate = 60;
+const Card = ({ w, off }) => (<Link href={`/workshops/${w.slug}`} className="card"><div className="ph"><img src={w.image} alt={w.title} loading="lazy" /></div>
+  <div className="body"><span className={`tag ${off ? 'off' : ''}`}>{w.cancelled ? 'Cancelled' : off ? 'Ended' : 'Open'}</span><h3>{w.title}</h3><p className="small">{fmtDate(w.starts_at)}</p><p className="small">{w.venue}</p></div></Link>);
 export default async function Workshops() {
-  const workshops = await getWorkshops();
-  const up = workshops.filter(w => !isPast(w)), past = workshops.filter(isPast);
+  const all = await getWorkshops();
+  const up = all.filter(w => !isPast(w) && !w.cancelled), past = all.filter(w => isPast(w) || w.cancelled).reverse();
   return (<main>
     <section className="pagehead"><div className="wrap"><p className="eyebrow">Learn with TBB</p><h1>Workshops</h1><p className="lead">Super excited to explore art with you. Don't miss it!</p></div></section>
-    <section className="section" style={{paddingTop:40}}><div className="wrap">
-      <h2>Upcoming</h2>
-      {up.length ? <div className="grid">{up.map(w=><Card key={w.slug} w={w} />)}</div> : <div className="notice">No workshops are scheduled right now. Follow us on Instagram to hear first about the next one.</div>}
-    </div></section>
-    {past.length>0 && <section className="section soft"><div className="wrap"><h2>Past workshops</h2><div className="grid">{past.map(w=><Card key={w.slug} w={w} past />)}</div></div></section>}
+    <section className="section"><div className="wrap"><div className="head"><h2>Upcoming</h2></div>
+      {up.length ? <div className="cards">{up.map(w => <Card key={w.slug} w={w} />)}</div> : <p className="notice">No workshops are scheduled right now. Follow us on Instagram to hear about the next one first.</p>}</div></section>
+    {past.length > 0 && <section className="section soft"><div className="wrap"><div className="head"><h2>Past workshops</h2></div><div className="cards">{past.map(w => <Card key={w.slug} w={w} off />)}</div></div></section>}
   </main>);
 }

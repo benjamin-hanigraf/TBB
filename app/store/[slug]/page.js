@@ -1,4 +1,7 @@
 import { notFound } from 'next/navigation';
+import Btn from '@/components/Btn';
+import Gallery from '@/components/Gallery';
+import Icon from '@/components/Icons';
 import { rupees, returnPolicy, business } from '@/lib/data';
 import { getProducts, getProduct } from '@/lib/db';
 export const revalidate = 60;
@@ -6,12 +9,15 @@ export async function generateStaticParams() { return (await getProducts()).map(
 export async function generateMetadata({ params }) { const { slug } = await params; return { title: (await getProduct(slug))?.title }; }
 export default async function Product({ params }) {
   const { slug } = await params; const p = await getProduct(slug); if (!p) notFound();
-  return (<main><section className="section"><div className="wrap split" style={{alignItems:'start'}}>
-    <div><div className="ph"><img src={p.images[0]} alt={p.title} /></div>
-      {p.images.length>1 && <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginTop:10}}>{p.images.slice(1,5).map((s,i)=><img key={i} src={s} alt="" style={{borderRadius:12,aspectRatio:1,objectFit:'cover',width:'100%'}} />)}</div>}</div>
-    <div><h1 style={{fontSize:'clamp(30px,4.5vw,48px)'}}>{p.title}</h1><p style={{fontSize:28,marginTop:12}}>{rupees(p.price)}</p><p className="lead">{p.text}</p>
-      <ul className="list">{p.details.map(d=><li key={d}>{d}</li>)}</ul>
-      <div className="row"><button className="btn" disabled>{p.stock>0?'Add to cart (checkout coming soon)':'Out of stock'}</button><a className="btn ghost" href={business.whatsapp}>Ask on WhatsApp</a></div>
-      {p.shipping && <p className="notice"><b>Shipping.</b> {p.shipping}</p>}<p className="notice"><b>Return policy.</b> {returnPolicy}</p></div>
+  const out = p.stock <= 0 && !p.preorder;
+  return (<main><section className="section"><div className="wrap split top">
+    <Gallery images={p.images} alt={p.title} />
+    <div className="info">{p.preorder && <span className="tag">Pre-order</span>}
+      <h1 style={{marginTop:p.preorder?14:0}}>{p.title}</h1><p className="price">{rupees(p.price)}</p>
+      <p style={{marginTop:20,color:'#424245'}}>{p.text}</p>
+      <ul className="facts">{p.details.map(d => <li key={d}><Icon n="check" size={16} /><span>{d}</span></li>)}</ul>
+      <div className="row"><Btn icon="bag" disabled>{out ? 'Out of stock' : p.preorder ? 'Pre-order' : 'Add to cart'}</Btn><Btn href={business.whatsapp} variant="ghost" icon="chat">WhatsApp</Btn></div>
+      <p className="fine">Online checkout opens soon. Until then, order on WhatsApp.</p>
+      {p.shipping && <p className="fine"><b>Shipping.</b> {p.shipping}</p>}<p className="fine"><b>Returns.</b> {returnPolicy}</p></div>
   </div></section></main>);
 }

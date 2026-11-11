@@ -1,0 +1,384 @@
+[
+ {
+  "slug": "terms",
+  "title": "Terms of Service",
+  "blocks": [
+   {
+    "p": "Welcome to the website of Thin Black Brush. By accessing or using this website, registering for workshops, or purchasing products through the website, you agree to comply with and be bound by the following Terms of Use. If you do not agree with these terms, please do not use the website."
+   },
+   {
+    "h": "1. About Our Services"
+   },
+   {
+    "p": "Thin Black Brush provides information about art workshops, allows users to register for workshops, and sells art-related stationery and products through this website. All services and products are subject to availability and may be modified or discontinued at any time without prior notice."
+   },
+   {
+    "h": "2. Eligibility"
+   },
+   {
+    "p": "By using this website or registering for a workshop, you confirm that you are at least 18 years old or that you have permission from a parent or legal guardian to participate. Parents or guardians registering minors are responsible for their participation."
+   },
+   {
+    "h": "3. Workshop Registration"
+   },
+   {
+    "p": "Workshop seats are limited and registrations are confirmed only after successful payment. Thin Black Brush reserves the right to reschedule, postpone, or cancel a workshop due to insufficient registrations, unforeseen circumstances, or operational reasons."
+   },
+   {
+    "p": "Participants are expected to arrive on time and follow any instructions provided during the workshop to ensure a safe and enjoyable experience for all attendees."
+   },
+   {
+    "h": "4. Product Orders"
+   },
+   {
+    "p": "The website may offer stationery or art-related products for purchase. All orders are subject to product availability and confirmation of payment. Thin Black Brush reserves the right to refuse or cancel any order if necessary, including in cases of pricing errors or suspected fraudulent transactions."
+   },
+   {
+    "h": "5. Pricing and Payments"
+   },
+   {
+    "p": "All prices listed on the website are in Indian Rupees (INR) unless otherwise stated. Payments are processed through secure third-party payment gateways. Thin Black Brush does not store or directly process payment card details."
+   },
+   {
+    "p": "Orders and workshop registrations are considered confirmed only after payment has been successfully processed."
+   },
+   {
+    "h": "6. Photography and Media"
+   },
+   {
+    "p": "Workshops and events conducted by Thin Black Brush may be photographed or recorded for documentation and promotional purposes. These images may be used on the website, social media platforms, or other marketing materials."
+   },
+   {
+    "p": "By attending a workshop, participants consent to the use of such photographs or recordings for promotional purposes. Participants who prefer not to appear in photographs may inform the organizers at the time of the workshop, and reasonable efforts will be made to respect such requests."
+   },
+   {
+    "h": "7. Intellectual Property"
+   },
+   {
+    "p": "All content on this website, including text, images, graphics, artwork, logos, workshop materials, and designs, is the intellectual property of Thin Black Brush unless otherwise stated."
+   },
+   {
+    "p": "This content may not be copied, reproduced, distributed, or used for commercial purposes without prior written permission."
+   },
+   {
+    "h": "8. Acceptable Use"
+   },
+   {
+    "p": "Users agree not to misuse the website. This includes, but is not limited to:"
+   },
+   {
+    "ul": [
+     "Attempting to gain unauthorized access to the website or its systems",
+     "Using the website for fraudulent or unlawful purposes",
+     "Copying or redistributing website content without permission",
+     "Interfering with the functionality or security of the website"
+    ]
+   },
+   {
+    "p": "Thin Black Brush reserves the right to restrict or terminate access to the website for users who violate these terms."
+   },
+   {
+    "h": "9. Limitation of Liability"
+   },
+   {
+    "p": "Thin Black Brush makes reasonable efforts to ensure the accuracy of the information on this website. However, the website and its content are provided on an “as-is” basis."
+   },
+   {
+    "p": "Thin Black Brush shall not be liable for any indirect or consequential damages arising from the use of the website, participation in workshops, or purchase of products, except where required by applicable law."
+   },
+   {
+    "h": "10. Third-Party Services"
+   },
+   {
+    "p": "The website may rely on third-party services such as payment processors, delivery partners, or website hosting providers. Thin Black Brush is not responsible for the performance or policies of these third-party services."
+   },
+   {
+    "h": "11. Changes to These Terms"
+   },
+   {
+    "p": "Thin Black Brush may update or modify these Terms of Use at any time. Updated terms will be posted on this page with a revised effective date. Continued use of the website after changes are posted constitutes acceptance of the updated terms."
+   },
+   {
+    "h": "12. Contact Information"
+   },
+   {
+    "p": "For questions regarding these Terms of Use, please contact:"
+   },
+   {
+    "p": "Thin Black Brush,"
+   },
+   {
+    "p": "Chennai, Tamil Nadu, India."
+   },
+   {
+    "p": "Email:"
+   },
+   {
+    "p": "thinblackbrush@gmail.com"
+   },
+   {
+    "p": "Phone: +91 99620 50962"
+   }
+  ]
+ },
+ {
+  "slug": "privacy",
+  "title": "Privacy Policy",
+  "blocks": [
+   {
+    "p": "Thin Black Brush is committed to protecting the privacy of visitors and customers who use our website. This Privacy Policy explains how we collect, use, store, and protect personal information when you access our website, register for workshops, or purchase products."
+   },
+   {
+    "p": "By using this website, you consent to the practices described in this Privacy Policy."
+   },
+   {
+    "h": "1. Information We Collect"
+   },
+   {
+    "p": "We may collect personal information that you voluntarily provide when you interact with the website. This may include:"
+   },
+   {
+    "ul": [
+     "Name"
+    ]
+   },
+   {
+    "p": "Email address"
+   },
+   {
+    "p": "Phone number"
+   },
+   {
+    "ul": [
+     "Billing address",
+     "Shipping address (for product orders)",
+     "Workshop registration details"
+    ]
+   },
+   {
+    "p": "When payments are made through the website, payment information such as card or banking details is processed securely by third-party payment gateways. Thin Black Brush does not store or directly process payment card details."
+   },
+   {
+    "p": "We may also automatically collect certain technical information when you visit the website, such as browser type, device information, IP address, and pages visited."
+   },
+   {
+    "h": "2. How We Use Your Information"
+   },
+   {
+    "p": "The information we collect may be used for the following purposes:"
+   },
+   {
+    "ul": [
+     "To process workshop registrations",
+     "To process and fulfil product orders",
+     "To communicate important information regarding workshops, orders, or inquiries",
+     "To provide customer support",
+     "To improve the functionality and performance of the website"
+    ]
+   },
+   {
+    "p": "To send updates, announcements, or promotional communications related to Thin Black Brush (you may opt out of such communications at any time)"
+   },
+   {
+    "h": "3. Photography and Media"
+   },
+   {
+    "p": "Workshops conducted by Thin Black Brush may be photographed or recorded for documentation and promotional purposes."
+   },
+   {
+    "p": "Images or videos taken during workshops may be used on the website, social media platforms, or other marketing materials to showcase workshop activities and outcomes. Participants who prefer not to appear in photographs or recordings may inform the organizers during the workshop, and reasonable efforts will be made to accommodate such requests."
+   },
+   {
+    "h": "4. Sharing of Information"
+   },
+   {
+    "p": "Thin Black Brush does not sell or rent personal information to third parties."
+   },
+   {
+    "p": "However, we may share limited information with trusted third-party service providers when necessary to operate the business, including:"
+   },
+   {
+    "ul": [
+     "Payment processing providers",
+     "Delivery and shipping partners",
+     "Website hosting or technical service providers"
+    ]
+   },
+   {
+    "p": "These third parties are expected to handle personal information securely and only for the purpose of providing their services."
+   },
+   {
+    "p": "We may also disclose information if required to comply with applicable laws, legal processes, or government requests."
+   },
+   {
+    "h": "5. Cookies and Website Analytics"
+   },
+   {
+    "p": "The website may use cookies or similar technologies to improve user experience and analyse website traffic. Cookies help remember certain preferences and allow the website to function more efficiently."
+   },
+   {
+    "p": "You may choose to disable cookies through your browser settings; however, doing so may affect certain features of the website."
+   },
+   {
+    "h": "6. Data Security"
+   },
+   {
+    "p": "Thin Black Brush takes reasonable measures to protect personal information from unauthorized access, misuse, or disclosure. While we strive to use commercially acceptable means to protect personal data, no method of transmission over the internet or electronic storage is completely secure."
+   },
+   {
+    "h": "7. Data Retention"
+   },
+   {
+    "p": "Personal information may be retained for as long as necessary to fulfil the purposes described in this policy, including maintaining workshop records, processing orders, complying with legal obligations, and resolving disputes."
+   },
+   {
+    "h": "8. Your Rights"
+   },
+   {
+    "p": "Users may request to:"
+   },
+   {
+    "ul": [
+     "Access the personal information we hold about them",
+     "Correct inaccurate information",
+     "Request deletion of their personal data where applicable"
+    ]
+   },
+   {
+    "p": "Such requests may be made by contacting us using the contact details below."
+   },
+   {
+    "h": "9. Links to Other Websites"
+   },
+   {
+    "p": "This website may contain links to external websites or social media platforms. Thin Black Brush is not responsible for the privacy practices or content of such third-party websites."
+   },
+   {
+    "h": "10. Changes to This Privacy Policy"
+   },
+   {
+    "p": "Thin Black Brush may update this Privacy Policy from time to time. Any changes will be posted on this page."
+   },
+   {
+    "h": "11. Contact Information"
+   },
+   {
+    "p": "If you have questions regarding this Privacy Policy or how your information is handled, please contact:"
+   },
+   {
+    "p": "Thin Black Brush,"
+   },
+   {
+    "p": "Chennai, Tamil Nadu, India."
+   },
+   {
+    "p": "Email:"
+   },
+   {
+    "p": "thinblackbrush@gmail.com"
+   },
+   {
+    "p": "Phone: +91 99620 50962"
+   }
+  ]
+ },
+ {
+  "slug": "refund",
+  "title": "Refund, Return and Cancellation Policy",
+  "blocks": [
+   {
+    "p": "This Refund, Return and Cancellation Policy outlines the conditions under which refunds, cancellations, and product returns are handled for purchases made through the Thin Black Brush website. By registering for workshops or purchasing products from this website, you agree to the terms described below."
+   },
+   {
+    "h": "1. Workshop Cancellation by Participant"
+   },
+   {
+    "p": "Once a workshop registration has been completed and payment has been successfully processed, the registration is non-cancellable and non-refundable."
+   },
+   {
+    "p": "However, if a participant is unable to attend the registered workshop, the registration may be transferred under the following conditions:"
+   },
+   {
+    "p": "The participant may transfer their seat to another individual who can attend the same workshop in their place, or"
+   },
+   {
+    "p": "The participant may request to transfer their registration to a future workshop conducted by Thin Black Brush, subject to seat availability and prior notice to the organizer."
+   },
+   {
+    "p": "All transfer requests must be communicated to Thin Black Brush in advance through the official contact details provided on the website. Thin Black Brush reserves the right to approve or decline transfer requests depending on workshop availability and scheduling."
+   },
+   {
+    "h": "2. Workshop Cancellation by Thin Black Brush"
+   },
+   {
+    "p": "Thin Black Brush reserves the right to reschedule or cancel a workshop due to unforeseen circumstances, insufficient registrations, or operational reasons."
+   },
+   {
+    "p": "In such cases, participants will be offered either a full refund, or the option to transfer their registration to a future workshop."
+   },
+   {
+    "h": "3. No-Show Policy"
+   },
+   {
+    "p": "If a participant fails to attend a workshop without prior notice, the registration fee will be considered forfeited and no refund will be issued."
+   },
+   {
+    "h": "4. Product Returns (Damaged or Incorrect Items)"
+   },
+   {
+    "p": "If you receive a damaged or incorrect product, please contact Thin Black Brush within 48 hours of delivery with photographs of the product and packaging."
+   },
+   {
+    "p": "Customers may request a return for eligible products, provided that:"
+   },
+   {
+    "ul": [
+     "The item is unused and in its original condition",
+     "The item is returned in its original packaging"
+    ]
+   },
+   {
+    "p": "Proof of purchase is provided."
+   },
+   {
+    "p": "Upon verification, we will arrange either a replacement product, or a refund to the original payment method."
+   },
+   {
+    "h": "5. Refund Processing"
+   },
+   {
+    "p": "Approved refunds will be processed to the original method of payment. Refunds typically take 5–10 business days to reflect in the customer’s account, depending on the policies of the payment provider and banking institution."
+   },
+   {
+    "h": "6. Shipping Costs"
+   },
+   {
+    "p": "Shipping charges, if applicable, are generally non-refundable unless the return is due to an error or damage caused during delivery."
+   },
+   {
+    "p": "Customers may be responsible for return shipping costs unless otherwise specified."
+   },
+   {
+    "h": "7. Contact for Returns or Refund Requests"
+   },
+   {
+    "p": "Requests will be reviewed and responded to within a reasonable timeframe. For any refund, return, or cancellation requests, please contact:"
+   },
+   {
+    "p": "Thin Black Brush,"
+   },
+   {
+    "p": "Chennai, Tamil Nadu, India."
+   },
+   {
+    "p": "Email:"
+   },
+   {
+    "p": "thinblackbrush@gmail.com"
+   },
+   {
+    "p": "Phone: +91 99620 50962"
+   }
+  ]
+ }
+]

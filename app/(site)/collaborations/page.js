@@ -2,7 +2,7 @@ import Form from '@/components/Form';
 import { collaborators, memories } from '@/lib/data';
 import { getImages } from '@/lib/db';
 export const revalidate = 60;
-export const metadata = { title: 'Collaborations' };
+export const metadata = { title: 'Collaborations', description: 'Brands, NGOs, colleges and companies we have collaborated with, and how to work with us.' };
 export default async function Collabs() {
   const im = await getImages();
   return (<main>

@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Btn from '@/components/Btn';
+import Pic from '@/components/Pic';
+import JsonLd from '@/components/JsonLd';
 import BookWorkshop from '@/components/BookWorkshop';
 import Icon from '@/components/Icons';
 import { rupees, isPast, fmtDate, business } from '@/lib/data';
@@ -13,8 +15,9 @@ export default async function Workshop({ params }) {
   const closed = isPast(w) || w.cancelled;
   const label = w.cancelled ? 'Cancelled' : isPast(w) ? 'Ended' : w.seatsLeft === 0 ? 'Sold out' : 'Open';
   return (<main>
+    <JsonLd data={{ '@context': 'https://schema.org', '@type': 'Event', name: w.title, description: w.summary, startDate: w.starts_at, eventStatus: w.cancelled ? 'https://schema.org/EventCancelled' : 'https://schema.org/EventScheduled', eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode', location: { '@type': 'Place', name: w.venue, address: w.address }, offers: { '@type': 'Offer', price: w.price, priceCurrency: 'INR', availability: closed ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock' }, organizer: { '@type': 'Organization', name: 'Thin Black Brush' } }} />
     <section className="section"><div className="wrap split">
-      <div className="gallery"><div className="main"><img src={w.image} alt={w.title} /></div></div>
+      <div className="gallery"><div className="main"><Pic src={w.image} alt={w.title} eager sizes="(max-width: 860px) 92vw, 520px" /></div></div>
       <div className="info"><span className={`tag ${closed ? 'off' : ''}`}>{label}</span>
         <h1 style={{marginTop:14}}>{w.title}</h1><p className="lead" style={{marginLeft:0}}>{w.summary}</p>
         <ul className="facts">

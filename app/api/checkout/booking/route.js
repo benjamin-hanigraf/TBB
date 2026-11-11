@@ -13,6 +13,10 @@ export async function POST(req) {
     const [w] = await q(`workshops?slug=eq.${encodeURIComponent(slug)}&status=eq.published&select=id,price_paise,friend_price_paise,starts_at`);
     if (!w || new Date(w.starts_at) <= new Date()) return json({ error: 'closed' }, 409);
     const per = seats >= 2 && w.friend_price_paise ? w.friend_price_paise : w.price_paise; const amount = per * seats;
+    // stop one person from holding many seats without paying: at most 2 unpaid holds per email or phone in 30 minutes
+    const since = new Date(Date.now() - 30 * 60_000).toISOString();
+    const holds = await q(`bookings?status=eq.pending&created_at=gte.${encodeURIComponent(since)}&or=(email.eq.${encodeURIComponent(email)},phone.eq.${encodeURIComponent(phone)})&select=id`);
+    if ((holds || []).length >= 2) return json({ error: 'slow_down' }, 429);
     const user = await userFromRequest(req).catch(() => null);
     let id; try { id = await rpc('book_seats', { p_workshop: w.id, p_user: user?.id || null, p_name: name, p_email: email, p_phone: phone, p_seats: seats, p_amount: amount }); }
     catch (e) { const m = JSON.stringify(e.detail || ''); return json({ error: m.includes('sold_out') ? 'sold_out' : 'closed' }, 409); }

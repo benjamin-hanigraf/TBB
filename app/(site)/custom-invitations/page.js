@@ -1,7 +1,7 @@
 import Form from '@/components/Form';
 import { getImages } from '@/lib/db';
 export const revalidate = 60;
-export const metadata = { title: 'Custom Invitations' };
+export const metadata = { title: 'Custom Invitations', description: 'Custom-designed and printed invitations for weddings, birthdays and corporate events.' };
 export default async function Invites() {
   const im = await getImages();
   return (<main>

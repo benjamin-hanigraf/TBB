@@ -37,7 +37,7 @@ export default function Labels() {
         <div><label className="ad-check"><input type="checkbox" checked={from} onChange={(e) => setFrom(e.target.checked)} /><span>Show our address as sender</span></label><label className="ad-check"><input type="checkbox" checked={phone} onChange={(e) => setPhone(e.target.checked)} /><span>Show customer phone</span></label></div></div>
         <p className="ad-help">Print at 100% size ("Actual size"), not "Fit to page". {labels.length ? `${labels.length} label${labels.length > 1 ? 's' : ''}, ${pages} page${pages > 1 ? 's' : ''}.` : ''}</p></Card>
     </div>
-    <Card title="Preview"><div className="lbl-wrap"><div className={`lbl-sheet ${cls}`}>{labels.length ? labels.map((l) => (<div className="lbl" key={l.key}>
+    <Card title="Preview"><div className="lbl-wrap" tabIndex={0} role="region" aria-label="Label preview"><div className={`lbl-sheet ${cls}`}>{labels.length ? labels.map((l) => (<div className="lbl" key={l.key}>
       {from && <div className="from"><b>From:</b> {biz.name || 'Thin Black Brush'}, {biz.address}{biz.phone ? ` · ${biz.phone}` : ''}</div>}
       <div className="to"><span>To:</span><b>{l.to}</b>{l.lines.map((x) => <div key={x}>{x}</div>)}{phone && l.phone && <div className="phone">Phone: {l.phone}</div>}</div>{note && <div className="note">{note}</div>}</div>)) : <p className="ad-empty ad-noprint">Choose parcels above to see your labels here.</p>}</div></div></Card>
   </Page>);

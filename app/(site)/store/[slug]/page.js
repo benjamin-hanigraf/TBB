@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import Btn from '@/components/Btn';
+import JsonLd from '@/components/JsonLd';
 import AddToCart from '@/components/AddToCart';
 import Gallery from '@/components/Gallery';
 import Icon from '@/components/Icons';
@@ -11,7 +12,7 @@ export async function generateMetadata({ params }) { const { slug } = await para
 export default async function Product({ params }) {
   const { slug } = await params; const p = await getProduct(slug); if (!p) notFound();
   const out = p.stock <= 0 && !p.preorder;
-  return (<main><section className="section"><div className="wrap split top">
+  return (<main><JsonLd data={{ '@context': 'https://schema.org', '@type': 'Product', name: p.title, description: p.text, image: p.images, brand: { '@type': 'Brand', name: 'Thin Black Brush' }, offers: { '@type': 'Offer', price: p.price, priceCurrency: 'INR', availability: out ? 'https://schema.org/OutOfStock' : p.preorder ? 'https://schema.org/PreOrder' : 'https://schema.org/InStock' } }} /><section className="section"><div className="wrap split top">
     <Gallery images={p.images} alt={p.title} />
     <div className="info">{p.preorder && <span className="tag">Pre-order</span>}
       <h1 style={{marginTop:p.preorder?14:0}}>{p.title}</h1><p className="price">{rupees(p.price)}</p>

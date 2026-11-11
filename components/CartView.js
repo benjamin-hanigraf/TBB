@@ -6,9 +6,9 @@ import { useCart } from './Cart';
 import { rupees } from '@/lib/data';
 import { supabase } from '@/lib/supabase-browser';
 export function useShipping() {
-  const [s, setS] = useState({ flat_paise: 0, free_above_paise: 0 });
-  useEffect(() => { const sb = supabase(); if (sb) sb.from('settings').select('value').eq('key', 'shipping').single().then(({ data }) => data && setS(data.value)); }, []);
-  return (subtotal) => (s.free_above_paise && subtotal * 100 >= s.free_above_paise ? 0 : (s.flat_paise || 0) / 100);
+  const [s, setS] = useState(null);   // null = still loading
+  useEffect(() => { const sb = supabase(); if (!sb) { setS({ flat_paise: 0, free_above_paise: 0 }); return; } sb.from('settings').select('value').eq('key', 'shipping').single().then(({ data }) => setS(data?.value || { flat_paise: 0, free_above_paise: 0 }), () => setS({ flat_paise: 0, free_above_paise: 0 })); }, []);
+  return (subtotal) => (s === null ? null : s.free_above_paise && subtotal * 100 >= s.free_above_paise ? 0 : (s.flat_paise || 0) / 100);
 }
 export default function CartView() {
   const { items, subtotal, setQty, remove } = useCart(); const ship = useShipping()(subtotal);
@@ -19,6 +19,6 @@ export default function CartView() {
         <div><Link href={`/store/${i.slug}`}><b>{i.title}</b></Link><p className="small">{rupees(i.price)} each</p></div></div>
         <div className="end"><div className="qty"><button aria-label="One less" onClick={() => setQty(i.slug, i.qty - 1)}>−</button><span>{i.qty}</span><button aria-label="One more" onClick={() => setQty(i.slug, i.qty + 1)}>+</button></div>
           <p><button className="link" onClick={() => remove(i.slug)}>Remove</button></p></div></div>))}</div>
-    <div className="sum"><div><span>Subtotal</span><span>{rupees(subtotal)}</span></div><div><span>Shipping</span><span>{ship ? rupees(ship) : 'Free'}</span></div><div className="tot"><span>Total</span><span>{rupees(subtotal + ship)}</span></div></div>
+    <div className="sum"><div><span>Subtotal</span><span>{rupees(subtotal)}</span></div><div><span>Shipping</span><span>{ship === null ? '…' : ship ? rupees(ship) : 'Free'}</span></div><div className="tot"><span>Total</span><span>{rupees(subtotal + (ship || 0))}</span></div></div>
     <div className="row c"><Btn href="/checkout" icon="arrow">Checkout</Btn></div></>);
 }

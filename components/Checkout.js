@@ -46,11 +46,11 @@ export default function Checkout() {
       <label key={'l2' + pick}><span>Address line 2 <em>(optional)</em></span><input name="line2" defaultValue={addr.line2 || ''} autoComplete="address-line2" {...ruleProps('text')} /></label>
       <label key={'c' + pick}><span>City <i>*</i></span><input name="city" required defaultValue={addr.city || ''} autoComplete="address-level2" {...ruleProps('text')} /></label>
       <label key={'s' + pick}><span>State <i>*</i></span><input name="state" required defaultValue={addr.state || ''} autoComplete="address-level1" {...ruleProps('text')} /></label>
-      <label key={'z' + pick}><span>Pincode <i>*</i></span><input name="pincode" required defaultValue={addr.pincode || ''} inputMode="numeric" pattern="[0-9]{6}" maxLength={6} autoComplete="postal-code" {...ruleProps('pin')} /></label>
+      <label key={'z' + pick}><span>Pincode <i>*</i></span><input name="pincode" required defaultValue={addr.pincode || ''} inputMode="numeric" pattern="[0-9]{6}" autoComplete="postal-code" {...ruleProps('pin')} /></label>
       <label><span>Gift message <em>(optional)</em></span><textarea name="gift" maxLength={500} {...ruleProps('sentence')} /></label>
       <div className="sum" style={{ marginTop: 8 }}>{items.map((i) => <div key={i.slug}><span>{i.title} × {i.qty}</span><span>{rupees(i.price * i.qty)}</span></div>)}
-        <div><span>Shipping</span><span>{ship ? rupees(ship) : 'Free'}</span></div><div className="tot"><span>Total</span><span>{rupees(subtotal + ship)}</span></div></div>
-      <button className="btn" disabled={busy}><Icon n="check" size={17} /><span>{busy ? 'Please wait…' : `Pay ${rupees(subtotal + ship)}`}</span></button>
+        <div><span>Shipping</span><span>{ship === null ? '…' : ship ? rupees(ship) : 'Free'}</span></div><div className="tot"><span>Total</span><span>{rupees(subtotal + (ship || 0))}</span></div></div>
+      <button className="btn" disabled={busy || ship === null}><Icon n="check" size={17} /><span>{busy ? 'Please wait…' : `Pay ${rupees(subtotal + (ship || 0))}`}</span></button>
       {err && <p className="notice err" role="alert">{err}</p>}
       <p className="small center">Secure payment by Razorpay: UPI, cards and netbanking. We never see your card details.</p>
     </form>);

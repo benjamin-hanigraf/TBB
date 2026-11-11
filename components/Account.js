@@ -85,7 +85,7 @@ function Addresses({ sb, user }) {
         <label><span>Address line 2 <em>(optional)</em></span><input name="line2" {...ruleProps('text')} /></label>
         <label><span>City <i>*</i></span><input name="city" required {...ruleProps('text')} /></label>
         <label><span>State <i>*</i></span><input name="state" required {...ruleProps('text')} /></label>
-        <label><span>Pincode <i>*</i></span><input name="pincode" required inputMode="numeric" pattern="[0-9]{6}" maxLength={6} title="6-digit pincode" {...ruleProps('pin')} /></label>
+        <label><span>Pincode <i>*</i></span><input name="pincode" required inputMode="numeric" pattern="[0-9]{6}" title="6-digit pincode" {...ruleProps('pin')} /></label>
         <button className="btn"><Icon n="check" size={17} /><span>Save address</span></button>
         <button type="button" className="btn ghost" onClick={() => setAdding(false)}>Cancel</button>
       </form>) : <div className="row c"><button className="btn ghost" onClick={() => setAdding(true)}><Icon n="pin" size={17} /><span>Add address</span></button></div>}

@@ -1,0 +1,13 @@
+# Supabase's free plan pauses a project after a week with no activity. This wakes it up every few days, for free.
+name: Keep database awake
+on:
+  schedule: [{ cron: '17 6 */3 * *' }]
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping the database
+        run: |
+          curl -fsS "https://jvbvddxetddhyuavxdxv.supabase.co/rest/v1/settings?select=key&limit=1" \
+            -H "apikey: sb_publishable_t-DD20nurOKMIZMcw4UDRQ_G15-JwWp" -H "Authorization: Bearer sb_publishable_t-DD20nurOKMIZMcw4UDRQ_G15-JwWp" > /dev/null

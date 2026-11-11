@@ -1,5 +1,5 @@
 import Form from '@/components/Form';
-export const metadata = { title: 'Our Services' };
+export const metadata = { title: 'Our Services', description: 'Tell us what you would like customised and we will get it done.' };
 export default function Services() {
   return (<main>
     <section className="pagehead"><div className="wrap"><p className="eyebrow">Our services</p><h1>Tell us what you need.<br />We will get it done.</h1>

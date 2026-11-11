@@ -54,3 +54,8 @@ on conflict (key) do nothing;
 update workshops set title='Beginners Watercolour Course', summary='A beginner-friendly course on the basics of watercolour.' where slug='beginners-watercolor-course';
 update products set title='Pattern Oblique Holder', allow_preorder=true where slug='pre-order-pattern-oblique-holder';
 update products set title='Wooden Oblique Holder (Circle)' where slug='wooden-oblique-holder-circle';
+
+-- 6. photo for the home page classes banner (landscape)
+insert into site_images (key,label,path,alt) values
+('classes_banner','Home page - classes banner (landscape)','/img/31648a2db3.webp','Students with their finished artwork')
+on conflict (key) do nothing;

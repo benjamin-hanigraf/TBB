@@ -39,7 +39,7 @@ export default async function Home() {
     <section className="section"><div className="wrap">
       <div className="head"><p className="eyebrow">Writing classes</p><h2>Handwriting and calligraphy, for every age.</h2>
         <p className="lead">Children from age 5, and tailor-made courses for adults. All materials are provided in class.</p></div>
-      <div className="wide"><img src={images.teaching} alt="Teaching a writing class" loading="lazy" /></div>
+      <div className="wide"><img src={images.classes_banner} alt="Students with their finished artwork" loading="lazy" /></div>
       <div className="row c"><Btn href="/writing-classes" icon="arrow">Learn more</Btn></div>
     </div></section>
 

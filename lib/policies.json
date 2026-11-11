@@ -105,19 +105,12 @@
     "p": "For questions regarding these Terms of Service, please contact:"
    },
    {
-    "p": "Thin Black Brush,"
-   },
-   {
-    "p": "Chennai, Tamil Nadu, India."
-   },
-   {
-    "p": "Email:"
-   },
-   {
-    "p": "thinblackbrush@gmail.com"
-   },
-   {
-    "p": "Phone: +91 99620 50962"
+    "contact": [
+     "Thin Black Brush",
+     "Chennai, Tamil Nadu, India.",
+     "Email: thinblackbrush@gmail.com",
+     "Phone: +91 99620 50962"
+    ]
    }
   ]
  },
@@ -139,17 +132,9 @@
    },
    {
     "ul": [
-     "Name"
-    ]
-   },
-   {
-    "p": "Email address"
-   },
-   {
-    "p": "Phone number"
-   },
-   {
-    "ul": [
+     "Name",
+     "Email address",
+     "Phone number",
      "Billing address",
      "Shipping address (for product orders)",
      "Workshop registration details"
@@ -173,11 +158,9 @@
      "To process and fulfil product orders",
      "To communicate important information regarding workshops, orders, or inquiries",
      "To provide customer support",
-     "To improve the functionality and performance of the website"
+     "To improve the functionality and performance of the website",
+     "To send updates, announcements, or promotional communications related to Thin Black Brush (you may opt out of such communications at any time)"
     ]
-   },
-   {
-    "p": "To send updates, announcements, or promotional communications related to Thin Black Brush (you may opt out of such communications at any time)"
    },
    {
     "h": "3. Photography and Media"
@@ -266,19 +249,12 @@
     "p": "If you have questions regarding this Privacy Policy or how your information is handled, please contact:"
    },
    {
-    "p": "Thin Black Brush,"
-   },
-   {
-    "p": "Chennai, Tamil Nadu, India."
-   },
-   {
-    "p": "Email:"
-   },
-   {
-    "p": "thinblackbrush@gmail.com"
-   },
-   {
-    "p": "Phone: +91 99620 50962"
+    "contact": [
+     "Thin Black Brush",
+     "Chennai, Tamil Nadu, India.",
+     "Email: thinblackbrush@gmail.com",
+     "Phone: +91 99620 50962"
+    ]
    }
   ]
  },
@@ -296,13 +272,13 @@
     "p": "Once a workshop registration has been completed and payment has been successfully processed, the registration is non-cancellable and non-refundable."
    },
    {
-    "p": "However, if a participant is unable to attend the registered workshop, the registration may be transferred under the following conditions:"
+    "p": "However, if a participant is unable to attend the registered workshop, the registration may be transferred in one of the following ways:"
    },
    {
-    "p": "The participant may transfer their seat to another individual who can attend the same workshop in their place, or"
-   },
-   {
-    "p": "The participant may request to transfer their registration to a future workshop conducted by Thin Black Brush, subject to seat availability and prior notice to the organiser."
+    "ul": [
+     "The participant may transfer their seat to another individual who can attend the same workshop in their place",
+     "The participant may request to transfer their registration to a future workshop conducted by Thin Black Brush, subject to seat availability and prior notice to the organiser"
+    ]
    },
    {
     "p": "All transfer requests must be communicated to Thin Black Brush in advance through the official contact details provided on the website. Thin Black Brush reserves the right to approve or decline transfer requests depending on workshop availability and scheduling."
@@ -334,11 +310,9 @@
    {
     "ul": [
      "The item is unused and in its original condition",
-     "The item is returned in its original packaging"
+     "The item is returned in its original packaging",
+     "Proof of purchase is provided"
     ]
-   },
-   {
-    "p": "Proof of purchase is provided."
    },
    {
     "p": "Upon verification, we will arrange either a replacement product, or a refund to the original payment method."
@@ -365,19 +339,12 @@
     "p": "Requests will be reviewed and responded to within a reasonable timeframe. For any refund, return, or cancellation requests, please contact:"
    },
    {
-    "p": "Thin Black Brush,"
-   },
-   {
-    "p": "Chennai, Tamil Nadu, India."
-   },
-   {
-    "p": "Email:"
-   },
-   {
-    "p": "thinblackbrush@gmail.com"
-   },
-   {
-    "p": "Phone: +91 99620 50962"
+    "contact": [
+     "Thin Black Brush",
+     "Chennai, Tamil Nadu, India.",
+     "Email: thinblackbrush@gmail.com",
+     "Phone: +91 99620 50962"
+    ]
    }
   ]
  }

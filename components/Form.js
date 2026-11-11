@@ -19,6 +19,8 @@ export default function Form({ kind, fields, submit = 'Send', done = 'Thank you.
         <label key={f.name}><span>{f.label}{f.required ? <i aria-hidden="true"> *</i> : <em> (optional)</em>}</span>
           {f.type === 'textarea' ? <textarea name={f.name} required={f.required} minLength={f.required ? 10 : undefined} maxLength={2000} placeholder={f.placeholder} />
           : f.type === 'select' ? <select name={f.name} required={f.required} defaultValue=""><option value="" disabled>Select</option>{f.options.map((o) => <option key={o}>{o}</option>)}</select>
+          : f.type === 'date' ? <input name={f.name} type="text" inputMode="numeric" placeholder="DD/MM/YYYY" maxLength={10} pattern="(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[0-2])/20[0-9]{2}" title="Enter the date as DD/MM/YYYY" autoComplete="off" required={f.required}
+              onChange={(e) => { const d = e.target.value.replace(/\D/g, '').slice(0, 8); e.target.value = d.length > 4 ? `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}` : d.length > 2 ? `${d.slice(0, 2)}/${d.slice(2)}` : d; }} />
           : <input name={f.name} type={f.type || 'text'} required={f.required} maxLength={200} placeholder={f.placeholder}
               {...(f.type === 'tel' ? { pattern: '[0-9+\\s\\-]{10,16}', title: 'Enter a valid phone number', inputMode: 'tel' } : {})}
               autoComplete={f.type === 'email' ? 'email' : f.type === 'tel' ? 'tel' : f.name === 'name' ? 'name' : 'off'} />}

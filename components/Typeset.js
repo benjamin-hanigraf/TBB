@@ -12,22 +12,26 @@ const RULES = [
   [/\s+·\s+/g, ' · '],
   [/(₹)\s+/g, '$1'],
 ];
+// terms that must never be split across lines
+const PHRASES = /\b(brush lettering|dip pen calligraphy|dip pen|faux calligraphy|modern calligraphy|thin black brush|teach for india|oblique holder|guideline book)\b/gi;
 const SKIP = new Set(['SCRIPT', 'STYLE', 'TEXTAREA', 'INPUT', 'SELECT', 'OPTION', 'CODE', 'PRE', 'NOSCRIPT']);
-function fix(s) {
-  let t = s;
+function fix(s, heading) {
+  let t = heading ? s : s.replace(PHRASES, (m) => m.replace(/\s+/g, '\u00A0'));
+  // two capitalised words mid-sentence are almost always a name ("Brush Lettering", "Tamil Nadu"): keep them together
+  if (!heading) t = t.replace(/([A-Z][a-z]+)\s+(?=[A-Z][a-z]{2,})/g, (m, w, off, str) => { const before = str.slice(0, off).trimEnd(); return (!before || /[.!?:]$/.test(before)) ? m : w + '\u00A0'; });
   for (const [re, rep] of RULES) t = t.replace(re, rep);
   const trimmed = t.trimEnd(); const tail = t.slice(trimmed.length);
   const words = trimmed.split(/\s+/);
-  if (words.length >= 3) {                       // glue the last two words
+  if (words.length >= 3 && !heading) {           // glue the last two words (headings are balanced by CSS instead)
     const i = trimmed.lastIndexOf(' ');
-    if (i > 0) t = trimmed.slice(0, i) + ' ' + trimmed.slice(i + 1) + tail;
+    if (i > 0 && trimmed.length - i <= 16) t = trimmed.slice(0, i) + ' ' + trimmed.slice(i + 1) + tail;
   }
   return t;
 }
 function run(root) {
   const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: (n) => (n.parentElement && !SKIP.has(n.parentElement.tagName) && /\S\s+\S/.test(n.nodeValue)) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT });
   const nodes = []; while (w.nextNode()) nodes.push(w.currentNode);
-  for (const n of nodes) { const next = fix(n.nodeValue); if (next !== n.nodeValue) n.nodeValue = next; }
+  for (const n of nodes) { const next = fix(n.nodeValue, !!n.parentElement.closest('h1,h2,h3')); if (next !== n.nodeValue) n.nodeValue = next; }
 }
 export default function Typeset() {
   useEffect(() => {

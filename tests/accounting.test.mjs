@@ -41,3 +41,15 @@ test('money parsing and CSV', () => {
   assert.equal(A.rupeesToPaise('₹1,650.50'), 165050); assert.equal(A.rupeesToPaise('abc'), 0); assert.equal(A.money(165000), '₹1,650');
   assert.equal(A.csvEscape('a,"b"'), '"a,""b"""');
 });
+
+import { calcInvoice } from '../lib/invoiceCalc.js';
+test('invoice with a GST rate on each line', () => {
+  const r = calcInvoice([{ qty: 2, unit_paise: 50000, gst_rate: 18 }, { qty: 1, unit_paise: 100000, gst_rate: 0 }], 0, true);
+  assert.equal(r.subtotal, 200000); assert.equal(r.gst, 18000); assert.equal(r.cgst + r.sgst, 18000); assert.equal(r.total, 218000); assert.deepEqual(r.byRate, { 18: 18000 });
+});
+test('discount is shared across lines and GST follows it; GST off means none', () => {
+  const r = calcInvoice([{ qty: 1, unit_paise: 100000, gst_rate: 18 }, { qty: 1, unit_paise: 100000, gst_rate: 18 }], 20000, true);
+  assert.equal(r.taxable, 180000); assert.equal(r.gst, 32400); assert.equal(r.total, 212400);
+  const off = calcInvoice([{ qty: 1, unit_paise: 100000, gst_rate: 18 }], 0, false); assert.equal(off.gst, 0); assert.equal(off.total, 100000);
+});
+test('next invoice number respects the starting number', () => { assert.equal(A.nextInvoiceNo([], 'TBB/YYYY-YY', '2026-05-01', 101), 'TBB/2026-27/101'); assert.equal(A.nextInvoiceNo(['TBB/2026-27/150'], 'TBB/YYYY-YY', '2026-05-01', 101), 'TBB/2026-27/151'); });

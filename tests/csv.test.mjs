@@ -34,5 +34,5 @@ test('customers sheet: old Wix export style columns, duplicates by email merged'
 });
 test('classes sheet', () => {
   const { rows } = readSheet(SPECS.classes, C.toObjects(C.parseCSV('Course name,Level,Type,Price,Covers\nHandwriting and Calligraphy,Level 2,Calligraphy,10000,Brush lettering | Dip pen')));
-  assert.equal(rows[0].track, 'calligraphy'); assert.equal(rows[0].price_paise, 1000000); assert.deepEqual(rows[0].covers, ['Brush lettering', 'Dip pen']); assert.equal(rows[0].sessions, 8);
+  assert.equal(rows[0].track, 'Calligraphy'); assert.equal(rows[0].price_paise, 1000000); assert.deepEqual(rows[0].covers, ['Brush lettering', 'Dip pen']); assert.equal(rows[0].sessions, 8);
 });

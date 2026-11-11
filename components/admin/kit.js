@@ -7,10 +7,14 @@ import Icon from '@/components/Icons';
 export const sb = () => adminClient();
 export const must = (r) => { if (r.error) throw r.error; return r.data; };
 
-/** Loads data and lets you reload it. fn must return a promise. */
+/** Loads data and lets you reload it. fn must return a promise. The last result is kept in memory, so going back to a page shows it at once while fresh data loads. */
+const CACHE = new Map();
+export const clearCache = () => CACHE.clear();
 export function useLoad(fn, deps = []) {
-  const [data, setData] = useState(null); const [error, setError] = useState(null); const [tick, setTick] = useState(0);
-  useEffect(() => { let on = true; setError(null); Promise.resolve().then(fn).then((d) => on && setData(d)).catch((e) => on && setError(e)); return () => { on = false; }; /* eslint-disable-next-line */ }, [tick, ...deps]);
+  const key = fn.toString() + JSON.stringify(deps);
+  const [data, setData] = useState(() => (CACHE.has(key) ? CACHE.get(key) : null)); const [error, setError] = useState(null); const [tick, setTick] = useState(0);
+  useEffect(() => { let on = true; setError(null); if (CACHE.has(key)) setData(CACHE.get(key)); else setData(null);
+    Promise.resolve().then(fn).then((d) => { CACHE.set(key, d); if (on) setData(d); }).catch((e) => on && setError(e)); return () => { on = false; }; /* eslint-disable-next-line */ }, [tick, key]);
   return { data, error, loading: data === null && !error, reload: useCallback(() => setTick((t) => t + 1), []) };
 }
 
@@ -35,7 +39,8 @@ export const Card = ({ title, children, action, tight }) => (<section className=
 export const Stat = ({ label, value, sub, tone }) => (<div className={`ad-stat ${tone || ''}`}><span>{label}</span><b>{value}</b>{sub && <em>{sub}</em>}</div>);
 export const Badge = ({ children, tone = '' }) => <span className={`ad-badge ${tone}`}>{children}</span>;
 export const Empty = ({ children }) => <p className="ad-empty">{children}</p>;
-export const Spin = () => <p className="ad-empty" role="status">Loading…</p>;
+export const Dots = () => <span className="ad-dotsload" role="status" aria-label="Loading"><i /><i /><i /></span>;
+export const Spin = () => <div className="ad-empty"><Dots /></div>;
 export const Err = ({ e }) => <p className="ad-err" role="alert">{e?.message || 'Could not load. Please check your connection and try again.'}</p>;
 export const Btn = ({ icon, children, variant = '', busy, ...p }) => (<button className={`ad-btn ${variant}`} disabled={busy || p.disabled} {...p}>{icon && <Icon n={icon} size={16} />}<span>{children}</span></button>);
 
@@ -46,10 +51,24 @@ export function Modal({ title, onClose, children, wide }) {
     <div className={`ad-modal ${wide ? 'wide' : ''}`} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={ref}>
       <div className="ad-modal-h"><h2>{title}</h2><button className="ad-x" onClick={onClose} aria-label="Close">✕</button></div><div className="ad-modal-b">{children}</div></div></div>);
 }
-export function Confirm({ children, onYes, label = 'Delete', ...p }) {
-  const [ask, setAsk] = useState(false);
-  return ask ? <span className="ad-confirm">Sure? <button className="ad-btn danger sm" onClick={() => { setAsk(false); onYes(); }}>{label}</button><button className="ad-btn ghost sm" onClick={() => setAsk(false)}>No</button></span>
-    : <button className="ad-btn ghost sm danger-text" onClick={() => setAsk(true)} {...p}>{children}</button>;
+export function Confirm({ children, onYes, label, className = '', ...p }) {
+  const [ask, setAsk] = useState(false); const t = useRef();
+  useEffect(() => () => clearTimeout(t.current), []);
+  return <button type="button" className={`ad-btn ghost danger-text ${ask ? 'asking' : ''} ${className}`} onClick={() => { if (ask) { clearTimeout(t.current); setAsk(false); onYes(); } else { setAsk(true); t.current = setTimeout(() => setAsk(false), 4000); } }} {...p}><span>{ask ? 'Sure? Tap again' : children}</span></button>;
+}
+
+// ---------- drag to reorder (works with mouse and touch) ----------
+export function Sortable({ items, getId = (x) => x.id, onReorder, render, className, ...rest }) {
+  const [list, setList] = useState(items); const [drag, setDrag] = useState(null); const ref = useRef(); const cur = useRef(items); const live = useRef(false);
+  useEffect(() => { if (!live.current) { setList(items); cur.current = items; } }, [items]);
+  const grip = (id) => ({ className: 'ad-grip', 'aria-label': 'Drag to reorder', style: { touchAction: 'none', cursor: 'grab' }, onPointerDown: (e) => {
+    if (e.button > 0) return; e.preventDefault(); live.current = true; setDrag(id); let changed = false;
+    const move = (ev) => { const el = document.elementFromPoint(ev.clientX, ev.clientY); const row = el?.closest?.('[data-sid]'); if (!row || !ref.current?.contains(row)) return; const over = row.dataset.sid; if (over === String(id)) return;
+      const a = cur.current.findIndex((x) => String(getId(x)) === String(id)), b = cur.current.findIndex((x) => String(getId(x)) === over); if (a < 0 || b < 0) return;
+      const n = [...cur.current]; const [m] = n.splice(a, 1); n.splice(b, 0, m); cur.current = n; changed = true; setList(n); };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up); live.current = false; setDrag(null); if (changed) onReorder(cur.current); };
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up); } });
+  return <div ref={ref} className={className} {...rest}>{list.map((x, i) => { const id = getId(x); return <div key={id} data-sid={id} className={`ad-sortable ${drag === id ? 'dragging' : ''}`}>{render(x, grip(id), i)}</div>; })}</div>;
 }
 
 // ---------- forms ----------
@@ -92,12 +111,10 @@ export function PhotoField({ label, paths, onChange, folder, max = 1 }) {
     try { const added = []; for (const f of files) added.push(await uploadPhoto(f, folder)); onChange(max === 1 ? added : [...list, ...added]); toast(added.length > 1 ? 'Photos added' : 'Photo added'); }
     catch (err) { toast(err.message || 'Upload failed. Please try again.', 'err'); } finally { setBusy(false); }
   }
-  const move = (i, d) => { const a = [...list]; const j = i + d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; onChange(a); };
-  return (<div className="ad-field full"><span>{label}{max > 1 && <em> (the first photo is the cover)</em>}</span>
-    <div className="ad-imgs">{list.map((p, i) => (<div className="it" key={p}><img src={photoUrl(p)} alt="" />
-      <button aria-label="Remove photo" onClick={(e) => { e.preventDefault(); onChange(list.filter((x) => x !== p)); }}>✕</button>
-      {max > 1 && i > 0 && <button className="mv" aria-label="Move earlier" onClick={(e) => { e.preventDefault(); move(i, -1); }}>‹</button>}
-      {max > 1 && i < list.length - 1 && <button className="mv" style={{ left: 22 }} aria-label="Move later" onClick={(e) => { e.preventDefault(); move(i, 1); }}>›</button>}</div>))}</div>
+  const tile = (p, grip) => (<div className="it"><img src={photoUrl(p)} alt="" draggable={false} {...(max > 1 ? grip : {})} /><button type="button" className="rm" aria-label="Remove photo" onClick={(e) => { e.preventDefault(); onChange(list.filter((x) => x !== p)); }}><Icon n="close" size={11} /></button></div>);
+  return (<div className="ad-field full"><span>{label}{max > 1 && <em> (drag to reorder, the first is the cover)</em>}</span>
+    {max > 1 ? <Sortable className="ad-imgs" items={list.map((p) => ({ id: p, p }))} onReorder={(a) => onChange(a.map((x) => x.p))} render={(x, grip) => tile(x.p, grip)} />
+      : <div className="ad-imgs">{list.map((p) => <div key={p}>{tile(p)}</div>)}</div>}
     {list.length < max && <div><input ref={input} type="file" accept="image/*" multiple={max > 1} hidden onChange={pick} /><button type="button" className="ad-btn ghost sm" disabled={busy} onClick={() => input.current.click()}><Icon n="upload" size={15} /><span>{busy ? 'Uploading…' : list.length ? 'Add photo' : 'Choose photo'}</span></button></div>}
   </div>);
 }

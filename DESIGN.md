@@ -97,10 +97,10 @@ Always use the `Btn` component (`components/Btn.js`) or `<button className="btn 
 ## 7. Icons
 
 One component: `components/Icons.js`, used as `<Icon n="bag" size={18} />`.
-- 24×24 viewBox, **outline only**: stroke `currentColor`, width 1.7, round caps and joins, no fill (exceptions: `send` is a filled paper plane; `chair` is a filled glyph).
+- 24×24 viewBox, **outline only**: stroke `currentColor`, width 1.7, round caps and joins, no fill (exceptions: `send` is a filled paper plane with a cut-out fold line; `chair` is a filled glyph).
 - Sizes: 17-18px inside buttons, 20-22px in the nav, 15px for ticks in lists.
 - To add an icon: add a new key to the `P` object in `Icons.js`, drawn on the 24×24 grid with the same stroke style. Never add an icon library and never use emoji.
-- Meaning is fixed, do not reuse for something else: `bag` = shopping bag (everywhere, including the Store menu item), `chair` = writing classes, `calendar` = workshops, `card` = pay, `rupee` = money, `send` = send/submit, `fileout` = export, `filein` = import, `user` = login/account.
+- Meaning is fixed, do not reuse for something else: `bag` = shopping bag (everywhere, including the Store menu item), `chair` = writing classes, `calendar` = workshops, `calendardays` = calendar tool, `wallet` = pay (cash, UPI and card alike), `note` = rupee note (Accounts), `rupee` = price, `listcheck` = to-do, `grip` = drag handle, `gear` = settings, `logout` = log out, `send` = send/submit, `fileout` = export, `filein` = import, `user` = login/account.
 - The bag icon is also available as a standalone file: `public/icons/bag.svg`.
 - The word is **"bag"** everywhere (never "basket" or "cart"). The page is `/bag`.
 
@@ -142,6 +142,15 @@ One component: `components/Icons.js`, used as `<Icon n="bag" size={18} />`.
 - **Nav:** sticky, 64px high, white at 82% opacity with blur and a hairline bottom border. Logo left. Links 14px `#424245`, active link black + 600. Right side: **bag icon (with a black count badge), login icon, burger**. Below 960px the links collapse into a full-screen white menu (links 19px, hairline separators). The burger is a black three-line icon.
 - **Footer:** `--soft` background, 14px grey text, compact. Top row: logo + one-line description on the left; "Studio" on the right (address, then phone, email, Instagram, Facebook on one wrapping line). Bottom row, below a hairline: copyright on the left, Terms · Privacy · Refunds on the right. No "Explore" column. The address is a link to the map and is **not underlined**.
 
+## 11b. Small rules added later
+- Workshop tags: upcoming workshops show **Book now**, past ones **Ended**.
+- Children are **5 to 15**. Forms say "Participant", never "Student".
+- The class form shows only the fields that apply: a child needs participant name, age and parent or guardian name; an adult needs just their name.
+- Checkboxes are always black (square, 6px radius, white tick). Never the browser's blue.
+- Footer contact links are four round icon buttons (phone, email, Instagram, Facebook), 40px, 1px border.
+- Prices: GST is set per product (No GST / Add 18% / Includes 18%). Shop pages show "+ 18% GST" or "incl. GST" beside the price when it applies.
+- Use **Bag** everywhere, never basket or cart.
+
 ## 12. Motion
 
 Subtle only: 0.2s colour/opacity fades, card lift on hover, smooth scrolling to the form when a class level is chosen on phones. Respect `prefers-reduced-motion`. No animations on load, no parallax, no carousels that auto-play.
@@ -165,6 +174,14 @@ A phone-first PWA in the same visual language but on a **grey `#f5f5f7` page wit
 - **Buttons:** `.ad-btn` black pill 44px; `.ghost` white with grey border; `.danger` red; `.sm` 34px. Same short-label rule as the website. Always use `Btn` from `kit.js`.
 - **Forms/modals:** "Add / edit" windows are large. On phones they are **full screen** with a sticky Save bar; on desktop they are centred up to 760px (`.ad-modal`) or 1040px (`.ad-modal.wide`) wide, 22px radius. Fields use `.ad-field` in a two-column `.ad-form` grid (one column on phones). Same field height and rules as the website.
 - **Toasts:** black pill, bottom centre, 3.5 seconds.
+- **Loading:** three small black dots that pulse (`<Dots />`). Never the word "Loading".
+- **Words:** Income and Expense (never money in/out), Participants (never students), Log out (never lock), Bag.
+- **Buttons at the bottom of a form** (`.ad-actions.full`) share one row of equal-width buttons: Save, a ghost action, Delete. Delete asks "Sure? Tap again" on the same button so the size never changes.
+- **Drag to reorder** (store products, class levels, product photos): a grip handle (`Icon n="grip"`) or the photo itself; use `<Sortable>` from `components/admin/kit.js`. The new order is saved when the finger or mouse is released.
+- **Class types** are greys only: the type's boxes use `#f5f5f7`, `#e8e8ed`, `#dcdce1`, `#d0d0d6` in order. Same on the website's level cards.
+- **Lists with unread items** (Inbox) are highlighted with a light grey row, a black dot and bold name, like Gmail.
+- **Calendar, To-do, Invoices, Label printer** are Home buttons: icon above a short label in a white card.
+- **Invoices** print on A4 portrait with the stacked logo, in a fixed-size header (`components/admin/InvoiceSheet.js`). **Labels** are A4 portrait strips 35 mm tall across the 190 mm printable width, black and white only, 7 per page.
 - **Access:** PIN keypad only (`PinGate`). No email login. Never show the PIN anywhere.
 - **Tables of data** (orders, customers, workshops, products, classes, money) always have: search, a bulk "Import" (CSV) and "Export" (CSV) in the header, one row per item.
 

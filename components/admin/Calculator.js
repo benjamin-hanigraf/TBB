@@ -9,7 +9,7 @@ function N({ label, v, set, suffix, hint }) {
 const R = ({ rows }) => <div className="ad-list" style={{ marginTop: 14 }}>{rows.map(([k, v, big]) => <div key={k} className="ad-row" style={{ cursor: 'default' }}><span>{k}</span><b style={big ? { fontSize: 20 } : undefined}>{v}</b></div>)}</div>;
 const pct = (x) => `${(Math.round(x * 10) / 10).toString()}%`;
 export default function Calculator() {
-  return (<Page title="Calculator" back="/manager/tools"><div className="ad-help" style={{ marginBottom: 14 }}>Type numbers in any box. Answers update as you type.</div><Price /><Gst /><Disc /><Even /></Page>);
+  return (<Page title="Calculator"><div className="ad-help" style={{ marginBottom: 14 }}>Type numbers in any box. Answers update as you type.</div><Price /><Gst /><Disc /><Even /></Page>);
 }
 function Price() {
   const [cost, setCost] = useState(''); const [mk, setMk] = useState('50'); const [sell, setSell] = useState('');
@@ -34,8 +34,8 @@ function Even() {
   const [fixed, setFixed] = useState(''); const [price, setPrice] = useState(''); const [cost, setCost] = useState(''); const [cap, setCap] = useState('12');
   const be = calc.breakEvenUnits(rupeesToPaise(fixed), rupeesToPaise(price), rupeesToPaise(cost)); const ok = rupeesToPaise(price) > rupeesToPaise(cost) && rupeesToPaise(fixed) > 0;
   const seats = Number(cap) || 0; const profitFull = seats * (rupeesToPaise(price) - rupeesToPaise(cost)) - rupeesToPaise(fixed);
-  return (<Card title="Workshop break-even"><p className="ad-help" style={{ marginTop: 0 }}>How many students do you need to cover your costs?</p>
+  return (<Card title="Workshop break-even"><p className="ad-help" style={{ marginTop: 0 }}>How many particints do you need to cover your costs?</p>
     <div className="ad-form"><N label="Fixed costs (₹)" v={fixed} set={setFixed} hint="Venue, teacher pay, marketing: costs that do not change with students" /><N label="Price per student (₹)" v={price} set={setPrice} /><N label="Cost per student (₹)" v={cost} set={setCost} hint="Kit and materials for one student" /><N label="Seats available" v={cap} set={setCap} /></div>
-    {ok && <R rows={[['Students needed to break even', Number.isFinite(be) ? String(be) : 'Not possible', true], ['Profit if all seats are filled', money(profitFull)]]} />}
+    {ok && <R rows={[['Participants needed to break even', Number.isFinite(be) ? String(be) : 'Not possible', true], ['Profit if all seats are filled', money(profitFull)]]} />}
     {be > seats && ok && <p className="ad-err" style={{ marginTop: 12 }}>You cannot break even with {seats} seats at this price. Try a higher price or lower costs.</p>}</Card>);
 }

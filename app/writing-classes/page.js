@@ -6,7 +6,7 @@ export const revalidate = 60;
 export default async function Classes() {
   const im = await getImages();
   return (<main>
-    <section className="pagehead"><div className="wrap"><p className="eyebrow">Writing classes</p><h1>Handwriting and<br />calligraphy classes.</h1>
+    <section className="pagehead"><div className="wrap"><p className="eyebrow">Writing classes</p><h1>Handwriting and calligraphy classes.</h1>
       <p className="lead">All materials are provided in class.</p></div></section>
     <section className="section"><div className="wrap">
       <div className="cards" style={{marginTop:0}}>

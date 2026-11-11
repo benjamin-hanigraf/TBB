@@ -130,3 +130,7 @@ footer a:hover{color:#000}footer .flogo{height:52px;width:auto;margin-bottom:14p
 .fine{font-size:13px;color:var(--mute);margin-top:18px;max-width:46ch}
 .center .fine,.head .fine{margin-left:auto;margin-right:auto}
 .dark .lead,.dark .eyebrow{color:#a1a1a6}.dark .doodle{color:#fff}
+/* no stranded words: balance short text, tidy long paragraphs */
+.small,.price,.card p,.card h3,.facts li,figcaption,.plist li,.eyebrow,.btn span,.tag,.notice,.fine,label span{text-wrap:balance}
+p,li,.lead{text-wrap:pretty}.lead,h1,h2,h3{text-wrap:balance}
+.prose p{text-wrap:pretty}

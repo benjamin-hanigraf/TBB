@@ -17,7 +17,7 @@ export default function Checkout() {
     const [{ data: p }, { data: a }] = await Promise.all([sb.from('profiles').select('full_name,phone').eq('id', u.id).single(), sb.from('addresses').select('*').eq('user_id', u.id)]);
     setPre({ name: p?.full_name || '', email: u.email || '', phone: p?.phone || '' }); setSaved(a || []); }); }, []);
   const addr = saved.find((a) => a.id === pick) || {};
-  if (!items.length) return <div className="center"><p className="lead" style={{ marginTop: 0 }}>Your cart is empty.</p><div className="row c"><Btn href="/store" icon="bag">Shop</Btn></div></div>;
+  if (!items.length) return <div className="center"><p className="lead" style={{ marginTop: 0 }}>Your basket is empty.</p><div className="row c"><Btn href="/store" icon="bag">Shop</Btn></div></div>;
   async function submit(e) {
     e.preventDefault(); setBusy(true); setErr('');
     const f = Object.fromEntries(new FormData(e.target)); const R = RULES;

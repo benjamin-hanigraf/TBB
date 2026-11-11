@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { useLoad, sb, must, Page, Card, Spin, Err, Btn, F, useForm, useAction } from './kit';
 import { rupeesToPaise } from '@/lib/accounting';
-import { pinApi, setToken } from '@/lib/adminApi';
+import { pinApi, setToken, lockDevice } from '@/lib/adminApi';
 import { useState } from 'react';
 const get = (rows, k, d) => ({ ...d, ...(rows.find((r) => r.key === k)?.value || {}) });
 export default function Settings() {
@@ -11,7 +11,6 @@ export default function Settings() {
   return (<Page title="Settings">
     <Business rows={data} /><Gst rows={data} /><Shipping rows={data} />
     <PinCard /><InstallCard />
-    <Card title="Sign out"><Btn variant="ghost" onClick={() => sb().auth.signOut()}>Sign out of this device</Btn></Card>
   </Page>);
 }
 async function save(key, value, pub) { must(await sb().from('settings').upsert({ key, value, is_public: pub })); }
@@ -60,7 +59,7 @@ function PinCard() {
   const dg = { type: 'password', rule: 'digits', required: true, inputMode: 'numeric', maxLength: 4, autoComplete: 'off' };
   return (<Card title="Device PIN"><p className="ad-help" style={{ marginTop: 0 }}>{def ? 'You are still using the starting PIN (0000). Please change it.' : 'A new device asks for this PIN the first time it signs in.'}</p>
     <form className="ad-form" onSubmit={submit}><F form={f} k="current" label="Current PIN" {...dg} /><div /><F form={f} k="next" label="New PIN" {...dg} /><F form={f} k="again" label="New PIN again" {...dg} />
-      <div className="ad-actions full"><Btn busy={busy} icon="check">Change PIN</Btn><Btn type="button" variant="ghost" onClick={() => { setToken(''); location.reload(); }}>Lock this device now</Btn></div></form></Card>);
+      <div className="ad-actions full"><Btn busy={busy} icon="check">Change PIN</Btn><Btn type="button" variant="ghost" onClick={async () => { await lockDevice(); location.reload(); }}>Lock this device now</Btn></div></form></Card>);
 }
 function InstallCard() {
   const [can, setCan] = useState(false); useEffect(() => { setCan(!!window.__bip); }, []);

@@ -56,7 +56,12 @@ test('device PIN: default 0000, hashing, tokens, lockout', async () => {
   assert.equal(N.checkToken(t, 'u1', 'dev1', 1), true); assert.equal(N.checkToken(t, 'u2', 'dev1', 1), false, 'other user'); assert.equal(N.checkToken(t, 'u1', 'dev2', 1), false, 'other device');
   assert.equal(N.checkToken(t, 'u1', 'dev1', 2), false, 'PIN changed, token dead'); assert.equal(N.checkToken(t + 'x', 'u1', 'dev1', 1), false, 'tampered');
   assert.equal(N.checkToken(N.makeToken('u1', 'dev1', 1, 1, now - 2 * 864e5), 'u1', 'dev1', 1), false, 'expired');
-  for (let i = 0; i < 5; i++) N.noteFail('lock-test'); assert.equal(N.locked('lock-test'), true); N.clearFails('lock-test'); assert.equal(N.locked('lock-test'), false);
+  let st; const t0 = 1_000_000_000_000;
+  for (let i = 1; i <= 4; i++) { st = N.nextFailState(st, t0 + i); assert.equal(N.isLocked(st, t0 + i), false, `try ${i} is not locked`); }
+  st = N.nextFailState(st, t0 + 5); assert.equal(N.isLocked(st, t0 + 6), true, '5th wrong PIN locks'); assert.equal(N.isLocked(st, t0 + 16 * 60e3), false, '15 minutes later it opens');
+  for (let i = 6; i <= 10; i++) st = N.nextFailState(st, t0 + 20 * 60e3 + i); assert.ok(st.locked_until - (t0 + 20 * 60e3) >= 3600e3 - 1000, '10 wrong tries lock for an hour');
+  for (let i = 11; i <= 15; i++) st = N.nextFailState(st, t0 + 3 * 3600e3 + i); assert.ok(st.locked_until - (t0 + 3 * 3600e3) >= 24 * 3600e3 - 1000, '15 wrong tries lock for a day');
+  assert.equal(N.nextFailState(st, t0 + 3 * 864e5).fails, 1, 'counting starts fresh after a quiet day');
 });
 
 test('finalize: a class enrolment is confirmed once, with ledger entry', async () => {
@@ -77,4 +82,17 @@ test('finalize: a class enrolment is confirmed once, with ledger entry', async (
 test('receipts link the studio address to Google Maps', () => {
   const inv = I.buildInvoice({ kind: 'order', row: { name: 'A', email: 'a@b.co', phone: '1', total_paise: 100, shipping_paise: 0, status: 'paid', invoice_no: 1, created_at: '2026-11-11T00:00:00Z' }, items: [{ title: 'X', qty: 1, unit_paise: 100 }], settings: { business: { address: '2nd Floor, Chennai' } } });
   const h = I.renderInvoiceHTML(inv); assert.ok(h.includes('href="https://maps.app.goo.gl/WMv8SSuAmd6C3mjK7"')); assert.ok(h.includes('2nd Floor, Chennai'));
+});
+
+test('owner session: creates the owner once, signs in, makes it admin', async () => {
+  const O = await import('../lib/server/owner.js'); process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'pub'; const calls = []; let created = false;
+  globalThis.fetch = async (url, opts = {}) => {
+    const u = String(url); calls.push(`${opts.method || 'GET'} ${u.replace('https://db.test', '').split('?')[0]}`); const ok = (d, st = 200) => new Response(JSON.stringify(d), { status: st });
+    if (u.includes('/auth/v1/token')) { const b = JSON.parse(opts.body); assert.equal(b.email, 'tbb-studio-owner@example.com'); assert.ok(b.password.length >= 40, 'strong derived password'); return created ? ok({ access_token: 'AT', refresh_token: 'RT', user: { id: 'owner-id' } }) : ok({ error: 'invalid' }, 400); }
+    if (u.endsWith('/auth/v1/admin/users')) { created = true; assert.equal(JSON.parse(opts.body).email_confirm, true); return ok({ id: 'owner-id' }); }
+    if (u.includes('/profiles?id=eq.owner-id')) { assert.equal(JSON.parse(opts.body).role, 'admin'); return ok([{ id: 'owner-id' }]); }
+    return ok(null);
+  };
+  const s = await O.mintOwnerSession(); assert.deepEqual(s, { access_token: 'AT', refresh_token: 'RT' }); assert.ok(calls.includes('POST /auth/v1/admin/users'), 'created on first use');
+  calls.length = 0; await O.mintOwnerSession(); assert.ok(!calls.includes('POST /auth/v1/admin/users'), 'not created again');
 });

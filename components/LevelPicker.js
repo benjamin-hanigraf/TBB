@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Icon from './Icons';
 import Btn from './Btn';
@@ -12,7 +12,9 @@ import { rupees } from '@/lib/data';
 export default function LevelPicker({ classes, phone, whatsapp }) {
   const router = useRouter(); const [sel, setSel] = useState(''); const [open, setOpen] = useState(false); const [group, setGroup] = useState('child');
   const [busy, setBusy] = useState(false); const [err, setErr] = useState(''); const [pre, setPre] = useState({});
-  const chosen = classes.find((c) => c.slug === sel);
+  const chosen = classes.find((c) => c.slug === sel); const panel = useRef(null); const formRef = useRef(null);
+  const stacked = () => typeof window !== 'undefined' && window.matchMedia('(max-width: 1060px)').matches;
+  const reveal = (el, block) => { if (!el) return; const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches; requestAnimationFrame(() => el.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block })); };
   useEffect(() => { const sb = supabase(); if (!sb || !open) return; sb.auth.getSession().then(async ({ data }) => { const u = data.session?.user; if (!u) return; const { data: p } = await sb.from('profiles').select('full_name,phone').eq('id', u.id).single(); setPre({ name: p?.full_name || '', email: u.email || '', phone: p?.phone || '' }); }); }, [open]);
   const label = chosen ? `${chosen.title}, ${chosen.level}` : '';
   async function submit(e) {
@@ -30,18 +32,18 @@ export default function LevelPicker({ classes, phone, whatsapp }) {
   return (<>
     <div className="levels" role="radiogroup" aria-label="Class level">{classes.map((c) => (
       <label key={c.slug} className={`level ${c.track === 'Calligraphy' ? 'cal' : ''} ${sel === c.slug ? 'sel' : ''}`}>
-        <input type="radio" className="sr" name="level" value={c.slug} checked={sel === c.slug} onChange={() => { setSel(c.slug); setErr(''); }} />
+        <input type="radio" className="sr" name="level" value={c.slug} checked={sel === c.slug} onChange={() => { setSel(c.slug); setErr(''); if (stacked()) reveal(panel.current, 'center'); }} />
         <span className="tag">{c.track === 'Calligraphy' ? 'Handwriting + Calligraphy' : 'Handwriting'}</span>
         <h3>{c.title}</h3><p className="small lv">{c.level}</p><p className="desc">{c.text}</p>
         <ul className="covers">{c.covers.map((x) => <li key={x}><Icon n="check" size={15} /><span>{x}</span></li>)}</ul>
         <p className="foot">{rupees(c.price)}<span> · {c.sessions || 8} classes</span></p>
-        <span className="pick" aria-hidden="true">{sel === c.slug ? 'Selected' : 'Select'}</span></label>))}</div>
-    <div className="enrol" aria-live="polite">
+</label>))}</div>
+    <div className="enrol" aria-live="polite" ref={panel}>
       <p className="small center">{chosen ? <>You chose <b>{label}</b>, {rupees(chosen.price)} for {chosen.sessions || 8} classes.</> : 'Choose a level to continue.'}</p>
-      {!open && <div className="row c"><Btn icon="ticket" disabled={!chosen} onClick={() => setOpen(true)}>{chosen ? `Enrol and pay ${rupees(chosen.price)}` : 'Enrol and pay'}</Btn>
+      {!open && <div className="row c"><Btn icon="ticket" disabled={!chosen} onClick={() => { setOpen(true); setTimeout(() => reveal(formRef.current, 'start'), 60); }}>{chosen ? `Enrol and pay ${rupees(chosen.price)}` : 'Enrol and pay'}</Btn>
         <Btn href={`tel:${phone.replace(/\s/g, '')}`} variant="ghost" icon="phone">Call</Btn><Btn href={wa} variant="ghost" icon="chat" target="_blank" rel="noopener noreferrer">WhatsApp</Btn></div>}
       {open && chosen && (
-        <form onSubmit={submit} className="form" style={{ marginTop: 20 }}>
+        <form onSubmit={submit} className="form" style={{ marginTop: 20 }} ref={formRef}>
           <label><span>Student's name <i>*</i></span><input name="student" required autoComplete="off" {...ruleProps('name')} /></label>
           <label><span>The student is <i>*</i></span><select value={group} onChange={(e) => setGroup(e.target.value)}><option value="child">A child (age 5 and above)</option><option value="adult">An adult</option></select></label>
           {group === 'child' && <label><span>Age <i>*</i></span><input name="age" required inputMode="numeric" pattern="([5-9]|1[0-7])" title="Age between 5 and 17" {...ruleProps('digits')} /></label>}

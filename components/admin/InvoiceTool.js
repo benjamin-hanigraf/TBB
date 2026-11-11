@@ -4,7 +4,7 @@ import { useLoad, sb, must, Page, Card, Badge, Empty, Spin, Err, Btn, F, useForm
 import { invoiceTotals, nextInvoiceNo, todayISO, money, rupeesToPaise } from '@/lib/accounting';
 import { buildManualInvoice, renderInvoiceHTML } from '@/lib/server/invoice';
 import { RULES } from '@/lib/format';
-import { supabase } from '@/lib/supabase-browser';
+import { adminClient as supabase } from '@/lib/supabase-admin';
 
 export default function InvoiceTool() {
   const [edit, setEdit] = useState(null);

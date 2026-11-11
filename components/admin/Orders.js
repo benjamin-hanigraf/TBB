@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useLoad, sb, must, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, useToast, fmtDT, fmtD, STATUS_TONE, download } from './kit';
 import { money, toCSV } from '@/lib/accounting';
-import { supabase } from '@/lib/supabase-browser';
+import { adminClient as supabase } from '@/lib/supabase-admin';
 
 const ORDER_STATUS = [['paid', 'Paid, to pack'], ['packed', 'Packed'], ['shipped', 'Shipped'], ['delivered', 'Delivered'], ['cancelled', 'Cancelled'], ['refunded', 'Refunded']];
 const addr = (a) => a ? [a.recipient, a.line1, a.line2, a.city, a.state, a.pincode].filter(Boolean).join(', ') : '';

@@ -1,10 +1,10 @@
 'use client';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { supabase } from '@/lib/supabase-browser';
+import { adminClient } from '@/lib/supabase-admin';
 import { RULES } from '@/lib/format';
 import Icon from '@/components/Icons';
 
-export const sb = () => supabase();
+export const sb = () => adminClient();
 export const must = (r) => { if (r.error) throw r.error; return r.data; };
 
 /** Loads data and lets you reload it. fn must return a promise. */

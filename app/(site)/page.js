@@ -35,7 +35,7 @@ export default async function Home() {
       <div className="cards">{products.slice(0, 3).map(p => (
         <Link key={p.slug} href={`/store/${p.slug}`} className="card"><div className="ph"><Pic src={p.images[0]} alt={p.title} /></div>
           <div className="body"><h3>{p.title}</h3><p className="price">{rupees(p.price)}</p></div></Link>))}</div>
-      <div className="row c"><Btn href="/store" variant="ghost" icon="bag">Shop all</Btn></div>
+      <div className="row c"><Btn href="/store" variant="ghost" icon="basket">Shop all</Btn></div>
     </div></section>
 
     <section className="section"><div className="wrap">

@@ -10,11 +10,11 @@ import ErrorBoundary from './ErrorBoundary';
 import { pinApi, getToken, setToken, applySession, lockDevice } from '@/lib/adminApi';
 
 export const NAV = [
-  ['/admin', 'Home', 'home'], ['/admin/orders', 'Orders', 'bag'], ['/admin/workshops', 'Workshops', 'calendar'], ['/admin/classes', 'Classes', 'ticket'], ['/admin/products', 'Store', 'tag'],
+  ['/admin', 'Home', 'home'], ['/admin/orders', 'Orders', 'box'], ['/admin/workshops', 'Workshops', 'calendar'], ['/admin/classes', 'Classes', 'ticket'], ['/admin/products', 'Store', 'basket'],
   ['/admin/customers', 'Customers', 'user'], ['/admin/inbox', 'Inbox', 'mail'], ['/admin/money', 'Money', 'coin'], ['/admin/tools', 'Tools', 'tool'],
   ['/admin/photos', 'Photos', 'image'], ['/admin/settings', 'Settings', 'gear'],
 ];
-const TABS = [['/admin', 'Home', 'home'], ['/admin/orders', 'Orders', 'bag'], ['/admin/workshops', 'Workshops', 'calendar'], ['/admin/money', 'Money', 'coin'], ['/admin/more', 'More', 'menu']];
+const TABS = [['/admin', 'Home', 'home'], ['/admin/orders', 'Orders', 'box'], ['/admin/workshops', 'Workshops', 'calendar'], ['/admin/money', 'Money', 'coin'], ['/admin/more', 'More', 'menu']];
 const active = (p, h) => (h === '/admin' ? p === '/admin' : p.startsWith(h));
 const setDefFlag = (v) => { try { sessionStorage.setItem('tbb-defpin', v ? '1' : ''); } catch {} };
 
@@ -23,6 +23,7 @@ export default function AdminShell({ children }) {
 }
 function Inner({ children }) {
   const path = usePathname(); const [state, setState] = useState('loading');
+  useEffect(() => { window.__adminReady = true; const t = setTimeout(() => setState((s) => (s === 'loading' ? 'error' : s)), 10000); return () => clearTimeout(t); }, []);
   useEffect(() => { const h = (e) => { e.preventDefault(); window.__bip = e; }; window.addEventListener('beforeinstallprompt', h); return () => window.removeEventListener('beforeinstallprompt', h); }, []);
   useEffect(() => { if ('serviceWorker' in navigator) navigator.serviceWorker.register('/admin/sw.js', { scope: '/admin' }).catch(() => {}); }, []);
   useEffect(() => {

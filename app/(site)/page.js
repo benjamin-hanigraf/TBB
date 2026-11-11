@@ -35,14 +35,14 @@ export default async function Home() {
       <div className="cards">{products.slice(0, 3).map(p => (
         <Link key={p.slug} href={`/store/${p.slug}`} className="card"><div className="ph"><Pic src={p.images[0]} alt={p.title} /></div>
           <div className="body"><h3>{p.title}</h3><p className="price">{rupees(p.price)}</p></div></Link>))}</div>
-      <div className="row c"><Btn href="/store" variant="ghost" icon="basket">Shop all</Btn></div>
+      <div className="row c"><Btn href="/store" variant="ghost" icon="bag">Shop</Btn></div>
     </div></section>
 
     <section className="section"><div className="wrap">
       <div className="head"><p className="eyebrow">Writing classes</p><h2>Handwriting and calligraphy classes, for every age.</h2>
         <p className="lead">Alongside our art workshops, we teach writing to children from age 5, with tailor-made courses for adults. All materials are provided in class.</p></div>
       <div className="wide"><Pic src={images.classes_banner} alt="Students with their finished artwork" w={1600} h={840} sizes="(max-width: 1100px) 100vw, 1080px" /></div>
-      <div className="row c"><Btn href="/writing-classes" icon="arrow">Learn more</Btn></div>
+      <div className="row c"><Btn href="/writing-classes" icon="arrow">More</Btn></div>
     </div></section>
 
     <section className="section dark"><div className="wrap head">

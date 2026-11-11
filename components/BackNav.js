@@ -2,8 +2,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Icon from './Icons';
-// A back button on pages that sit inside another page (a workshop, a product, the basket, checkout). Main pages use the menu.
-const PARENTS = [[/^\/workshops\/.+/, '/workshops', 'Workshops'], [/^\/store\/.+/, '/store', 'Store'], [/^\/basket$/, '/store', 'Store'], [/^\/checkout$/, '/basket', 'Basket']];
+// A back button on pages that sit inside another page (a workshop, a product, the bag, checkout). Main pages use the menu.
+const PARENTS = [[/^\/workshops\/.+/, '/workshops', 'Workshops'], [/^\/store\/.+/, '/store', 'Store'], [/^\/bag$/, '/store', 'Store'], [/^\/checkout$/, '/bag', 'Bag']];
 export default function BackNav() {
   const p = usePathname();
   const hit = PARENTS.find(([re]) => re.test(p)); if (!hit) return null;          // main pages have no back button, the menu has Home

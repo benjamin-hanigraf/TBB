@@ -14,7 +14,7 @@ export default function Contact() {
           <Btn href={`tel:${b.phone.replace(/\s/g,'')}`} variant="ghost" icon="phone" className="sm">Call</Btn></div>
         <div className="cc"><span className="cic"><Icon n="mail" size={22} /></span><h2 className="t3">Email</h2>
           <div className="cl"><a href={`mailto:${b.email}`}>{b.email}</a><span className="muted">We reply within a day</span></div>
-          <Btn href={`mailto:${b.email}`} variant="ghost" icon="mail" className="sm">Write to us</Btn></div>
+          <Btn href={`mailto:${b.email}`} variant="ghost" icon="mail" className="sm">Write</Btn></div>
         <div className="cc"><span className="cic"><Icon n="pin" size={22} /></span><h2 className="t3">Visit the studio</h2>
           <address className="cl"><a href={b.map} target="_blank" rel="noopener noreferrer" style={{ display: 'grid', gap: 3 }}>{b.address.map((l) => <span key={l}>{l}</span>)}</a></address>
           <Btn href={b.map} variant="ghost" icon="arrow" className="sm" target="_blank" rel="noopener noreferrer">Directions</Btn></div></div>

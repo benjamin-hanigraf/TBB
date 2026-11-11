@@ -24,6 +24,6 @@ function Detail({ e, onClose, onDone }) {
     {Object.entries(e.details || {}).filter(([, v]) => v).map(([k, v]) => <p key={k} className="ad-help" style={{ margin: '2px 0' }}><b>{k.replace(/_/g, ' ')}:</b> {v}</p>)}
     <p className="ad-help">{e.email}{e.phone ? ` · ${e.phone}` : ''}</p>
     <div className="ad-actions"><a className="ad-btn" href={`mailto:${e.email}`}>Reply by email</a>{e.phone && <a className="ad-btn ghost" href={`tel:${e.phone}`}>Call</a>}{wa.length === 10 && <a className="ad-btn ghost" target="_blank" rel="noopener" href={`https://wa.me/91${wa}`}>WhatsApp</a>}</div>
-    <div className="ad-actions"><Btn variant="ghost" busy={busy} onClick={toggle} icon="check">{e.handled ? 'Mark as new' : 'Mark as done'}</Btn><Confirm onYes={del}>Delete</Confirm></div>
+    <div className="ad-actions"><Btn variant="ghost" busy={busy} onClick={toggle} icon="check">{e.handled ? 'Reopen' : 'Done'}</Btn><Confirm onYes={del}>Delete</Confirm></div>
   </Modal>);
 }

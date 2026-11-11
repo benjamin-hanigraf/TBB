@@ -45,6 +45,6 @@ function ProductForm({ p, onClose, onSaved }) {
       <div className="full"><F form={f} k="details" label="Details" type="textarea" rule="sentence" hint="One point per line, such as size or paper" /></div>
       <F form={f} k="shipping_note" label="Shipping note" rule="sentence" /><F form={f} k="return_note" label="Return note" rule="sentence" />
       <PhotoField label="Photos" paths={f.v.images} onChange={(a) => f.set('images', a)} folder="products" max={8} />
-      <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn>{!isNew && <Btn type="button" variant="ghost" busy={busy} onClick={(e) => save(e, true)}>Save as a copy</Btn>}{!isNew && <Confirm onYes={remove}>Delete</Confirm>}</div>
+      <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn>{!isNew && <Btn type="button" variant="ghost" busy={busy} onClick={(e) => save(e, true)}>Copy</Btn>}{!isNew && <Confirm onYes={remove}>Delete</Confirm>}</div>
     </form></Modal>);
 }

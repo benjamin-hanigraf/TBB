@@ -59,7 +59,7 @@ function PinCard() {
   const dg = { type: 'password', rule: 'digits', required: true, inputMode: 'numeric', maxLength: 4, autoComplete: 'off' };
   return (<Card title="Device PIN"><p className="ad-help" style={{ marginTop: 0 }}>{def ? 'You are still using the starting PIN (0000). Please change it.' : 'A new device asks for this PIN the first time it signs in.'}</p>
     <form className="ad-form" onSubmit={submit}><F form={f} k="current" label="Current PIN" {...dg} /><div /><F form={f} k="next" label="New PIN" {...dg} /><F form={f} k="again" label="New PIN again" {...dg} />
-      <div className="ad-actions full"><Btn busy={busy} icon="check">Change PIN</Btn><Btn type="button" variant="ghost" onClick={async () => { await lockDevice(); location.reload(); }}>Lock this device now</Btn></div></form></Card>);
+      <div className="ad-actions full"><Btn busy={busy} icon="check">Change PIN</Btn><Btn type="button" variant="ghost" onClick={async () => { await lockDevice(); location.reload(); }}>Lock now</Btn></div></form></Card>);
 }
 function InstallCard() {
   const [can, setCan] = useState(false); useEffect(() => { setCan(!!window.__bip); }, []);

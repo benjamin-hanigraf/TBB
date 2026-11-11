@@ -82,7 +82,7 @@ function WorkshopForm({ w, onClose, onSaved }) {
       <F form={f} k="includes" label="What is included in the kit" type="textarea" rule="sentence" hint="One item per line" />
       <div className="full"><F form={f} k="note" label="Note" rule="sentence" /></div>
       <PhotoField label="Photo" paths={f.v.image} onChange={(p) => f.set('image', p)} folder="workshops" />
-      <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn>{f.v.status === 'draft' && <Btn type="button" variant="ghost" busy={busy} onClick={() => save(null, 'published')}>Save and publish</Btn>}
+      <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn>{f.v.status === 'draft' && <Btn type="button" variant="ghost" busy={busy} onClick={() => save(null, 'published')}>Publish</Btn>}
         {!isNew && <Confirm onYes={remove}>Delete</Confirm>}</div>
     </form></Modal>);
 }
@@ -94,6 +94,6 @@ function Attendees({ w, onClose }) {
     {error && <Err e={error} />}{!data && !error && <Spin />}
     {data && <><p className="ad-help" style={{ marginTop: 0 }}>{seats} of {w.capacity} seats booked · {fmtD(w.starts_at)}</p>
       {data.length ? <div className="ad-scroll"><table className="ad-table"><thead><tr><th>Name</th><th>Phone</th><th className="r">Seats</th><th className="r">Paid</th></tr></thead><tbody>{data.map((b) => <tr key={b.id}><td>{b.name}<br /><small className="ad-help">{b.email}</small></td><td><a href={`tel:${b.phone}`}>{b.phone}</a></td><td className="r">{b.seats}</td><td className="r">{money(b.amount_paise)}</td></tr>)}</tbody></table></div> : <Empty>No confirmed bookings yet.</Empty>}
-      {data.length > 0 && <div className="ad-actions"><Btn variant="ghost" icon="fileout" onClick={() => download(`${w.slug}-attendees.csv`, toCSV(data, [{ label: 'Name', key: 'name' }, { label: 'Email', key: 'email' }, { label: 'Phone', key: 'phone' }, { label: 'Seats', key: 'seats' }, { label: 'Paid', get: (b) => b.amount_paise / 100 }]))}>Download list</Btn></div>}</>}
+      {data.length > 0 && <div className="ad-actions"><Btn variant="ghost" icon="fileout" onClick={() => download(`${w.slug}-attendees.csv`, toCSV(data, [{ label: 'Name', key: 'name' }, { label: 'Email', key: 'email' }, { label: 'Phone', key: 'phone' }, { label: 'Seats', key: 'seats' }, { label: 'Paid', get: (b) => b.amount_paise / 100 }]))}>Export list</Btn></div>}</>}
   </Modal>);
 }

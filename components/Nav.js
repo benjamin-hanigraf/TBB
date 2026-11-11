@@ -18,7 +18,7 @@ export default function Nav() {
       <ul id="site-menu" className={open ? 'open' : ''} onClick={() => setOpen(false)}>
         {links.map(([h, t]) => <li key={h}><Link href={h} className={(h === '/' ? p === '/' : p.startsWith(h)) ? 'on' : ''}>{t}</Link></li>)}
       </ul>
-      <div className="tools"><Link href="/basket" className="cartlink" aria-label={`Basket, ${count} items`}><Icon n="basket" size={22} />{count > 0 && <span className="badge">{count}</span>}</Link><Link href="/account" className="loginlink" aria-label={signedIn ? 'Account' : 'Log in'}><Icon n="user" size={20} /><span className="lt">{signedIn ? 'Account' : 'Log in'}</span></Link>
+      <div className="tools"><Link href="/bag" className="cartlink" aria-label={`Bag, ${count} items`}><Icon n="bag" size={22} />{count > 0 && <span className="badge">{count}</span>}</Link><Link href="/account" className="loginlink" aria-label={signedIn ? 'Account' : 'Log in'}><Icon n="user" size={20} /><span className="lt">{signedIn ? 'Account' : 'Log in'}</span></Link>
         <button className="burger" aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open} aria-controls="site-menu" onClick={() => setOpen(!open)}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">{open ? <path d="M6 6l12 12M18 6 6 18" /> : <path d="M4 8h16M4 16h16" />}</svg></button></div>
     </div></nav>);

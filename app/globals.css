@@ -115,10 +115,9 @@ textarea{min-height:132px;resize:vertical}.hp{position:absolute;left:-9999px;opa
 .prose p{margin-top:12px;color:#424245;text-align:justify;hyphens:auto;-webkit-hyphens:auto}.prose ul{margin:12px 0 0 22px;color:#424245}.prose li{margin:4px 0}
 
 /* ---- footer ---- */
-footer{background:var(--soft);padding:64px 0 36px;font-size:14px;color:var(--mute)}
-footer .cols{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:40px}
-@media(max-width:800px){footer .cols{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:480px){footer .cols{grid-template-columns:minmax(0,1fr)}}
+footer{background:var(--soft);padding:40px 0 24px;font-size:14px;color:var(--mute)}
+footer .cols{display:grid;grid-template-columns:1fr 1.4fr;gap:32px}
+@media(max-width:700px){footer .cols{grid-template-columns:minmax(0,1fr);gap:22px}}
 footer{overflow-wrap:anywhere}
 footer .fh{color:var(--ink);font-size:13px;margin-bottom:12px;font-weight:600;line-height:1.6}footer li{list-style:none;margin:8px 0}footer ul{padding:0}
 footer a:hover{color:#000}footer .flogo{height:38px;width:auto;margin-bottom:14px}
@@ -187,7 +186,7 @@ label.level{cursor:pointer;position:relative;transition:box-shadow .2s}.level:ho
 .level.sel{box-shadow:inset 0 0 0 2px var(--ink)}.level:has(.sr:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
 .sr{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
 .enrol{margin-top:40px}.enrol .small{font-size:15px}
-.maplink{text-decoration:underline;text-decoration-color:#c7c7cc;text-underline-offset:3px}.maplink:hover{text-decoration-color:currentColor}
+.maplink{text-decoration:none}.maplink:hover{color:#000}
 .only-m{display:none}@media(max-width:960px){.only-m{display:list-item}}
 
 /* back button */
@@ -198,6 +197,16 @@ label.level{cursor:pointer;position:relative;transition:box-shadow .2s}.level:ho
 .gallery .main img{-webkit-user-drag:none;user-select:none}
 .facts li>span{min-width:0;overflow-wrap:anywhere}
 
-/* phone: basket, login and menu as three even icons */
+/* phone: bag, login and menu as three even icons */
 .scroll-fix{scroll-margin-top:84px}.enrol,.enrol form{scroll-margin-top:84px}
 @media(max-width:960px){.nav .tools{gap:2px}.nav .tools a,.nav .tools .burger{width:42px;height:42px;display:grid;place-items:center;padding:0;border-radius:50%}.loginlink .lt{display:none}.badge{top:3px;right:2px}}
+
+/* footer v2 */
+footer .flinks{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:8px}footer .cols p{margin:0}footer .cols .fh{margin-bottom:6px}
+footer .fbase{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 24px;margin-top:24px;padding-top:16px;border-top:1px solid var(--line);font-size:13px}footer .fbase .flinks{margin:0}footer .fbase .copy{margin:0;padding:0;border:0}
+/* add-to-bag control, fixed-width buttons */
+.fixw{min-width:176px;justify-content:center}
+.addwrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}.viewbag{text-decoration:none;color:var(--mute)}.viewbag:hover{color:var(--ink)}
+.qty.big{min-width:176px;justify-content:space-between;min-height:48px}.qty.big button{width:52px;height:46px;font-size:20px}.qty.big button:disabled{opacity:.35;cursor:default}.qty.big span{font-size:16px;font-weight:500}
+/* no scrollbars anywhere (scrolling still works) */
+*{scrollbar-width:none;-ms-overflow-style:none}*::-webkit-scrollbar{display:none;width:0;height:0}

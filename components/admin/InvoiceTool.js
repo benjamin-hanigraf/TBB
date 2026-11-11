@@ -64,9 +64,9 @@ function Editor({ inv, data, onBack }) {
       <F form={f} k="discount" label="Discount (₹)" type="money" rule="money" />{gstSet.enabled && <F form={f} k="gst" label={`Add GST (${rate}%)`} type="check" />}
       <div className="full"><F form={f} k="notes" label="Notes" type="textarea" rule="sentence" rows={2} /></div>
       <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn>
-        <Btn type="button" variant="ghost" busy={busy} icon="mail" onClick={() => run(async () => { const s = await save(); await sendEmail(s); onBack(); })}>Save and email</Btn>
-        {!isNew && inv.status !== 'paid' && <Btn type="button" variant="ghost" busy={busy} onClick={async () => { const s = await run(save); if (s) markPaid(s); }}>Mark as paid</Btn>}
+        <Btn type="button" variant="ghost" busy={busy} icon="mail" onClick={() => run(async () => { const s = await save(); await sendEmail(s); onBack(); })}>Email</Btn>
+        {!isNew && inv.status !== 'paid' && <Btn type="button" variant="ghost" busy={busy} onClick={async () => { const s = await run(save); if (s) markPaid(s); }}>Mark paid</Btn>}
         {!isNew && <Confirm onYes={del}>Delete</Confirm>}</div></form></Card></div>
-    <Card><div dangerouslySetInnerHTML={{ __html: renderInvoiceHTML(doc) }} /><div className="ad-actions ad-noprint" style={{ justifyContent: 'center' }}><Btn type="button" variant="ghost" icon="print" onClick={() => window.print()}>Print or save as PDF</Btn></div></Card>
+    <Card><div dangerouslySetInnerHTML={{ __html: renderInvoiceHTML(doc) }} /><div className="ad-actions ad-noprint" style={{ justifyContent: 'center' }}><Btn type="button" variant="ghost" icon="print" onClick={() => window.print()}>Print</Btn></div></Card>
   </Page>);
 }

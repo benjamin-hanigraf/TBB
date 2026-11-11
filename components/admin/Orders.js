@@ -58,7 +58,7 @@ function OrderModal({ o, onClose, onSaved }) {
       <F form={f} k="carrier" label="Courier" rule="text" placeholder="e.g. India Post" /><F form={f} k="number" label="Tracking number" rule="code" />
     </div>
     <div className="ad-actions"><Btn busy={busy} onClick={save} icon="check">Save</Btn><Link className="ad-btn ghost" href={`/invoice/${o.id}`} target="_blank">Receipt</Link>
-      <Link className="ad-btn ghost" href={`/manager/tools/labels?order=${o.id}`}>Print label</Link>{o.tracking_number && <Btn variant="ghost" busy={busy} onClick={email} icon="mail">Email tracking</Btn>}</div>
+      <Link className="ad-btn ghost" href={`/manager/tools/labels?order=${o.id}`}>Print label</Link>{o.tracking_number && <Btn variant="ghost" busy={busy} onClick={email} icon="mail">Tracking</Btn>}</div>
   </Modal>);
 }
 function BookingModal({ b, onClose, onSaved }) {

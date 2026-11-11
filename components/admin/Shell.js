@@ -10,7 +10,7 @@ import ErrorBoundary from './ErrorBoundary';
 import { pinApi, getToken, setToken, applySession, lockDevice } from '@/lib/adminApi';
 
 export const NAV = [
-  ['/manager', 'Home', 'home'], ['/manager/orders', 'Orders', 'box'], ['/manager/workshops', 'Workshops', 'calendar'], ['/manager/classes', 'Classes', 'chair'], ['/manager/products', 'Store', 'basket'],
+  ['/manager', 'Home', 'home'], ['/manager/orders', 'Orders', 'box'], ['/manager/workshops', 'Workshops', 'calendar'], ['/manager/classes', 'Classes', 'chair'], ['/manager/products', 'Store', 'bag'],
   ['/manager/customers', 'Customers', 'user'], ['/manager/inbox', 'Inbox', 'mail'], ['/manager/money', 'Money', 'rupee'], ['/manager/tools', 'Tools', 'tool'],
   ['/manager/photos', 'Photos', 'image'], ['/manager/settings', 'Settings', 'gear'],
 ];

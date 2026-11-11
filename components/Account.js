@@ -20,12 +20,12 @@ export function Login({ sb }) {
   }
   return (
     <div className="form" style={{ marginTop: 40 }}>
-      {process.env.NEXT_PUBLIC_GOOGLE_LOGIN === '1' && <><button type="button" className="btn ghost" onClick={google}><GoogleMark /><span>Continue with Google</span></button>
+      {process.env.NEXT_PUBLIC_GOOGLE_LOGIN === '1' && <><button type="button" className="btn ghost" onClick={google}><GoogleMark /><span>Google</span></button>
       <p className="small center" style={{ margin: '2px 0' }}>or use your email</p></>}
       {step === 'email' ? (
         <form autoComplete="off" onSubmit={sendLink} className="form" style={{ margin: 0 }}>
           <label><span>Email <i>*</i></span><input type="email" required value={email} onChange={(e) => setEmail(cleanEmail(e.target.value))} autoComplete="off" autoCapitalize="none" spellCheck={false} /></label>
-          <button className="btn" disabled={busy}><Icon n="mail" size={17} /><span>{busy ? 'Sending…' : 'Email me a sign-in link'}</span></button>
+          <button className="btn" disabled={busy}><Icon n="mail" size={17} /><span>{busy ? 'Sending…' : 'Send link'}</span></button>
         </form>) : (
         <div className="form" style={{ margin: 0 }}>
           <p className="notice ok" style={{ margin: 0 }}><Icon n="mail" size={20} /> We emailed a sign-in link to {email}. Open it on this device to log in.</p>

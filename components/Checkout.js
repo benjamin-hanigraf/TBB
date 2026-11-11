@@ -34,19 +34,19 @@ export default function Checkout() {
     } catch (x) { setErr(x.message === 'dismissed' ? 'Payment cancelled. You have not been charged.' : 'The payment did not complete. You have not been charged.'); setBusy(false); }
   }
   return (
-    <form onSubmit={submit} className="form" style={{ margin: 0, maxWidth: 'none' }}>
+    <form autoComplete="off" onSubmit={submit} className="form" style={{ margin: 0, maxWidth: 'none' }}>
       <h3>Contact</h3>
-      <label><span>Name <i>*</i></span><input name="name" required defaultValue={pre.name} key={'n' + pre.name} autoComplete="name" {...ruleProps('name')} /></label>
-      <label><span>Email <i>*</i></span><input name="email" type="email" required defaultValue={pre.email} key={'e' + pre.email} autoComplete="email" {...ruleProps('email')} /></label>
-      <label><span>Phone <i>*</i></span><input name="phone" type="tel" required defaultValue={pre.phone} key={'p' + pre.phone} pattern="[0-9+\s\-]{10,16}" autoComplete="tel" {...ruleProps('phone')} /></label>
+      <label><span>Name <i>*</i></span><input name="name" required defaultValue={pre.name} key={'n' + pre.name} autoComplete="off" {...ruleProps('name')} /></label>
+      <label><span>Email <i>*</i></span><input name="email" type="email" required defaultValue={pre.email} key={'e' + pre.email} autoComplete="off" {...ruleProps('email')} /></label>
+      <label><span>Phone <i>*</i></span><input name="phone" type="tel" required defaultValue={pre.phone} key={'p' + pre.phone} pattern="[0-9+\s\-]{10,16}" autoComplete="off" {...ruleProps('phone')} /></label>
       <h3 style={{ marginTop: 12 }}>Delivery address</h3>
       {saved.length > 0 && <label><span>Saved addresses</span><select value={pick} onChange={(e) => setPick(e.target.value)}><option value="">Enter a new address</option>{saved.map((a) => <option key={a.id} value={a.id}>{a.label} · {a.line1}</option>)}</select></label>}
       <label key={'r' + pick}><span>Recipient name <em>(optional)</em></span><input name="recipient" defaultValue={addr.recipient || ''} {...ruleProps('name')} /></label>
-      <label key={'l1' + pick}><span>Address line 1 <i>*</i></span><input name="line1" required defaultValue={addr.line1 || ''} autoComplete="address-line1" {...ruleProps('text')} /></label>
-      <label key={'l2' + pick}><span>Address line 2 <em>(optional)</em></span><input name="line2" defaultValue={addr.line2 || ''} autoComplete="address-line2" {...ruleProps('text')} /></label>
-      <label key={'c' + pick}><span>City <i>*</i></span><input name="city" required defaultValue={addr.city || ''} autoComplete="address-level2" {...ruleProps('text')} /></label>
-      <label key={'s' + pick}><span>State <i>*</i></span><input name="state" required defaultValue={addr.state || ''} autoComplete="address-level1" {...ruleProps('text')} /></label>
-      <label key={'z' + pick}><span>Pincode <i>*</i></span><input name="pincode" required defaultValue={addr.pincode || ''} inputMode="numeric" pattern="[0-9]{6}" autoComplete="postal-code" {...ruleProps('pin')} /></label>
+      <label key={'l1' + pick}><span>Address line 1 <i>*</i></span><input name="line1" required defaultValue={addr.line1 || ''} autoComplete="off" {...ruleProps('text')} /></label>
+      <label key={'l2' + pick}><span>Address line 2 <em>(optional)</em></span><input name="line2" defaultValue={addr.line2 || ''} autoComplete="off" {...ruleProps('text')} /></label>
+      <label key={'c' + pick}><span>City <i>*</i></span><input name="city" required defaultValue={addr.city || ''} autoComplete="off" {...ruleProps('text')} /></label>
+      <label key={'s' + pick}><span>State <i>*</i></span><input name="state" required defaultValue={addr.state || ''} autoComplete="off" {...ruleProps('text')} /></label>
+      <label key={'z' + pick}><span>Pincode <i>*</i></span><input name="pincode" required defaultValue={addr.pincode || ''} inputMode="numeric" pattern="[0-9]{6}" autoComplete="off" {...ruleProps('pin')} /></label>
       <label><span>Gift message <em>(optional)</em></span><textarea name="gift" maxLength={500} {...ruleProps('sentence')} /></label>
       <div className="sum" style={{ marginTop: 8 }}>{items.map((i) => <div key={i.slug}><span>{i.title} × {i.qty}</span><span>{rupees(i.price * i.qty)}</span></div>)}
         <div><span>Shipping</span><span>{ship === null ? '…' : ship ? rupees(ship) : 'Free'}</span></div><div className="tot"><span>Total</span><span>{rupees(subtotal + (ship || 0))}</span></div></div>

@@ -2,22 +2,24 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLoad, sb, must, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, F, PhotoField, useForm, useAction, Confirm, slugify } from './kit';
+import ImportCsv from './ImportCsv';
 import { money, rupeesToPaise } from '@/lib/accounting';
 import { photo } from '@/lib/photo';
 const lines = (s) => String(s || '').split('\n').map((x) => x.trim()).filter(Boolean);
 
 export default function Products() {
-  const sp = useSearchParams(); const [edit, setEdit] = useState(null); const [q, setQ] = useState('');
+  const sp = useSearchParams(); const [edit, setEdit] = useState(null); const [q, setQ] = useState(''); const [imp, setImp] = useState(false);
   const { data, error, reload } = useLoad(async () => must(await sb().from('products').select('*').order('sort_order').order('created_at', { ascending: false })));
   useEffect(() => { if (sp.get('new')) setEdit({}); }, [sp]);
   if (error) return <Page title="Store"><Err e={error} /></Page>; if (!data) return <Page title="Store"><Spin /></Page>;
   const rows = data.filter((p) => !q || p.title.toLowerCase().includes(q.toLowerCase()));
-  return (<Page title="Store" action={<Btn icon="plus" onClick={() => setEdit({})}>Add product</Btn>}>
+  return (<Page title="Store" action={<><Btn variant="ghost" icon="filein" onClick={() => setImp(true)}>Import</Btn><Btn icon="plus" onClick={() => setEdit({})}>Add product</Btn></>}>
     <input className="ad-search" type="search" placeholder="Search products" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search products" />
     <Card tight>{rows.length ? <div className="ad-list">{rows.map((p) => (
       <button key={p.id} className="ad-row" onClick={() => setEdit(p)}>{p.images?.[0] ? <img className="ad-thumb" src={photo(p.images[0])} alt="" /> : <div className="ad-thumb" />}
         <div className="main"><b>{p.title}</b><small>{money(p.price_paise)}{p.allow_preorder ? ' · pre-order' : ` · ${p.stock} in stock`}</small></div>
         <div className="end">{!p.active ? <Badge>Hidden</Badge> : p.stock === 0 && !p.allow_preorder ? <Badge tone="bad">Out of stock</Badge> : p.stock <= 2 && !p.allow_preorder ? <Badge tone="warn">Low</Badge> : <Badge tone="ok">On sale</Badge>}</div></button>))}</div> : <Empty>No products yet. Tap "Add product".</Empty>}</Card>
+    {imp && <ImportCsv kind="products" onClose={() => setImp(false)} onDone={reload} />}
     {edit && <ProductForm p={edit} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); reload(); }} />}
   </Page>);
 }

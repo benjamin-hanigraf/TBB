@@ -1,20 +1,22 @@
 'use client';
 import { useState } from 'react';
 import { useLoad, sb, must, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, slugify } from './kit';
+import ImportCsv from './ImportCsv';
 import { money, rupeesToPaise } from '@/lib/accounting';
 const lines = (s) => String(s || '').split('\n').map((x) => x.trim()).filter(Boolean);
 export default function Classes() {
-  const [edit, setEdit] = useState(null);
+  const [edit, setEdit] = useState(null); const [imp, setImp] = useState(false);
   const { data, error, reload } = useLoad(async () => {
     const c = sb(); const [l, e] = await Promise.all([c.from('class_levels').select('*').order('sort_order'), c.from('class_enrolments').select('class_id').eq('status', 'paid')]);
     const n = {}; must(e).forEach((x) => (n[x.class_id] = (n[x.class_id] || 0) + 1)); return { levels: must(l), n };
   });
   if (error) return <Page title="Classes"><Err e={error} /></Page>; if (!data) return <Page title="Classes"><Spin /></Page>;
-  return (<Page title="Classes" action={<Btn icon="plus" onClick={() => setEdit({})}>Add level</Btn>}>
+  return (<Page title="Classes" action={<><Btn variant="ghost" icon="filein" onClick={() => setImp(true)}>Import</Btn><Btn icon="plus" onClick={() => setEdit({})}>Add level</Btn></>}>
     <p className="ad-help" style={{ marginTop: 0, marginBottom: 14 }}>These are the levels people can pay for on the Writing Classes page. Change a price here and the website updates within a minute.</p>
     <Card tight>{data.levels.length ? <div className="ad-list">{data.levels.map((c) => (
       <button key={c.id} className="ad-row" onClick={() => setEdit(c)}><div className="main"><b>{c.title}, {c.level}</b><small>{c.track === 'calligraphy' ? 'Handwriting + Calligraphy' : 'Handwriting'} · {c.sessions} classes · {data.n[c.id] || 0} enrolled</small></div>
         <div className="end"><b>{money(c.price_paise)}</b>{!c.active && <Badge>Hidden</Badge>}</div></button>))}</div> : <Empty>No levels yet.</Empty>}</Card>
+    {imp && <ImportCsv kind="classes" onClose={() => setImp(false)} onDone={reload} />}
     {edit && <Form c={edit} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); reload(); }} />}
   </Page>);
 }

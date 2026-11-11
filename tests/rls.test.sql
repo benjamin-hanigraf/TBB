@@ -23,6 +23,7 @@ insert into class_enrolments (id,class_id,user_id,student_name,student_group,stu
 insert into class_enrolments (id,class_id,user_id,student_name,student_group,name,email,phone,amount_paise,status)
  select 'ffffffff-0000-0000-0000-000000000002', id, 'bbbbbbbb-0000-0000-0000-000000000002','Bob','adult','Bob','bob@x.com','8',600000,'paid' from class_levels where slug='handwriting-1';
 update class_levels set active=false where slug='calligraphy-2';
+insert into customers (name,email,phone,source) values ('Imported Ina','ina@x.com','5','wix');
 insert into admin_security (key,value) values ('pin','{"hash":"x","salt":"y","version":1}');
 update workshops set status='draft' where slug='beginners-watercolor-course';
 
@@ -58,6 +59,8 @@ do $$ begin
   assert (select count(*) from class_levels) = 3, 'anon sees only active class levels';
   assert pg_temp.count_of('class_enrolments') = 0, 'anon sees no enrolments';
   assert pg_temp.count_of('admin_security') = 0, 'anon cannot read the PIN record';
+  assert pg_temp.count_of('customers') = 0, 'anon cannot read the customer list';
+  assert pg_temp.denied($q$insert into customers (name,email) values ('x','x@x.com')$q$), 'anon cannot add customers';
   assert pg_temp.denied($q$insert into admin_security (key,value) values ('pin','{}') on conflict (key) do update set value='{}'$q$), 'anon cannot overwrite the PIN';
   assert pg_temp.denied($q$update class_levels set price_paise = 1$q$), 'anon cannot change class prices';
   assert pg_temp.denied($q$insert into class_enrolments (class_id,student_name,student_group,name,email,phone,amount_paise,status) select id,'x','adult','x','x@x.com','1',1,'paid' from class_levels limit 1$q$), 'anon cannot create enrolments';
@@ -86,6 +89,8 @@ do $$ begin
   assert pg_temp.denied($q$select book_seats((select id from workshops limit 1), null,'a','a@x.com','1',1,1)$q$), 'alice cannot call book_seats';
   assert (select count(*) from class_enrolments) = 1 and (select student_name from class_enrolments) = 'Kid A', 'alice sees only her enrolment';
   assert pg_temp.count_of('admin_security') = 0, 'a customer cannot read the PIN record';
+  assert (select count(*) from customers) = 1 and (select email from customers) = 'alice@x.com', 'alice sees only her own customer record, not the whole list';
+  assert pg_temp.denied($q$update customers set name='Hacked'$q$), 'a customer cannot edit customer records';
   assert pg_temp.denied($q$update admin_security set value='{}'$q$), 'a customer cannot change the PIN';
   assert pg_temp.denied($q$update class_enrolments set status='refunded' where id='ffffffff-0000-0000-0000-000000000001'$q$), 'alice cannot change her enrolment';
   assert pg_temp.denied($q$update class_levels set price_paise = 1$q$), 'alice cannot change class prices';
@@ -109,6 +114,11 @@ do $$ begin
   assert pg_temp.denied($q$select decrement_stock((select id from products limit 1), 1)$q$), 'even the owner browser cannot call server-only functions';
   assert pg_temp.count_of('class_enrolments') = 2 and (select count(*) from class_levels) = 4, 'owner sees all enrolments and inactive levels';
   assert pg_temp.count_of('admin_security') = 0, 'even the owner browser session cannot read the PIN record (only the server can)';
+  assert (select count(*) from customers) = 4, 'owner sees the whole customer list (3 sign-ups + 1 imported)';
+  assert not pg_temp.denied($q$insert into customers (name,email,source) values ('Bulk One','  BULK@X.com ','import')$q$), 'owner can add customers';
+  assert (select email from customers where name='Bulk One') = 'bulk@x.com', 'emails are tidied to lowercase automatically';
+  assert pg_temp.denied($q$insert into customers (name,email) values ('Dup','bulk@x.com')$q$), 'the same email cannot be added twice';
+  assert not pg_temp.denied($q$insert into ledger_entries (source,source_id,kind,category,amount_paise) values ('refund',gen_random_uuid(),'out','Refunds',100)$q$), 'refund entries are allowed';
   assert pg_temp.denied($q$update admin_security set value='{}'$q$), 'the owner browser session cannot change the PIN directly';
   assert not pg_temp.denied($q$update class_levels set price_paise = 650000 where slug='handwriting-1'$q$), 'owner can change class prices';
   assert not pg_temp.denied($q$update class_enrolments set status='transferred' where id='ffffffff-0000-0000-0000-000000000002'$q$), 'owner can update enrolments';

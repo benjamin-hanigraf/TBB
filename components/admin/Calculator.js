@@ -9,7 +9,7 @@ function N({ label, v, set, suffix, hint }) {
 const R = ({ rows }) => <div className="ad-list" style={{ marginTop: 14 }}>{rows.map(([k, v, big]) => <div key={k} className="ad-row" style={{ cursor: 'default' }}><span>{k}</span><b style={big ? { fontSize: 20 } : undefined}>{v}</b></div>)}</div>;
 const pct = (x) => `${(Math.round(x * 10) / 10).toString()}%`;
 export default function Calculator() {
-  return (<Page title="Calculator" back="/admin/tools"><div className="ad-help" style={{ marginBottom: 14 }}>Type numbers in any box. Answers update as you type.</div><Price /><Gst /><Disc /><Even /></Page>);
+  return (<Page title="Calculator" back="/manager/tools"><div className="ad-help" style={{ marginBottom: 14 }}>Type numbers in any box. Answers update as you type.</div><Price /><Gst /><Disc /><Even /></Page>);
 }
 function Price() {
   const [cost, setCost] = useState(''); const [mk, setMk] = useState('50'); const [sell, setSell] = useState('');

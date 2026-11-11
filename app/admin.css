@@ -1,4 +1,4 @@
-/* TBB Studio (admin app): same white and black look as the website, built phone-first */
+/* TBB Manager (admin app): same white and black look as the website, built phone-first */
 body{background:#f5f5f7}
 .ad-center{min-height:100dvh;display:grid;place-items:center;padding:24px;background:#fff;text-align:center}
 .ad-login{width:100%;max-width:420px}.ad-login img{margin:0 auto 12px;border-radius:18px}.ad-login h1{font-size:30px}.ad-login>p{color:var(--mute);margin:6px 0 4px}
@@ -46,10 +46,10 @@ body{background:#f5f5f7}
 /* modal */
 .ad-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:80;display:grid;place-items:end center;padding:0}
 @media(min-width:700px){.ad-modal-bg{place-items:center;padding:24px}}
-.ad-modal{background:#fff;width:100%;max-width:560px;max-height:92dvh;border-radius:22px 22px 0 0;display:flex;flex-direction:column;outline:none}.ad-modal.wide{max-width:780px}
-@media(min-width:700px){.ad-modal{border-radius:22px}}
-.ad-modal-h{display:flex;justify-content:space-between;align-items:center;padding:18px 20px 8px}.ad-modal-h h2{font-size:21px}.ad-x{width:36px;height:36px;border-radius:50%;border:0;background:#f0f0f3;cursor:pointer;font-size:15px}
-.ad-modal-b{padding:8px 20px calc(22px + env(safe-area-inset-bottom));overflow-y:auto}
+.ad-modal{background:#fff;width:100%;max-width:760px;height:100dvh;max-height:100dvh;border-radius:0;display:flex;flex-direction:column;outline:none}.ad-modal.wide{max-width:1040px}
+@media(min-width:700px){.ad-modal{border-radius:22px;width:min(94vw,760px);height:auto;max-height:92vh}.ad-modal.wide{width:min(96vw,1040px)}}
+.ad-modal-h{display:flex;justify-content:space-between;align-items:center;padding:20px 24px 10px;border-bottom:1px solid #f0f0f3}.ad-modal-h h2{font-size:21px}.ad-x{width:36px;height:36px;border-radius:50%;border:0;background:#f0f0f3;cursor:pointer;font-size:15px}
+.ad-modal-b{padding:18px 24px calc(24px + env(safe-area-inset-bottom));overflow-y:auto;flex:1 1 auto;min-height:0}
 .ad-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(88px + env(safe-area-inset-bottom));background:#000;color:#fff;padding:12px 20px;border-radius:980px;z-index:120;font-size:14px;max-width:90vw;text-align:center}.ad-toast.err{background:#b42318}
 @media(min-width:901px){.ad-toast{bottom:28px}}
 /* photos */
@@ -84,3 +84,8 @@ body{background:#f5f5f7}
 .ad-keys button{width:76px;height:76px;border-radius:50%;border:0;background:#f0f0f3;font-size:28px;font-weight:500;color:#1d1d1f;cursor:pointer;-webkit-tap-highlight-color:transparent}.ad-keys button:active{background:#d9d9de}.ad-keys button:disabled{opacity:.5}
 .ad-pin-msg{min-height:24px;color:#9b1c1c;font-size:14px;margin:16px 0 4px;text-align:center}
 .ad-linkbtn{background:none;border:0;color:#6e6e73;text-decoration:underline;cursor:pointer;font-size:14px;margin-top:6px;display:inline-block}
+.ad-modal .ad-form{gap:18px 20px}.ad-modal .ad-actions.full{position:sticky;bottom:calc(-24px - env(safe-area-inset-bottom));background:#fff;padding:14px 0 calc(14px + env(safe-area-inset-bottom));margin-top:8px;border-top:1px solid #f0f0f3;z-index:2}
+.ad-modal textarea{min-height:140px}
+.ad-steps{margin:0 0 6px;padding-left:22px;display:grid;gap:14px;font-size:15px}.ad-steps li::marker{font-weight:600}
+.ad-details{margin-top:12px;font-size:14px}.ad-details summary{cursor:pointer;color:#424245;padding:6px 0}
+@media(min-width:700px){.ad-modal{min-height:min(78vh,720px)}}

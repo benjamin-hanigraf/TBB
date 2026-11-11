@@ -29,11 +29,11 @@ export function Login({ sb }) {
       {process.env.NEXT_PUBLIC_GOOGLE_LOGIN === '1' && <><button type="button" className="btn ghost" onClick={google}><GoogleMark /><span>Continue with Google</span></button>
       <p className="small center" style={{ margin: '2px 0' }}>or use your email</p></>}
       {step === 'email' ? (
-        <form onSubmit={sendCode} className="form" style={{ margin: 0 }}>
-          <label><span>Email <i>*</i></span><input type="email" required value={email} onChange={(e) => setEmail(cleanEmail(e.target.value))} autoComplete="email" autoCapitalize="none" spellCheck={false} /></label>
+        <form autoComplete="off" onSubmit={sendCode} className="form" style={{ margin: 0 }}>
+          <label><span>Email <i>*</i></span><input type="email" required value={email} onChange={(e) => setEmail(cleanEmail(e.target.value))} autoComplete="off" autoCapitalize="none" spellCheck={false} /></label>
           <button className="btn" disabled={busy}><Icon n="mail" size={17} /><span>{busy ? 'Sending…' : 'Email me a code'}</span></button>
         </form>) : (
-        <form onSubmit={verify} className="form" style={{ margin: 0 }}>
+        <form autoComplete="off" onSubmit={verify} className="form" style={{ margin: 0 }}>
           <p className="notice" style={{ margin: 0 }}>We sent a code to {email}. It can take a minute to arrive.</p>
           <label><span>Code <i>*</i></span><input name="code" required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6,8}" maxLength={8} placeholder="6-digit code" /></label>
           <button className="btn" disabled={busy}><Icon n="check" size={17} /><span>{busy ? 'Checking…' : 'Log in'}</span></button>
@@ -54,9 +54,9 @@ function Profile({ sb, user }) {
   }
   if (!p) return null;
   return (
-    <form onSubmit={save} className="form" style={{ margin: '24px auto 0' }}>
-      <label><span>Name <i>*</i></span><input name="name" required defaultValue={p.full_name || ''} autoComplete="name" {...ruleProps('name')} /></label>
-      <label><span>Phone <i>*</i></span><input name="phone" type="tel" required defaultValue={p.phone || ''} pattern="[0-9+\s\-]{10,16}" inputMode="tel" autoComplete="tel" {...ruleProps('phone')} /></label>
+    <form autoComplete="off" onSubmit={save} className="form" style={{ margin: '24px auto 0' }}>
+      <label><span>Name <i>*</i></span><input name="name" required defaultValue={p.full_name || ''} autoComplete="off" {...ruleProps('name')} /></label>
+      <label><span>Phone <i>*</i></span><input name="phone" type="tel" required defaultValue={p.phone || ''} pattern="[0-9+\s\-]{10,16}" inputMode="tel" autoComplete="off" {...ruleProps('phone')} /></label>
       <label className="check"><input type="checkbox" name="opt" defaultChecked={p.marketing_opt_in} /><span>Send me news about new workshops and products</span></label>
       <button className="btn"><Icon n="check" size={17} /><span>Save</span></button>
       {saved === 'ok' && <p className="notice ok">Saved.</p>}{saved === 'error' && <p className="notice err">Could not save. Please try again.</p>}
@@ -77,7 +77,7 @@ function Addresses({ sb, user }) {
     {rows.map((a) => (<div key={a.id} className="acct-row"><div><b>{a.label}</b><p className="small">{a.recipient}{a.phone ? ` · ${a.phone}` : ''}</p><p className="small">{[a.line1, a.line2, a.city, a.state, a.pincode].filter(Boolean).join(', ')}</p></div><button className="link" onClick={() => del(a.id)}>Remove</button></div>))}
     {!rows.length && !adding && <p className="small center">No saved addresses yet.</p>}
     {adding ? (
-      <form onSubmit={add} className="form" style={{ margin: '16px auto 0' }}>
+      <form autoComplete="off" onSubmit={add} className="form" style={{ margin: '16px auto 0' }}>
         <label><span>Label <i>*</i></span><select name="label" required defaultValue=""><option value="" disabled>Select</option><option>Home</option><option>Work</option><option>Other</option></select></label>
         <label><span>Recipient name <i>*</i></span><input name="recipient" required {...ruleProps('name')} /></label>
         <label><span>Phone <i>*</i></span><input name="phone" type="tel" required pattern="[0-9+\s\-]{10,16}" {...ruleProps('phone')} /></label>

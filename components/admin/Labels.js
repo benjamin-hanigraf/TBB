@@ -20,10 +20,10 @@ export default function Labels() {
     return [...fromOrders, ...manual];
   }, [data, pick, manual]);
   useEffect(() => { const s = document.createElement('style'); s.id = 'lbl-page'; s.textContent = `@media print{@page{size:${size};margin:0}}`; document.head.appendChild(s); return () => s.remove(); }, [size]);
-  if (error) return <Page title="Address labels" back="/admin/tools"><Err e={error} /></Page>; if (!data) return <Page title="Address labels" back="/admin/tools"><Spin /></Page>;
+  if (error) return <Page title="Address labels" back="/manager/tools"><Err e={error} /></Page>; if (!data) return <Page title="Address labels" back="/manager/tools"><Spin /></Page>;
   const biz = data.biz; const addManual = (e) => { e.preventDefault(); const v = m.v; setManual((a) => [...a, { key: crypto.randomUUID(), to: v.recipient, phone: v.phone, lines: lines(v) }]); m.reset(); };
   const pages = Math.max(1, Math.ceil(labels.length / per));
-  return (<Page title="Address labels" back="/admin/tools" action={<Btn icon="print" disabled={!labels.length} onClick={() => window.print()}>Print {labels.length || ''}</Btn>}>
+  return (<Page title="Address labels" back="/manager/tools" action={<Btn icon="print" disabled={!labels.length} onClick={() => window.print()}>Print {labels.length || ''}</Btn>}>
     <div className="ad-noprint">
       <Card title="1. Choose parcels"><p className="ad-help" style={{ marginTop: 0 }}>Orders that are paid and waiting to be sent.</p>
         {data.orders.length ? <div className="ad-list">{data.orders.map((o) => (<label key={o.id} className="ad-row" style={{ cursor: 'pointer' }}><span style={{ display: 'flex', gap: 12, alignItems: 'center' }}><input type="checkbox" style={{ width: 22, height: 22, appearance: 'auto', WebkitAppearance: 'checkbox', padding: 0 }} checked={!!pick[o.id]} onChange={(e) => setPick((p) => ({ ...p, [o.id]: e.target.checked }))} /><span className="main"><b>{o.name}</b><small>{o.shipping_address?.city}, {o.shipping_address?.pincode}</small></span></span><Badge tone={o.status === 'packed' ? 'info' : 'warn'}>{o.status === 'paid' ? 'to pack' : o.status}</Badge></label>))}</div> : <Empty>No orders waiting to be sent.</Empty>}

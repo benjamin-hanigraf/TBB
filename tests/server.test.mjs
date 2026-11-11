@@ -38,7 +38,7 @@ test('finalize: first call pays, repeat calls do nothing; wrong amount refused',
   assert.equal(bad.error, 'amount_mismatch'); assert.ok(!calls.some((c) => c.startsWith('PATCH orders')));
   const first = await P.finalizePayment('rzp_o1', 'pay_1', 125000);
   assert.equal(first.kind, 'order'); assert.equal(first.already, undefined);
-  assert.ok(calls.includes('POST rpc/decrement_stock')); assert.ok(calls.includes('POST ledger_entries')); assert.equal(calls.filter((c) => c === 'POST emails').length + calls.filter((c) => c.includes('resend')).length >= 0, true);
+  assert.ok(calls.includes('POST rpc/decrement_stock')); assert.ok(calls.includes('POST ledger_entries')); assert.ok(calls.includes('POST customers'), 'the buyer is added to the customers list'); assert.equal(calls.filter((c) => c === 'POST emails').length + calls.filter((c) => c.includes('resend')).length >= 0, true);
   const again = await P.finalizePayment('rzp_o1', 'pay_1', 125000);
   assert.equal(again.already, true); assert.equal(calls.filter((c) => c === 'POST rpc/decrement_stock').length, 1);   // stock reduced only once
 });

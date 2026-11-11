@@ -26,13 +26,13 @@ export default function BookWorkshop({ slug, title, price, friendPrice, seatsLef
   }
   if (!open) return <button className="btn" onClick={() => setOpen(true)}><Icon n="calendar" size={17} /><span>Reserve</span></button>;
   return (
-    <form onSubmit={submit} className="form bookform" style={{ margin: '8px 0 0', maxWidth: 420 }}>
+    <form autoComplete="off" onSubmit={submit} className="form bookform" style={{ margin: '8px 0 0', maxWidth: 420 }}>
       <label><span>Seats <i>*</i></span><select value={seats} onChange={(e) => setSeats(Number(e.target.value))}>{Array.from({ length: max }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}</select></label>
-      <label><span>Name <i>*</i></span><input name="name" required defaultValue={pre.name} key={pre.name} autoComplete="name" {...ruleProps('name')} /></label>
-      <label><span>Email <i>*</i></span><input name="email" type="email" required defaultValue={pre.email} key={pre.email} autoComplete="email" {...ruleProps('email')} /></label>
-      <label><span>Phone <i>*</i></span><input name="phone" type="tel" required defaultValue={pre.phone} key={pre.phone} pattern="[0-9+\s\-]{10,16}" autoComplete="tel" {...ruleProps('phone')} /></label>
+      <label><span>Name <i>*</i></span><input name="name" required defaultValue={pre.name} key={pre.name} autoComplete="off" {...ruleProps('name')} /></label>
+      <label><span>Email <i>*</i></span><input name="email" type="email" required defaultValue={pre.email} key={pre.email} autoComplete="off" {...ruleProps('email')} /></label>
+      <label><span>Phone <i>*</i></span><input name="phone" type="tel" required defaultValue={pre.phone} key={pre.phone} pattern="[0-9+\s\-]{10,16}" autoComplete="off" {...ruleProps('phone')} /></label>
       <p className="small center">{seats} × {rupees(per)} = <b>{rupees(per * seats)}</b>{seats >= 2 && friendPrice ? ' (friend price applied)' : ''}</p>
-      <button className="btn" disabled={busy}><Icon n="ticket" size={17} /><span>{busy ? 'Please wait…' : `Pay ${rupees(per * seats)}`}</span></button>
+      <button className="btn" disabled={busy}><Icon n="card" size={17} /><span>{busy ? 'Please wait…' : `Pay ${rupees(per * seats)}`}</span></button>
       <button type="button" className="btn ghost" onClick={() => setOpen(false)}>Cancel</button>
       {err && <p className="notice err" role="alert">{err}</p>}
       <p className="small center">Secure payment by Razorpay. Bookings are confirmed on payment.</p>

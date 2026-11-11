@@ -23,7 +23,7 @@ export default async function Workshop({ params }) {
         <ul className="facts">
           <li><Icon n="calendar" /><span><b>{fmtDate(w.starts_at)}</b></span></li>
           <li><Icon n="pin" /><span><b>{w.venue}</b><br /><span className="muted">{w.address}</span></span></li>
-          <li><Icon n="ticket" /><span>{rupees(w.price)} per person, kit included{w.friendPrice ? <><br /><span className="muted">{rupees(w.friendPrice)} each when you bring a friend</span></> : null}</span></li>
+          <li><Icon n="rupee" /><span>{rupees(w.price)} per person, kit included{w.friendPrice ? <><br /><span className="muted">{rupees(w.friendPrice)} each when you bring a friend</span></> : null}</span></li>
         </ul>
         {closed || w.seatsLeft === 0 ? <div className="row"><Btn icon="calendar" disabled>{w.cancelled ? 'Cancelled' : isPast(w) ? 'Booking closed' : 'Sold out'}</Btn><Btn href={business.whatsapp} variant="ghost" icon="chat">WhatsApp</Btn></div>
           : <><div className="row"><BookWorkshop slug={w.slug} title={w.title} price={w.price} friendPrice={w.friendPrice} seatsLeft={w.seatsLeft} /><Btn href={business.whatsapp} variant="ghost" icon="chat">WhatsApp</Btn></div></>}

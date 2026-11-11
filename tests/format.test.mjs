@@ -1,8 +1,8 @@
 import test from 'node:test'; import assert from 'node:assert/strict';
 import * as F from '../lib/format.js';
 test('names get capitals', () => {
-  assert.equal(F.titleCase('rahi sharma'), 'Rahi Sharma'); assert.equal(F.titleCase("  JOHN   o'neil "), "John O'Neil");
-  assert.equal(F.titleCase('anne-marie d’souza'), 'Anne-Marie D’Souza'); assert.equal(F.titleCase('DSouza'), 'DSouza');
+  assert.equal(F.titleCase('rahi sharma'), 'Rahi Sharma'); assert.equal(F.titleCase("  JOHN   o'neil "), "JOHN O'Neil", 'capitals typed on purpose are kept');
+  assert.equal(F.titleCase('anne-marie d’souza'), 'Anne-Marie D’Souza'); assert.equal(F.titleCase('DSouza'), 'DSouza'); assert.equal(F.titleCase('IIT madras'), 'IIT Madras'); assert.equal(F.titleCase('hdfc BANK'), 'Hdfc BANK'); assert.equal(F.titleCase('TBB'), 'TBB');
   assert.equal(F.titleCase('2nd floor, berachah'), '2nd Floor, Berachah'); assert.equal(F.titleCase(''), '');
 });
 test('email lowercase, no spaces', () => { assert.equal(F.cleanEmail('  Rahi.Sharma@Gmail.COM '), 'rahi.sharma@gmail.com'); });

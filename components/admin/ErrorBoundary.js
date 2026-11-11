@@ -7,7 +7,7 @@ export default class ErrorBoundary extends Component {
   componentDidCatch(e) { console.error('admin error', e); }
   render() {
     if (!this.state.failed) return this.props.children;
-    return (<div className="ad-center"><div className="ad-login"><h1>Something went wrong</h1><p>The Studio app could not show this screen. Your data is safe.</p>
+    return (<div className="ad-center"><div className="ad-login"><h1>Something went wrong</h1><p>The Manager app could not show this screen. Your data is safe.</p>
       <button className="ad-btn" onClick={() => location.reload()}>Reload</button></div></div>);
   }
 }

@@ -20,14 +20,14 @@ const security = [
 /** @type {import('next').NextConfig} */
 export default {
   poweredByHeader: false,
-  async redirects() { return [{ source: '/cart', destination: '/basket', permanent: true }]; },
+  async redirects() { return [{ source: '/cart', destination: '/basket', permanent: true }, { source: '/admin', destination: '/manager', permanent: true }, { source: '/admin/:path*', destination: '/manager/:path*', permanent: true }]; },
   images: { remotePatterns: [{ protocol: 'https', hostname: '*.supabase.co' }] },
   async headers() {
     return [
       { source: '/:path*', headers: security },
-      { source: '/(admin|api|invoice|checkout|basket|cart|account)/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] },
+      { source: '/(manager|admin|api|invoice|checkout|basket|cart|account)/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] },
       { source: '/api/:path*', headers: [{ key: 'Cache-Control', value: 'no-store' }] },
-      { source: '/admin/sw.js', headers: [{ key: 'Cache-Control', value: 'no-cache' }, { key: 'Service-Worker-Allowed', value: '/admin' }] },
+      { source: '/manager/sw.js', headers: [{ key: 'Cache-Control', value: 'no-cache' }, { key: 'Service-Worker-Allowed', value: '/manager' }] },
     ];
   },
 };

@@ -22,7 +22,7 @@ export default function CheckPage() {
   async function reset() {
     try { const regs = await navigator.serviceWorker?.getRegistrations?.(); for (const g of regs || []) await g.unregister(); const ks = await caches?.keys?.(); for (const k of ks || []) await caches.delete(k); } catch {}
     try { ['tbb-device-token', 'tbb-device-id', 'tbb-admin-auth'].forEach((k) => localStorage.removeItem(k)); sessionStorage.clear(); } catch {}
-    setMsg('Done. The Studio app on this device is reset. Open /admin again.');
+    setMsg('Done. The Manager app on this device is reset. Open /manager again.');
   }
   const mark = (ok) => (ok === null ? '•' : ok ? '✓' : '✗');
   return (<main style={{ maxWidth: 680, margin: '0 auto', padding: '40px 20px 80px', fontFamily: '-apple-system, system-ui, sans-serif', color: '#1d1d1f', lineHeight: 1.5 }}>
@@ -33,12 +33,12 @@ export default function CheckPage() {
     {!health && <p style={{ color: '#6e6e73' }}>Checking…</p>}
     {health?.error && <p style={{ color: '#b42318' }}>Could not reach the website's status report.</p>}
     {health && !health.error && <>
-      <p><b>Studio app (PIN): </b><b style={{ color: health.studioApp.ready ? '#14532d' : '#b42318' }}>{health.studioApp.ready ? 'ready' : 'not ready'}</b></p>
-      {[...health.studioApp.needs, ...health.laterSteps].map((n, i) => <p key={i} style={{ margin: '6px 0', color: health.studioApp.needs.includes(n) ? '#7a1f1f' : '#6e6e73', fontSize: 15 }}>{health.studioApp.needs.includes(n) ? 'To do now: ' : 'Later: '}{n}</p>)}
+      <p><b>Manager app (PIN): </b><b style={{ color: health.managerApp.ready ? '#14532d' : '#b42318' }}>{health.managerApp.ready ? 'ready' : 'not ready'}</b></p>
+      {[...health.managerApp.needs, ...health.laterSteps].map((n, i) => <p key={i} style={{ margin: '6px 0', color: health.managerApp.needs.includes(n) ? '#7a1f1f' : '#6e6e73', fontSize: 15 }}>{health.managerApp.needs.includes(n) ? 'To do now: ' : 'Later: '}{n}</p>)}
       <p style={{ color: '#6e6e73', fontSize: 14 }}>Database parts: {Object.entries(health.database).map(([k, v]) => `${k.replace(/_/g, ' ')} ${v ? '✓' : '✗'}`).join(' · ')}<br />Payments {health.payments ? '✓' : '✗'} · Payment confirmations {health.webhook ? '✓' : '✗'} · Emails {health.emails ? '✓' : '✗'} · Google login {health.googleLogin ? '✓' : '✗'}</p></>}
-    <h2 style={{ fontSize: 19, margin: '28px 0 8px' }}>Start the Studio app fresh on this device</h2>
-    <p style={{ color: '#6e6e73', fontSize: 15 }}>If the Studio app ever looks stuck, this clears its saved settings on this device only.</p>
+    <h2 style={{ fontSize: 19, margin: '28px 0 8px' }}>Start the Manager app fresh on this device</h2>
+    <p style={{ color: '#6e6e73', fontSize: 15 }}>If the Manager app ever looks stuck, this clears its saved settings on this device only.</p>
     <button onClick={reset} style={{ minHeight: 46, padding: '0 22px', borderRadius: 99, border: 0, background: '#1d1d1f', color: '#fff', fontSize: 16, cursor: 'pointer' }}>Reset the app on this device</button>
     {msg && <p role="status" style={{ marginTop: 14, color: '#14532d' }}>{msg}</p>}
-    <p style={{ marginTop: 28 }}><a href="/admin" style={{ color: '#1d1d1f' }}>Open the Studio app</a></p></main>);
+    <p style={{ marginTop: 28 }}><a href="/manager" style={{ color: '#1d1d1f' }}>Open the Manager app</a></p></main>);
 }

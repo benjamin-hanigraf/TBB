@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useLoad, sb, must, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, useToast, fmtDT, fmtD, STATUS_TONE, download } from './kit';
 import { money, toCSV } from '@/lib/accounting';
+import { recordRefund } from '@/lib/ledgerSync';
 import { adminClient as supabase } from '@/lib/supabase-admin';
 
 const ORDER_STATUS = [['paid', 'Paid, to pack'], ['packed', 'Packed'], ['shipped', 'Shipped'], ['delivered', 'Delivered'], ['cancelled', 'Cancelled'], ['refunded', 'Refunded']];
@@ -23,7 +24,7 @@ export default function Orders() {
   const bookings = data.bookings.filter(has); const enrols = data.enrol.filter((x) => has({ name: x.name, email: x.email, phone: x.phone, invoice_no: x.invoice_no }) || (x.student_name || '').toLowerCase().includes(q.toLowerCase()));
   const toPack = data.orders.filter((o) => o.status === 'paid' || o.status === 'packed').length;
   const exportCsv = () => download('orders.csv', toCSV(data.orders, [{ label: 'Order no', get: (o) => o.invoice_no }, { label: 'Date', get: (o) => o.created_at.slice(0, 10) }, { label: 'Name', key: 'name' }, { label: 'Email', key: 'email' }, { label: 'Phone', key: 'phone' }, { label: 'Items', get: (o) => (o.order_items || []).map((i) => `${i.title} x${i.qty}`).join('; ') }, { label: 'Total', get: (o) => o.total_paise / 100 }, { label: 'Status', key: 'status' }, { label: 'Address', get: (o) => addr(o.shipping_address) }, { label: 'Payment id', key: 'razorpay_payment_id' }]));
-  return (<Page title="Orders" action={<><Link className="ad-btn ghost" href="/admin/tools/labels">Print labels</Link><Btn variant="ghost" icon="download" onClick={exportCsv}>Export</Btn></>}>
+  return (<Page title="Orders" action={<><Link className="ad-btn ghost" href="/manager/tools/labels">Print labels</Link><Btn variant="ghost" icon="fileout" onClick={exportCsv}>Export</Btn></>}>
     <div className="ad-tabsbar" role="tablist">{[['pack', `To pack (${toPack})`], ['shipped', 'Shipped'], ['all', 'All orders'], ['book', 'Workshop bookings'], ['enrol', 'Class enrolments']].map(([k, t]) => <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{t}</button>)}</div>
     <input className="ad-search" type="search" placeholder="Search name, email, phone or number" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search" />
     <Card tight>{tab === 'enrol' ? (enrols.length ? <div className="ad-list">{enrols.map((x) => (
@@ -40,9 +41,9 @@ export default function Orders() {
 
 function OrderModal({ o, onClose, onSaved }) {
   const f = useForm({ status: o.status, carrier: o.tracking_carrier || '', number: o.tracking_number || '' }); const [run, busy] = useAction(); const toast = useToast();
-  const save = () => run(async () => { must(await sb().from('orders').update({ status: f.v.status, tracking_carrier: f.v.carrier || null, tracking_number: f.v.number || null }).eq('id', o.id)); onSaved(); }, 'Order updated');
+  const save = () => run(async () => { must(await sb().from('orders').update({ status: f.v.status, tracking_carrier: f.v.carrier || null, tracking_number: f.v.number || null }).eq('id', o.id)); if (f.v.status === 'refunded' && o.status !== 'refunded') await recordRefund(sb(), { source_id: o.id, amount_paise: o.total_paise, party: o.name, description: `Refund for order ${o.invoice_no ?? ''}`.trim() }); onSaved(); }, 'Order updated');
   const email = () => run(async () => {
-    const { data } = await supabase().auth.getSession(); const r = await fetch('/api/admin/email', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ type: 'shipped', order_id: o.id }) });
+    const { data } = await supabase().auth.getSession(); const r = await fetch('/api/manager/email', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ type: 'shipped', order_id: o.id }) });
     if (!r.ok) throw new Error('Could not send the email. Please check the email settings.');
   }, 'Shipping email sent');
   return (<Modal title={`Order ${o.name}`} onClose={onClose}>
@@ -57,12 +58,12 @@ function OrderModal({ o, onClose, onSaved }) {
       <F form={f} k="carrier" label="Courier" rule="text" placeholder="e.g. India Post" /><F form={f} k="number" label="Tracking number" rule="code" />
     </div>
     <div className="ad-actions"><Btn busy={busy} onClick={save} icon="check">Save</Btn><Link className="ad-btn ghost" href={`/invoice/${o.id}`} target="_blank">Receipt</Link>
-      <Link className="ad-btn ghost" href={`/admin/tools/labels?order=${o.id}`}>Print label</Link>{o.tracking_number && <Btn variant="ghost" busy={busy} onClick={email} icon="mail">Email tracking</Btn>}</div>
+      <Link className="ad-btn ghost" href={`/manager/tools/labels?order=${o.id}`}>Print label</Link>{o.tracking_number && <Btn variant="ghost" busy={busy} onClick={email} icon="mail">Email tracking</Btn>}</div>
   </Modal>);
 }
 function BookingModal({ b, onClose, onSaved }) {
   const f = useForm({ status: b.status }); const [run, busy] = useAction();
-  const save = () => run(async () => { must(await sb().from('bookings').update({ status: f.v.status }).eq('id', b.id)); onSaved(); }, 'Booking updated');
+  const save = () => run(async () => { must(await sb().from('bookings').update({ status: f.v.status }).eq('id', b.id)); if (f.v.status === 'refunded' && b.status !== 'refunded') await recordRefund(sb(), { source_id: b.id, amount_paise: b.amount_paise, party: b.name, description: `Refund: ${b.workshops?.title || 'workshop'}` }); onSaved(); }, 'Booking updated');
   return (<Modal title={b.name} onClose={onClose}>
     <p style={{ marginTop: 0 }}><b>{b.workshops?.title}</b><br />{b.seats} {b.seats > 1 ? 'seats' : 'seat'} · {money(b.amount_paise)}<br /><span className="ad-help">{b.email} · {b.phone}</span></p>
     <p className="ad-help">Booked {fmtDT(b.created_at)}{b.razorpay_payment_id ? ` · Payment ID ${b.razorpay_payment_id}` : ''}</p>
@@ -75,7 +76,7 @@ function BookingModal({ b, onClose, onSaved }) {
 
 function EnrolModal({ e, onClose, onSaved }) {
   const f = useForm({ status: e.status }); const [run, busy] = useAction();
-  const save = () => run(async () => { must(await sb().from('class_enrolments').update({ status: f.v.status }).eq('id', e.id)); onSaved(); }, 'Enrolment updated');
+  const save = () => run(async () => { must(await sb().from('class_enrolments').update({ status: f.v.status }).eq('id', e.id)); if (f.v.status === 'refunded' && e.status !== 'refunded') await recordRefund(sb(), { source_id: e.id, amount_paise: e.amount_paise, party: e.name, description: `Refund: ${e.class_levels?.title || 'class'}, ${e.class_levels?.level || ''}` }); onSaved(); }, 'Enrolment updated');
   const wa = String(e.phone).replace(/\D/g, '').slice(-10);
   return (<Modal title={e.student_name} onClose={onClose}>
     <p style={{ marginTop: 0 }}><b>{e.class_levels?.title}, {e.class_levels?.level}</b><br />{e.student_group === 'child' ? `Child, age ${e.student_age}` : 'Adult'} · {money(e.amount_paise)}</p>

@@ -12,9 +12,9 @@ export default function InvoiceTool() {
     const c = sb(); const [i, s] = await Promise.all([c.from('invoices').select('*').order('created_at', { ascending: false }).limit(500), c.from('settings').select('key,value')]);
     const st = Object.fromEntries(must(s).map((r) => [r.key, r.value])); return { list: must(i), st };
   });
-  if (error) return <Page title="Invoices" back="/admin/tools"><Err e={error} /></Page>; if (!data) return <Page title="Invoices" back="/admin/tools"><Spin /></Page>;
+  if (error) return <Page title="Invoices" back="/manager/tools"><Err e={error} /></Page>; if (!data) return <Page title="Invoices" back="/manager/tools"><Spin /></Page>;
   if (edit) return <Editor inv={edit} data={data} onBack={() => { setEdit(null); reload(); }} />;
-  return (<Page title="Invoices" back="/admin/tools" action={<Btn icon="plus" onClick={() => setEdit({})}>New invoice</Btn>}>
+  return (<Page title="Invoices" back="/manager/tools" action={<Btn icon="plus" onClick={() => setEdit({})}>New invoice</Btn>}>
     <Card tight>{data.list.length ? <div className="ad-list">{data.list.map((i) => (
       <button key={i.id} className="ad-row" onClick={() => setEdit(i)}><div className="main"><b>{i.customer_name}</b><small>{i.invoice_no} · {fmtD(i.issue_date)}</small></div><div className="end"><b>{money(i.total_paise)}</b><Badge tone={STATUS_TONE[i.status]}>{i.status}</Badge></div></button>))}</div> : <Empty>No invoices yet. Tap "New invoice".</Empty>}</Card>
   </Page>);
@@ -40,7 +40,7 @@ function Editor({ inv, data, onBack }) {
   };
   const sendEmail = (saved) => run(async () => {
     const to = RULES.email.done(f.v.email); if (!to) throw new Error('Please add the customer email first.');
-    const { data: s } = await supabase().auth.getSession(); const r = await fetch('/api/admin/email', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${s.session.access_token}` }, body: JSON.stringify({ type: 'invoice', invoice_id: saved.id, to }) });
+    const { data: s } = await supabase().auth.getSession(); const r = await fetch('/api/manager/email', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${s.session.access_token}` }, body: JSON.stringify({ type: 'invoice', invoice_id: saved.id, to }) });
     if (!r.ok) throw new Error('Could not send the email. Please check the email settings.');
   }, 'Invoice emailed');
   const markPaid = (saved) => run(async () => {

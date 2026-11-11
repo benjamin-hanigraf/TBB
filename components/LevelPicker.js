@@ -40,17 +40,17 @@ export default function LevelPicker({ classes, phone, whatsapp }) {
 </label>))}</div>
     <div className="enrol" aria-live="polite" ref={panel}>
       <p className="small center">{chosen ? <>You chose <b>{label}</b>, {rupees(chosen.price)} for {chosen.sessions || 8} classes.</> : 'Choose a level to continue.'}</p>
-      {!open && <div className="row c"><Btn icon="ticket" disabled={!chosen} onClick={() => { setOpen(true); setTimeout(() => reveal(formRef.current, 'start'), 60); }}>{chosen ? `Enrol and pay ${rupees(chosen.price)}` : 'Enrol and pay'}</Btn>
+      {!open && <div className="row c"><Btn icon="chair" disabled={!chosen} onClick={() => { setOpen(true); setTimeout(() => reveal(formRef.current, 'start'), 60); }}>{chosen ? `Enrol and pay ${rupees(chosen.price)}` : 'Enrol and pay'}</Btn>
         <Btn href={`tel:${phone.replace(/\s/g, '')}`} variant="ghost" icon="phone">Call</Btn><Btn href={wa} variant="ghost" icon="chat" target="_blank" rel="noopener noreferrer">WhatsApp</Btn></div>}
       {open && chosen && (
-        <form onSubmit={submit} className="form" style={{ marginTop: 20 }} ref={formRef}>
+        <form autoComplete="off" onSubmit={submit} className="form" style={{ marginTop: 20 }} ref={formRef}>
           <label><span>Student's name <i>*</i></span><input name="student" required autoComplete="off" {...ruleProps('name')} /></label>
           <label><span>The student is <i>*</i></span><select value={group} onChange={(e) => setGroup(e.target.value)}><option value="child">A child (age 5 and above)</option><option value="adult">An adult</option></select></label>
           {group === 'child' && <label><span>Age <i>*</i></span><input name="age" required inputMode="numeric" pattern="([5-9]|1[0-7])" title="Age between 5 and 17" {...ruleProps('digits')} /></label>}
-          <label><span>Your name <i>*</i></span><input name="name" required defaultValue={pre.name} key={'n' + pre.name} autoComplete="name" {...ruleProps('name')} /></label>
-          <label><span>Email <i>*</i></span><input name="email" type="email" required defaultValue={pre.email} key={'e' + pre.email} autoComplete="email" {...ruleProps('email')} /></label>
-          <label><span>Phone <i>*</i></span><input name="phone" type="tel" required defaultValue={pre.phone} key={'p' + pre.phone} pattern="[0-9+\s\-]{10,16}" autoComplete="tel" {...ruleProps('phone')} /></label>
-          <button className="btn" disabled={busy}><Icon n="ticket" size={17} /><span>{busy ? 'Please wait…' : `Pay ${rupees(chosen.price)}`}</span></button>
+          <label><span>Your name <i>*</i></span><input name="name" required defaultValue={pre.name} key={'n' + pre.name} autoComplete="off" {...ruleProps('name')} /></label>
+          <label><span>Email <i>*</i></span><input name="email" type="email" required defaultValue={pre.email} key={'e' + pre.email} autoComplete="off" {...ruleProps('email')} /></label>
+          <label><span>Phone <i>*</i></span><input name="phone" type="tel" required defaultValue={pre.phone} key={'p' + pre.phone} pattern="[0-9+\s\-]{10,16}" autoComplete="off" {...ruleProps('phone')} /></label>
+          <button className="btn" disabled={busy}><Icon n="card" size={17} /><span>{busy ? 'Please wait…' : `Pay ${rupees(chosen.price)}`}</span></button>
           <button type="button" className="btn ghost" onClick={() => setOpen(false)}>Back</button>
           {err && <p className="notice err" role="alert">{err}</p>}
           <p className="small center">Secure payment by Razorpay. We will contact you with the class schedule after your payment.</p></form>)}

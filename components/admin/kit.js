@@ -60,7 +60,7 @@ export function useForm(init) {
 /** One field. rule = typing/finishing rule from lib/format (name, email, phone, money, text, sentence, title, ...) */
 export function F({ form, k, label, type = 'text', rule, required, options, hint, rows = 4, ...rest }) {
   const r = rule && RULES[rule]; const val = form.v[k] ?? '';
-  const common = { id: `f-${k}`, name: k, required, value: val, ...(r ? { autoCapitalize: r.cap, spellCheck: r.spell } : {}), ...rest };
+  const common = { id: `f-${k}`, name: k, required, value: val, autoComplete: 'off', 'data-lpignore': 'true', 'data-1p-ignore': 'true', ...(r ? { autoCapitalize: r.cap, spellCheck: r.spell } : {}), ...rest };
   const onChange = (e) => form.set(k, r ? r.typing(e.target.value) : e.target.value);
   const onBlur = r ? (e) => form.set(k, r.done(e.target.value)) : undefined;
   let el;

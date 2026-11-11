@@ -64,6 +64,6 @@ function PinCard() {
 function InstallCard() {
   const [can, setCan] = useState(false); useEffect(() => { setCan(!!window.__bip); }, []);
   const install = async () => { const e = window.__bip; if (!e) return; e.prompt(); await e.userChoice; window.__bip = null; setCan(false); };
-  return (<Card title="Install this app"><p className="ad-help" style={{ marginTop: 0 }}>The app always opens at <b>/admin</b> on your website. Install it to get an app icon on your phone.</p>
+  return (<Card title="Install this app"><p className="ad-help" style={{ marginTop: 0 }}>The app always opens at <b>/manager</b> on your website. Install it to get an app icon on your phone.</p>
     {can && <Btn icon="download" onClick={install}>Install</Btn>}<p className="ad-help">iPhone: open this page in Safari, tap Share, then "Add to Home Screen". Android: tap the menu, then "Install app".</p></Card>);
 }

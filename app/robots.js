@@ -1,4 +1,4 @@
 export default function robots() {
   const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thinblackbrush.com';
-  return { rules: [{ userAgent: '*', allow: '/', disallow: ['/admin', '/api/', '/invoice/', '/checkout', '/basket', '/cart', '/account', '/check'] }], sitemap: `${base}/sitemap.xml` };
+  return { rules: [{ userAgent: '*', allow: '/', disallow: ['/manager', '/admin', '/api/', '/invoice/', '/checkout', '/basket', '/cart', '/account', '/check'] }], sitemap: `${base}/sitemap.xml` };
 }

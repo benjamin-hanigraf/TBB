@@ -1,15 +1,17 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useLoad, sb, must, Page, Card, Stat, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, dmyToISO, isoToDMY, fmtD, download } from './kit';
+import { useLoad, useToast, sb, must, Page, Card, Stat, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, dmyToISO, isoToDMY, fmtD, download } from './kit';
+import { syncPaymentsToLedger } from '@/lib/ledgerSync';
 import { IN_CATEGORIES, OUT_CATEGORIES, METHODS, summarise, fyChoices, fyOf, inFY, fyRange, todayISO, money, monthLabel, rupeesToPaise, gstInside, toCSV } from '@/lib/accounting';
 
 export default function Money() {
-  const sp = useSearchParams(); const [fy, setFy] = useState(fyOf(todayISO())); const [tab, setTab] = useState('list'); const [kind, setKind] = useState('all'); const [q, setQ] = useState(''); const [edit, setEdit] = useState(null);
+  const sp = useSearchParams(); const toast = useToast(); const [fy, setFy] = useState(fyOf(todayISO())); const [tab, setTab] = useState('list'); const [kind, setKind] = useState('all'); const [q, setQ] = useState(''); const [edit, setEdit] = useState(null);
   const { data, error, reload } = useLoad(async () => {
     const c = sb(); const [e, s] = await Promise.all([c.from('ledger_entries').select('*').order('entry_date', { ascending: false }).order('created_at', { ascending: false }).limit(5000), c.from('settings').select('value').eq('key', 'gst').maybeSingle()]);
     return { entries: must(e), gst: s.data?.value || { enabled: false, rate_percent: 18 } };
   });
+  useEffect(() => { let on = true; syncPaymentsToLedger(sb()).then((n) => { if (on && n > 0) { toast(`${n} payment${n > 1 ? 's' : ''} added to your accounts`); reload(); } }).catch((e) => console.error('sync', e)); return () => { on = false; }; /* eslint-disable-next-line */ }, []);
   useEffect(() => { const n = sp.get('new'); if (n === 'in' || n === 'out') setEdit({ kind: n }); }, [sp]);
   if (error) return <Page title="Accounts"><Err e={error} /></Page>; if (!data) return <Page title="Accounts"><Spin /></Page>;
   const sum = summarise(data.entries, fy); const choices = fyChoices(data.entries); const gstOn = data.gst.enabled;
@@ -43,7 +45,7 @@ function Reports({ sum, fy, gstOn, exportAll }) {
       <tbody>{sum.months.map((m) => <tr key={m.month}><td>{monthLabel(m.month)}</td><td className="r">{money(m.in)}</td><td className="r">{money(m.out)}</td><td className="r" style={{ color: m.profit < 0 ? '#9b1c1c' : undefined }}>{money(m.profit)}</td>{gstOn && <td className="r">{money(m.gstPayable)}</td>}</tr>)}
         {!sum.months.length && <tr><td colSpan={5}><Empty>No entries yet.</Empty></td></tr>}</tbody></table></div></Card>
     {gstOn && <Card title="GST summary"><p style={{ margin: 0 }}>GST collected from customers: <b>{money(sum.gstCollected)}</b><br />GST paid on your purchases: <b>{money(sum.gstPaid)}</b><br />GST payable to the government: <b>{money(sum.gstPayable)}</b></p><p className="ad-help">This is a guide for your accountant. It is not a GST return.</p></Card>}
-    <div className="ad-actions"><Btn variant="ghost" icon="download" onClick={exportAll}>Download all entries for {fy}</Btn></div>
+    <div className="ad-actions"><Btn variant="ghost" icon="fileout" onClick={exportAll}>Download all entries for {fy}</Btn></div>
   </>);
 }
 

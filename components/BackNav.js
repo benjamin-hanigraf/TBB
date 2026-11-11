@@ -7,5 +7,5 @@ const PARENTS = [[/^\/workshops\/.+/, '/workshops', 'Workshops'], [/^\/store\/.+
 export default function BackNav() {
   const p = usePathname(); if (p === '/') return null;
   const hit = PARENTS.find(([re]) => re.test(p)); const [href, label] = hit ? [hit[1], hit[2]] : ['/', 'Home'];
-  return (<div className="backrow"><div className="wrap"><Link href={href} className="back"><Icon n="left" size={18} /><span>{label}</span></Link></div></div>);
+  return (<nav className="backrow" aria-label="Back"><div className="wrap"><Link href={href} className="back"><Icon n="left" size={18} /><span>{label}</span></Link></div></nav>);
 }

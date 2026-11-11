@@ -8,7 +8,7 @@ import { rupees, fmtDate } from '@/lib/data';
 
 const GoogleMark = () => (<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.500c3.540 0 6.710 1.220 9.210 3.600l6.850-6.850C35.900 2.380 30.470 0 24 0 14.620 0 6.510 5.380 2.560 13.220l7.980 6.190C12.430 13.720 17.740 9.500 24 9.500z"/><path fill="#4285F4" d="M46.980 24.550c0-1.570-.15-3.090-.38-4.550H24v9.020h12.940c-.58 2.960-2.260 5.480-4.780 7.180l7.730 6c4.510-4.180 7.090-10.360 7.090-17.650z"/><path fill="#FBBC05" d="M10.530 28.590A14.500 14.500 0 0 1 9.500 24c0-1.590.28-3.140.76-4.590l-7.980-6.190A23.990 23.990 0 0 0 0 24c0 3.770.9 7.350 2.560 10.780l7.970-6.190z"/><path fill="#34A853" d="M24 48c6.480 0 11.930-2.130 15.890-5.810l-7.730-6c-2.150 1.450-4.920 2.300-8.160 2.300-6.260 0-11.570-4.220-13.470-9.910l-7.980 6.190C6.510 42.620 14.620 48 24 48z"/></svg>);
 
-function Login({ sb }) {
+export function Login({ sb }) {
   const [step, setStep] = useState('email'); const [email, setEmail] = useState(''); const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false);
   async function sendCode(e) {
     e.preventDefault(); setBusy(true); setMsg('');

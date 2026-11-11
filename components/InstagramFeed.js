@@ -1,5 +1,6 @@
 import Icon from './Icons';
-import { business, images } from '@/lib/data';
+import { business } from '@/lib/data';
+import { getImages } from '@/lib/db';
 // Live feed: set INSTAGRAM_FEED_URL (a free Behold.so JSON feed URL) in Netlify. Without it, shows studio photos.
 async function load() {
   const u = process.env.INSTAGRAM_FEED_URL; if (!u) return null;
@@ -10,7 +11,7 @@ async function load() {
   } catch { return null; }
 }
 export default async function InstagramFeed() {
-  const live = await load();
+  const live = await load(); const images = await getImages();
   const items = live?.length ? live : images.gallery.slice(0, 6).map(src => ({ href: business.instagram, src, alt: 'Thin Black Brush on Instagram' }));
   return (
     <section className="section"><div className="wrap">

@@ -1,11 +1,13 @@
 import Form from '@/components/Form';
-import { img } from '@/lib/data';
+import { getImages } from '@/lib/db';
+export const revalidate = 60;
 export const metadata = { title: 'Custom Invitations' };
-export default function Invites() {
+export default async function Invites() {
+  const im = await getImages();
   return (<main>
     <section className="pagehead"><div className="wrap"><p className="eyebrow">Custom invitations</p><h1>Design with us.</h1>
       <p className="lead">For corporate events, weddings, birthdays and more. We take care of the design and the printing.</p></div></section>
-    <section className="section"><div className="wrap"><div className="gal" style={{marginTop:0}}>{['55fd8e1e6e', 'ac911ad304', '3c20fb04cd'].map(s => <figure key={s}><img src={img(s)} alt="Custom invitation by Thin Black Brush" loading="lazy" /></figure>)}</div></div></section>
+    <section className="section"><div className="wrap"><div className="gal" style={{marginTop:0}}>{im.invites.map((s, i) => <figure key={i}><img src={s} alt="Custom invitation by Thin Black Brush" loading="lazy" /></figure>)}</div></div></section>
     <section className="section soft"><div className="wrap"><div className="head"><h2>Want a custom invite?</h2>
       <p className="lead">Each invitation is designed around your needs. Tell us what you have in mind and we will send you an estimate.</p></div>
       <Form kind="invitation" submit="Send" done="Thank you for getting in touch. We will get back to you at the earliest." fields={[

@@ -10,16 +10,10 @@ const GoogleMark = () => (<svg width="18" height="18" viewBox="0 0 48 48" aria-h
 
 export function Login({ sb }) {
   const [step, setStep] = useState('email'); const [email, setEmail] = useState(''); const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false);
-  async function sendCode(e) {
+  async function sendLink(e) {
     e.preventDefault(); setBusy(true); setMsg('');
     const { error } = await sb.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true, emailRedirectTo: `${window.location.origin}/account` } });
-    setBusy(false); if (error) setMsg('We could not send the code. Please check the email address and try again.'); else setStep('code');
-  }
-  async function verify(e) {
-    e.preventDefault(); setBusy(true); setMsg('');
-    const token = new FormData(e.target).get('code').toString().trim();
-    const { error } = await sb.auth.verifyOtp({ email: email.trim(), token, type: 'email' });
-    setBusy(false); if (error) setMsg('That code is not right, or it has expired. Please try again.');
+    setBusy(false); if (error) setMsg('We could not send the link. Please check the email address and try again.'); else setStep('sent');
   }
   async function google() {
     await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/account` } });
@@ -29,17 +23,15 @@ export function Login({ sb }) {
       {process.env.NEXT_PUBLIC_GOOGLE_LOGIN === '1' && <><button type="button" className="btn ghost" onClick={google}><GoogleMark /><span>Continue with Google</span></button>
       <p className="small center" style={{ margin: '2px 0' }}>or use your email</p></>}
       {step === 'email' ? (
-        <form autoComplete="off" onSubmit={sendCode} className="form" style={{ margin: 0 }}>
+        <form autoComplete="off" onSubmit={sendLink} className="form" style={{ margin: 0 }}>
           <label><span>Email <i>*</i></span><input type="email" required value={email} onChange={(e) => setEmail(cleanEmail(e.target.value))} autoComplete="off" autoCapitalize="none" spellCheck={false} /></label>
           <button className="btn" disabled={busy}><Icon n="mail" size={17} /><span>{busy ? 'Sending…' : 'Email me a sign-in link'}</span></button>
         </form>) : (
-        <form autoComplete="off" onSubmit={verify} className="form" style={{ margin: 0 }}>
-          <p className="notice" style={{ margin: 0 }}>We emailed a sign-in link to {email}. Open it on this device to log in. It can take a minute to arrive, so please check your spam folder too.</p>
-          <p className="small center" style={{ margin: 0 }}>If your email shows a code instead of a link, type it here.</p>
-          <label><span>Code <em>(only if your email has one)</em></span><input name="code" required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6,8}" maxLength={8} placeholder="6-digit code" /></label>
-          <button className="btn" disabled={busy}><Icon n="check" size={17} /><span>{busy ? 'Checking…' : 'Log in with the code'}</span></button>
+        <div className="form" style={{ margin: 0 }}>
+          <p className="notice ok" style={{ margin: 0 }}><Icon n="mail" size={20} /> We emailed a sign-in link to {email}. Open it on this device to log in.</p>
+          <p className="small center" style={{ margin: 0 }}>It can take a minute to arrive. Please check your spam folder too.</p>
           <button type="button" className="btn ghost" onClick={() => { setStep('email'); setMsg(''); }}>Use a different email</button>
-        </form>)}
+        </div>)}
       {msg && <p className="notice err" role="alert">{msg}</p>}
       <p className="small center">New here? Just enter your email and we will create your account.</p>
     </div>);

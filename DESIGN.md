@@ -125,6 +125,9 @@ One component: `components/Icons.js`, used as `<Icon n="bag" size={18} />`.
 - **Owner workflow:** she changes website photos in the Manager app → Website photos. Each slot there is a named place on the site (hero, classes banner, etc.). Do not hard-code a new photo path if a slot exists; add a new slot in `lib/data.js` (`images`) and the `site_images` table instead.
 - Photos on cards sit flush at the top of the card with the card's rounded top corners; text below, centred, 22px padding.
 
+### Gallery
+The gallery lives at the bottom of the Workshops page (`/workshops#gallery`), built by `components/PhotoWall.js`: a masonry wall (3 columns on desktop, 2 on tablet and phone, 14px gap, 18px radius), pill filters (All, Workshops, Artwork), the first 12 photos then "Show all", and a black full-screen viewer with arrows, swipe, Esc and a caption. Photos are listed in `lib/gallery.json`. To add one: grade it with `tools/grade_photos.py`, save `<id>.webp` (max 1600px) and `<id>-640.webp` in `public/img/`, then add `{ "id", "tag": "w" or "a", "alt", "w", "h" }` (width and height of the webp) to the list. Order in the file is the order on the page.
+
 ## 10. Components and patterns to copy
 
 | Need | Copy this |

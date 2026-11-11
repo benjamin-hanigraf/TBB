@@ -217,3 +217,14 @@ input[type=checkbox]{-webkit-appearance:none;appearance:none;width:22px;height:2
 input[type=checkbox]:checked{background:#000;border-color:#000}
 input[type=checkbox]:checked::after{content:"";width:11px;height:6px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
 #message-form{scroll-margin-top:84px}
+/* photo wall and viewer */
+.wall-filters{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:36px 0 28px}.wall-filters button{border:1px solid #86868b;background:transparent;color:var(--ink);border-radius:980px;padding:8px 20px;font:inherit;font-size:15px;cursor:pointer;transition:background .2s,color .2s}.wall-filters button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.wall-grid{column-count:3;column-gap:14px}.wall-item{display:block;width:100%;margin:0 0 14px;padding:0;border:0;background:var(--soft);border-radius:18px;overflow:hidden;cursor:zoom-in;break-inside:avoid;transition:transform .3s,box-shadow .3s}.wall-item:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.1)}.wall-item img{width:100%;height:auto;display:block}
+@media(max-width:1000px){.wall-grid{column-count:2}}@media(max-width:700px){.wall-grid{column-gap:10px}.wall-item{margin-bottom:10px;border-radius:14px}}
+.viewer{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.94);display:grid;grid-template-rows:1fr auto;outline:none;touch-action:pan-y}
+.v-stage{display:grid;place-items:center;padding:56px 64px 8px;min-height:0}.v-img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;animation:vfade .25s}@keyframes vfade{from{opacity:.3}to{opacity:1}}
+.v-cap{display:flex;justify-content:space-between;gap:16px;align-items:baseline;color:#d2d2d7;font-size:14px;padding:6px 24px calc(18px + env(safe-area-inset-bottom));margin:0}.v-cap b{font-weight:500;color:#fff;white-space:nowrap}
+.v-close,.v-nav{position:absolute;width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(8px)}.v-close:hover,.v-nav:hover{background:rgba(255,255,255,.26)}
+.v-close{top:max(14px,env(safe-area-inset-top));right:14px}.v-nav{top:50%;transform:translateY(-50%)}.v-nav.l{left:12px}.v-nav.r{right:12px}
+@media(max-width:700px){.v-stage{padding:60px 8px 4px}.v-nav{display:none}.v-cap{padding-left:16px;padding-right:16px}}
+@media(prefers-reduced-motion:reduce){.v-img{animation:none}.wall-item{transition:none}}

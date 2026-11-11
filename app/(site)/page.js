@@ -26,7 +26,7 @@ export default async function Home() {
       <div className="cards">{shown.map(w => (
         <Link key={w.slug} href={`/workshops/${w.slug}`} className="card"><div className="ph"><Pic src={w.image} alt={w.title} /></div>
           <div className="body"><span className={`tag ${isPast(w) ? 'off' : ''}`}>{isPast(w) ? 'Ended' : 'Book now'}</span><h3>{w.title}</h3><p className="small">{fmtDate(w.starts_at)}</p><p className="small">{w.venue}</p></div></Link>))}</div>
-      <div className="row c"><Btn href="/workshops" variant="ghost" icon="arrow">View all</Btn></div>
+      <div className="row c"><Btn href="/workshops" variant="ghost" icon="arrow">View all</Btn><Btn href="/workshops#gallery" variant="ghost" icon="image">Gallery</Btn></div>
     </div></section>
 
     <section className="section soft"><div className="wrap">

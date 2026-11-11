@@ -25,7 +25,7 @@ export default async function Home() {
         <p className="lead">Beginner-friendly, in-person art and calligraphy workshops with every material included.</p></div>
       <div className="cards">{shown.map(w => (
         <Link key={w.slug} href={`/workshops/${w.slug}`} className="card"><div className="ph"><Pic src={w.image} alt={w.title} /></div>
-          <div className="body"><span className={`tag ${isPast(w) ? 'off' : ''}`}>{isPast(w) ? 'Ended' : 'Open'}</span><h3>{w.title}</h3><p className="small">{fmtDate(w.starts_at)}</p><p className="small">{w.venue}</p></div></Link>))}</div>
+          <div className="body"><span className={`tag ${isPast(w) ? 'off' : ''}`}>{isPast(w) ? 'Ended' : 'Book now'}</span><h3>{w.title}</h3><p className="small">{fmtDate(w.starts_at)}</p><p className="small">{w.venue}</p></div></Link>))}</div>
       <div className="row c"><Btn href="/workshops" variant="ghost" icon="arrow">View all</Btn></div>
     </div></section>
 
@@ -40,7 +40,7 @@ export default async function Home() {
 
     <section className="section"><div className="wrap">
       <div className="head"><p className="eyebrow">Writing classes</p><h2>Handwriting and calligraphy classes, for every age.</h2>
-        <p className="lead">Alongside our art workshops, we teach writing to children from age 5, with tailor-made courses for adults. All materials are provided in class.</p></div>
+        <p className="lead">Alongside our art workshops, we teach writing to children aged 5 to 15, with tailor-made courses for adults. All materials are provided in class.</p></div>
       <div className="wide"><Pic src={images.classes_banner} alt="Students with their finished artwork" w={1600} h={840} sizes="(max-width: 1100px) 100vw, 1080px" /></div>
       <div className="row c"><Btn href="/writing-classes" icon="arrow">More</Btn></div>
     </div></section>

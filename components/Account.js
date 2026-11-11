@@ -3,17 +3,17 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase-browser';
 import Icon from './Icons';
 import { ruleProps } from '@/lib/rules';
-import { cleanEmail } from '@/lib/format';
+import { cleanEmail, RULES } from '@/lib/format';
 import { rupees, fmtDate } from '@/lib/data';
 
 const GoogleMark = () => (<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.500c3.540 0 6.710 1.220 9.210 3.600l6.850-6.850C35.900 2.380 30.470 0 24 0 14.620 0 6.510 5.380 2.560 13.220l7.980 6.190C12.430 13.720 17.740 9.500 24 9.500z"/><path fill="#4285F4" d="M46.980 24.550c0-1.570-.15-3.090-.38-4.550H24v9.020h12.940c-.58 2.960-2.260 5.480-4.780 7.180l7.730 6c4.510-4.180 7.090-10.360 7.090-17.650z"/><path fill="#FBBC05" d="M10.530 28.590A14.500 14.500 0 0 1 9.500 24c0-1.590.28-3.140.76-4.590l-7.980-6.190A23.990 23.990 0 0 0 0 24c0 3.770.9 7.350 2.560 10.780l7.970-6.190z"/><path fill="#34A853" d="M24 48c6.480 0 11.930-2.130 15.890-5.810l-7.730-6c-2.150 1.450-4.920 2.300-8.160 2.300-6.260 0-11.570-4.220-13.470-9.910l-7.980 6.190C6.510 42.620 14.620 48 24 48z"/></svg>);
 
 export function Login({ sb }) {
-  const [step, setStep] = useState('email'); const [email, setEmail] = useState(''); const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false);
+  const [step, setStep] = useState('email'); const [email, setEmail] = useState(''); const [mode, setMode] = useState('login'); const [name, setName] = useState(''); const [phone, setPhone] = useState(''); const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false);
   async function sendLink(e) {
     e.preventDefault(); setBusy(true); setMsg('');
-    const { error } = await sb.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true, emailRedirectTo: `${window.location.origin}/account` } });
-    setBusy(false); if (error) setMsg('We could not send the link. Please check the email address and try again.'); else setStep('sent');
+    const { error } = await sb.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: mode === 'signup', ...(mode === 'signup' ? { data: { full_name: RULES.name.done(name), phone: RULES.phone.done(phone) } } : {}), emailRedirectTo: `${window.location.origin}/account` } });
+    setBusy(false); if (error) setMsg(mode === 'login' ? 'We could not find an account with that email. New here? Choose Sign up.' : 'We could not send the link. Please check your details and try again.'); else setStep('sent');
   }
   async function google() {
     await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/account` } });
@@ -24,8 +24,11 @@ export function Login({ sb }) {
       <p className="small center" style={{ margin: '2px 0' }}>or use your email</p></>}
       {step === 'email' ? (
         <form autoComplete="off" onSubmit={sendLink} className="form" style={{ margin: 0 }}>
+          {mode === 'signup' && <><label><span>Name <i>*</i></span><input required value={name} onChange={(e) => setName(RULES.name.typing(e.target.value))} onBlur={(e) => setName(RULES.name.done(e.target.value))} autoComplete="off" autoCapitalize="words" /></label>
+          <label><span>Phone <i>*</i></span><input type="tel" required inputMode="tel" pattern="[0-9+\s\-]{10,16}" value={phone} onChange={(e) => setPhone(RULES.phone.typing(e.target.value))} autoComplete="off" /></label></>}
           <label><span>Email <i>*</i></span><input type="email" required value={email} onChange={(e) => setEmail(cleanEmail(e.target.value))} autoComplete="off" autoCapitalize="none" spellCheck={false} /></label>
           <button className="btn" disabled={busy}><Icon n="mail" size={17} /><span>{busy ? 'Sending…' : 'Send link'}</span></button>
+          <button type="button" className="link center" style={{ background: 'none', border: 0, cursor: 'pointer', color: 'var(--mute)', font: 'inherit' }} onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setMsg(''); }}>{mode === 'login' ? 'New here? Sign up' : 'Have an account? Log in'}</button>
         </form>) : (
         <div className="form" style={{ margin: 0 }}>
           <p className="notice ok" style={{ margin: 0 }}><Icon n="mail" size={20} /> We emailed a sign-in link to {email}. Open it on this device to log in.</p>
@@ -33,7 +36,7 @@ export function Login({ sb }) {
           <button type="button" className="btn ghost" onClick={() => { setStep('email'); setMsg(''); }}>Use a different email</button>
         </div>)}
       {msg && <p className="notice err" role="alert">{msg}</p>}
-      <p className="small center">New here? Just enter your email and we will create your account.</p>
+      
     </div>);
 }
 

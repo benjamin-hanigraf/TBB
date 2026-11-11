@@ -32,7 +32,7 @@ export default function BookWorkshop({ slug, title, price, friendPrice, seatsLef
       <label><span>Email <i>*</i></span><input name="email" type="email" required defaultValue={pre.email} key={pre.email} autoComplete="off" {...ruleProps('email')} /></label>
       <label><span>Phone <i>*</i></span><input name="phone" type="tel" required defaultValue={pre.phone} key={pre.phone} pattern="[0-9+\s\-]{10,16}" autoComplete="off" {...ruleProps('phone')} /></label>
       <p className="small center">{seats} × {rupees(per)} = <b>{rupees(per * seats)}</b>{seats >= 2 && friendPrice ? ' (friend price applied)' : ''}</p>
-      <button className="btn" disabled={busy}><Icon n="card" size={17} /><span>{busy ? 'Please wait…' : `Pay ${rupees(per * seats)}`}</span></button>
+      <button className="btn" disabled={busy}><Icon n="wallet" size={17} /><span>{busy ? 'Please wait…' : `Pay ${rupees(per * seats)}`}</span></button>
       <button type="button" className="btn ghost" onClick={() => setOpen(false)}>Cancel</button>
       {err && <p className="notice err" role="alert">{err}</p>}
       <p className="small center">Secure payment by Razorpay. Bookings are confirmed on payment.</p>

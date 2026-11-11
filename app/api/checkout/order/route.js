@@ -1,5 +1,6 @@
 import { q, dbReady, getSettings, userFromRequest } from '@/lib/server/db';
 import { createRzpOrder, razorpayReady } from '@/lib/server/razorpay';
+import { gstLine } from '@/lib/gst';
 import { rateLimit, sameOrigin, readJson, str, isEmail, isPhone, isPin, intIn, json } from '@/lib/server/guard';
 export const runtime = 'nodejs';
 export async function POST(req) {
@@ -15,13 +16,13 @@ export async function POST(req) {
   const want = new Map(); for (const i of b.items) { const qty = intIn(i.qty, 1, 10), slug = str(i.slug, 100); if (!qty || !slug) return json({ error: 'invalid_items' }, 400); want.set(slug, (want.get(slug) || 0) + qty); }
   try {
     const slugs = [...want.keys()].map((s) => `"${s.replace(/"/g, '')}"`).join(',');
-    const products = await q(`products?slug=in.(${encodeURIComponent(slugs)})&active=eq.true&select=id,slug,title,price_paise,stock,allow_preorder`);
+    const products = await q(`products?slug=in.(${encodeURIComponent(slugs)})&active=eq.true&select=id,slug,title,price_paise,stock,allow_preorder,gst_mode`);
     if (products.length !== want.size) return json({ error: 'unavailable' }, 409);
     let subtotal = 0; const lines = [];
     for (const p of products) {
       const qty = want.get(p.slug);
       if (qty > 10 || (!p.allow_preorder && p.stock < qty)) return json({ error: 'out_of_stock', item: p.title }, 409);
-      subtotal += p.price_paise * qty; lines.push({ product_id: p.id, title: p.title, unit_paise: p.price_paise, qty });
+      const g = gstLine(p.price_paise, qty, p.gst_mode); subtotal += g.total; lines.push({ product_id: p.id, title: p.title, unit_paise: p.price_paise, qty, gst_paise: p.gst_mode === 'none' ? 0 : g.gst });
     }
     const settings = await getSettings(); const ship = settings.shipping || { flat_paise: 0, free_above_paise: 0 };
     const shipping = ship.free_above_paise && subtotal >= ship.free_above_paise ? 0 : (ship.flat_paise || 0);

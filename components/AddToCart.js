@@ -12,9 +12,9 @@ export default function AddToCart({ product, label }) {
     <div className="qty big" role="group" aria-label={`${product.title} in your bag`}>
       <button type="button" aria-label="One less" onClick={() => setQty(product.slug, qty - 1)}>−</button>
       <span aria-live="polite">{qty}</span>
-      <button type="button" aria-label="One more" disabled={qty >= max} onClick={() => add({ slug: product.slug, title: product.title, price: product.price, image: product.image })}>+</button>
+      <button type="button" aria-label="One more" disabled={qty >= max} onClick={() => add({ slug: product.slug, title: product.title, price: product.price, image: product.image, gstMode: product.gstMode })}>+</button>
     </div>
     <Link href="/bag" className="small viewbag">View bag</Link></div>);
-  return (<button className="btn fixw" disabled={blocked} onClick={() => add({ slug: product.slug, title: product.title, price: product.price, image: product.image })}>
+  return (<button className="btn fixw" disabled={blocked} onClick={() => add({ slug: product.slug, title: product.title, price: product.price, image: product.image, gstMode: product.gstMode })}>
     <Icon n="bag" size={18} /><span>{blocked ? 'Sold out' : label}</span></button>);
 }

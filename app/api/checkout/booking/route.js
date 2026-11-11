@@ -10,9 +10,11 @@ export async function POST(req) {
   const name = str(b.name, 120), email = str(b.email).toLowerCase(), phone = str(b.phone, 20), seats = intIn(b.seats, 1, 10), slug = str(b.slug, 100);
   if (!name || !isEmail(email) || !isPhone(phone) || !seats || !slug) return json({ error: 'invalid_details' }, 400);
   try {
-    const [w] = await q(`workshops?slug=eq.${encodeURIComponent(slug)}&status=eq.published&select=id,price_paise,friend_price_paise,starts_at`);
+    const [w] = await q(`workshops?slug=eq.${encodeURIComponent(slug)}&status=eq.published&select=id,price_paise,friend_price_paise,starts_at,early_price_paise,early_until`);
     if (!w || new Date(w.starts_at) <= new Date()) return json({ error: 'closed' }, 409);
-    const per = seats >= 2 && w.friend_price_paise ? w.friend_price_paise : w.price_paise; const amount = per * seats;
+    const today = new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10);
+    const base = w.early_price_paise != null && w.early_until && w.early_until >= today ? Math.min(w.early_price_paise, w.price_paise) : w.price_paise;
+    const per = seats >= 2 && w.friend_price_paise ? Math.min(w.friend_price_paise, base) : base; const amount = per * seats;
     // stop one person from holding many seats without paying: at most 2 unpaid holds per email or phone in 30 minutes
     const since = new Date(Date.now() - 30 * 60_000).toISOString();
     const holds = await q(`bookings?status=eq.pending&created_at=gte.${encodeURIComponent(since)}&or=(email.eq.${encodeURIComponent(email)},phone.eq.${encodeURIComponent(phone)})&select=id`);

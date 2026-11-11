@@ -13,7 +13,7 @@ export async function generateMetadata({ params }) { const { slug } = await para
 export default async function Workshop({ params }) {
   const { slug } = await params; const w = await getWorkshop(slug); if (!w) notFound();
   const closed = isPast(w) || w.cancelled;
-  const label = w.cancelled ? 'Cancelled' : isPast(w) ? 'Ended' : w.seatsLeft === 0 ? 'Sold out' : 'Open';
+  const label = w.cancelled ? 'Cancelled' : isPast(w) ? 'Ended' : w.seatsLeft === 0 ? 'Sold out' : 'Book now';
   return (<main>
     <JsonLd data={{ '@context': 'https://schema.org', '@type': 'Event', name: w.title, description: w.summary, startDate: w.starts_at, eventStatus: w.cancelled ? 'https://schema.org/EventCancelled' : 'https://schema.org/EventScheduled', eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode', location: { '@type': 'Place', name: w.venue, address: w.address }, offers: { '@type': 'Offer', price: w.price, priceCurrency: 'INR', availability: closed ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock' }, organizer: { '@type': 'Organization', name: 'Thin Black Brush' } }} />
     <section className="section"><div className="wrap split">
@@ -21,9 +21,9 @@ export default async function Workshop({ params }) {
       <div className="info"><span className={`tag ${closed ? 'off' : ''}`}>{label}</span>
         <h1 style={{marginTop:14}}>{w.title}</h1><p className="lead" style={{marginLeft:0}}>{w.summary}</p>
         <ul className="facts">
-          <li><Icon n="calendar" /><span><b>{fmtDate(w.starts_at)}</b></span></li>
+          <li><Icon n="calendar" /><span><b>{fmtDate(w.starts_at)}{w.kind === 'course' && w.ends_at && fmtDate(w.ends_at) !== fmtDate(w.starts_at) ? ` to ${fmtDate(w.ends_at)}` : ''}</b></span></li>
           <li><Icon n="pin" /><span><b>{w.venue}</b><br /><span className="muted">{w.address}</span></span></li>
-          <li><Icon n="rupee" /><span>{rupees(w.price)} per person, kit included{w.friendPrice ? <><br /><span className="muted">{rupees(w.friendPrice)} each when you bring a friend</span></> : null}</span></li>
+          <li><Icon n="rupee" /><span>{rupees(w.price)} per person, kit included{w.regularPrice ? <><br /><span className="muted">Early-bird price until {fmtDate(w.earlyUntil)}. Then {rupees(w.regularPrice)}.</span></> : null}{w.friendPrice ? <><br /><span className="muted">{rupees(w.friendPrice)} each when you bring a friend</span></> : null}</span></li>
         </ul>
         {closed || w.seatsLeft === 0 ? <div className="row"><Btn icon="calendar" disabled>{w.cancelled ? 'Cancelled' : isPast(w) ? 'Booking closed' : 'Sold out'}</Btn><Btn href={business.whatsapp} variant="ghost" icon="chat">WhatsApp</Btn></div>
           : <><div className="row"><BookWorkshop slug={w.slug} title={w.title} price={w.price} friendPrice={w.friendPrice} seatsLeft={w.seatsLeft} /><Btn href={business.whatsapp} variant="ghost" icon="chat">WhatsApp</Btn></div></>}

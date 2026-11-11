@@ -1,9 +1,11 @@
 import { notFound } from 'next/navigation';
-import { products, rupees, returnPolicy, business } from '@/lib/data';
-export function generateStaticParams() { return products.map(p => ({ slug: p.slug })); }
-export async function generateMetadata({ params }) { const { slug } = await params; return { title: products.find(x => x.slug === slug)?.title }; }
+import { rupees, returnPolicy, business } from '@/lib/data';
+import { getProducts, getProduct } from '@/lib/db';
+export const revalidate = 60;
+export async function generateStaticParams() { return (await getProducts()).map(p => ({ slug: p.slug })); }
+export async function generateMetadata({ params }) { const { slug } = await params; return { title: (await getProduct(slug))?.title }; }
 export default async function Product({ params }) {
-  const { slug } = await params; const p = products.find(x => x.slug === slug); if (!p) notFound();
+  const { slug } = await params; const p = await getProduct(slug); if (!p) notFound();
   return (<main><section className="section"><div className="wrap split" style={{alignItems:'start'}}>
     <div><div className="ph"><img src={p.images[0]} alt={p.title} /></div>
       {p.images.length>1 && <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginTop:10}}>{p.images.slice(1,5).map((s,i)=><img key={i} src={s} alt="" style={{borderRadius:12,aspectRatio:1,objectFit:'cover',width:'100%'}} />)}</div>}</div>

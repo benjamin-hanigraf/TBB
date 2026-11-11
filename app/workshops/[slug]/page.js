@@ -1,14 +1,16 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { workshops, rupees, isPast, fmtDate, business } from '@/lib/data';
-export function generateStaticParams() { return workshops.map(w => ({ slug: w.slug })); }
-export async function generateMetadata({ params }) { const { slug } = await params; const w = workshops.find(x => x.slug === slug); return { title: w?.title }; }
+import { rupees, isPast, fmtDate, business } from '@/lib/data';
+import { getWorkshops, getWorkshop } from '@/lib/db';
+export const revalidate = 60;
+export async function generateStaticParams() { return (await getWorkshops()).map(w => ({ slug: w.slug })); }
+export async function generateMetadata({ params }) { const { slug } = await params; const w = await getWorkshop(slug); return { title: w?.title }; }
 export default async function Workshop({ params }) {
-  const { slug } = await params; const w = workshops.find(x => x.slug === slug); if (!w) notFound();
-  const past = isPast(w);
+  const { slug } = await params; const w = await getWorkshop(slug); if (!w) notFound();
+  const past = isPast(w) || w.cancelled;
   return (<main><section className="section"><div className="wrap split">
     <div className="ph"><img src={w.image} alt={w.title} /></div>
-    <div><span className={`tag ${past?'off':''}`}>{past?'Ended':'Open for booking'}</span>
+    <div><span className={`tag ${past?'off':''}`}>{w.cancelled?'Cancelled':past?'Ended':w.seatsLeft===0?'Sold out':'Open for booking'}</span>
       <h1 style={{fontSize:'clamp(32px,5vw,52px)'}}>{w.title}</h1><p className="lead">{w.summary}</p>
       <div className="dl"><span><b>Date</b> · {fmtDate(w.starts_at)}</span><span><b>Venue</b> · {w.venue}</span><span style={{color:'#6e6e73'}}>{w.address}</span>
         <span><b>Price</b> · {rupees(w.price)} per person, kit included</span>{w.friendPrice && <span><b>Bring a friend</b> · {rupees(w.friendPrice)} per person</span>}</div>

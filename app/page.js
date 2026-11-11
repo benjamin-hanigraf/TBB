@@ -1,6 +1,9 @@
 import Link from 'next/link';
-import { images, workshops, products, rupees, isPast, fmtDate } from '@/lib/data';
-export default function Home() {
+import { rupees, isPast, fmtDate } from '@/lib/data';
+import { getWorkshops, getProducts, getImages } from '@/lib/db';
+export const revalidate = 60;
+export default async function Home() {
+  const [workshops, products, images] = await Promise.all([getWorkshops(), getProducts(), getImages()]);
   const upcoming = workshops.filter(w => !isPast(w));
   return (<main>
     <section className="hero"><div className="wrap">
@@ -16,7 +19,7 @@ export default function Home() {
         <p className="lead">Beginner friendly, in-person workshops. Every kit is included, so all you bring is curiosity.</p>
         <ul className="list">{(upcoming.length?upcoming:workshops).slice(0,3).map(w=>(<li key={w.slug}><Link href={`/workshops/${w.slug}`}><b>{w.title}</b><br /><span style={{color:'#6e6e73'}}>{fmtDate(w.starts_at)} · {w.venue}</span></Link></li>))}</ul>
         <div className="row"><Link className="btn" href="/workshops">See all workshops</Link></div></div>
-      <div className="ph"><img src={workshops[1].image} alt="Calligraphy workshop" /></div>
+      <div className="ph"><img src={(workshops[1] || workshops[0] || {}).image || images.studio} alt="Calligraphy workshop" /></div>
     </div></section>
 
     <section className="section soft"><div className="wrap center">

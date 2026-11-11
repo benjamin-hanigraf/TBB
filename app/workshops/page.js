@@ -1,9 +1,12 @@
 import Link from 'next/link';
-import { workshops, rupees, isPast, fmtDate } from '@/lib/data';
+import { rupees, isPast, fmtDate } from '@/lib/data';
+import { getWorkshops } from '@/lib/db';
+export const revalidate = 60;
 export const metadata = { title: 'Workshops' };
 const Card = ({ w, past }) => (<Link href={`/workshops/${w.slug}`} className="card"><div className="ph"><img src={w.image} alt={w.title} loading="lazy" /></div>
   <div className="body"><span className={`tag ${past?'off':''}`}>{past?'Ended':'Open for booking'}</span><h3>{w.title}</h3><p className="price">{fmtDate(w.starts_at)} · {w.venue}</p><p className="price">{rupees(w.price)} per person</p></div></Link>);
-export default function Workshops() {
+export default async function Workshops() {
+  const workshops = await getWorkshops();
   const up = workshops.filter(w => !isPast(w)), past = workshops.filter(isPast);
   return (<main>
     <section className="pagehead"><div className="wrap"><p className="eyebrow">Learn with TBB</p><h1>Workshops</h1><p className="lead">Super excited to explore art with you. Don't miss it!</p></div></section>

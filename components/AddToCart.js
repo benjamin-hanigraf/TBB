@@ -8,7 +8,7 @@ export default function AddToCart({ product, label }) {
   const blocked = product.stock <= 0 && !product.preorder;
   return (<>
     <button className="btn" disabled={blocked} onClick={() => { add({ slug: product.slug, title: product.title, price: product.price, image: product.image }); setDone(true); }}>
-      <Icon n="bag" size={17} /><span>{blocked ? 'Out of stock' : label}</span></button>
+      <Icon n="paperbag" size={18} /><span>{blocked ? 'Out of stock' : label}</span></button>
     {done && <p className="fine" role="status">Added to your cart. <Link href="/cart" style={{ textDecoration: 'underline' }}>View cart</Link></p>}
   </>);
 }

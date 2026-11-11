@@ -6,11 +6,12 @@ const PAID = ['paid', 'packed', 'shipped', 'delivered'];
 export default function Customers() {
   const [q, setQ] = useState(''); const [open, setOpen] = useState(null);
   const { data, error } = useLoad(async () => {
-    const c = sb(); const [p, o, b] = await Promise.all([c.from('profiles').select('id,full_name,email,phone,created_at').neq('role', 'admin').limit(2000), c.from('orders').select('id,user_id,name,email,phone,total_paise,status,created_at').in('status', PAID).limit(5000), c.from('bookings').select('id,user_id,name,email,phone,amount_paise,status,created_at,workshops(title)').eq('status', 'paid').limit(5000)]);
+    const c = sb(); const [p, o, b, en] = await Promise.all([c.from('profiles').select('id,full_name,email,phone,created_at').neq('role', 'admin').limit(2000), c.from('orders').select('id,user_id,name,email,phone,total_paise,status,created_at').in('status', PAID).limit(5000), c.from('bookings').select('id,user_id,name,email,phone,amount_paise,status,created_at,workshops(title)').eq('status', 'paid').limit(5000), c.from('class_enrolments').select('id,user_id,name,email,phone,amount_paise,status,created_at,class_levels(title,level)').eq('status', 'paid').limit(5000)]);
     const m = new Map(); const get = (email, seed) => { const k = (email || '').toLowerCase(); if (!k) return null; if (!m.has(k)) m.set(k, { email: k, name: '', phone: '', member: null, orders: [], bookings: [], spent: 0, last: '', joined: '', ...seed }); return m.get(k); };
     must(p).forEach((x) => { const r = get(x.email, {}); if (r) { r.member = x.id; r.name ||= x.full_name || ''; r.phone ||= x.phone || ''; r.joined = x.created_at; } });
     must(o).forEach((x) => { const r = get(x.email, {}); if (!r) return; r.name ||= x.name; r.phone ||= x.phone; r.orders.push(x); r.spent += x.total_paise; if (x.created_at > r.last) r.last = x.created_at; });
     must(b).forEach((x) => { const r = get(x.email, {}); if (!r) return; r.name ||= x.name; r.phone ||= x.phone; r.bookings.push(x); r.spent += x.amount_paise; if (x.created_at > r.last) r.last = x.created_at; });
+    must(en).forEach((x) => { const r = get(x.email, {}); if (!r) return; r.name ||= x.name; r.phone ||= x.phone; r.bookings.push({ ...x, workshops: { title: `${x.class_levels?.title}, ${x.class_levels?.level}` } }); r.spent += x.amount_paise; if (x.created_at > r.last) r.last = x.created_at; });
     return [...m.values()].sort((a, b) => (b.last || b.joined || '').localeCompare(a.last || a.joined || ''));
   });
   if (error) return <Page title="Customers"><Err e={error} /></Page>; if (!data) return <Page title="Customers"><Spin /></Page>;

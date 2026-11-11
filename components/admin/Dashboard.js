@@ -5,7 +5,7 @@ import { summarise, fyOf, todayISO, money } from '@/lib/accounting';
 export default function Dashboard() {
   const { data: d, error } = useLoad(async () => {
     const c = sb(); const fy = fyOf(todayISO());
-    const [ledger, toPack, inbox, ws, recentO, recentB, low] = await Promise.all([
+    const [ledger, toPack, inbox, ws, recentO, recentB, low, recentE] = await Promise.all([
       c.from('ledger_entries').select('entry_date,kind,category,amount_paise,gst_paise').gte('entry_date', `${fy.slice(0, 4)}-04-01`).limit(5000),
       c.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'paid'),
       c.from('enquiries').select('id', { count: 'exact', head: true }).eq('handled', false),
@@ -13,16 +13,19 @@ export default function Dashboard() {
       c.from('orders').select('id,name,total_paise,paid_at').not('paid_at', 'is', null).order('paid_at', { ascending: false }).limit(5),
       c.from('bookings').select('id,name,amount_paise,paid_at,workshops(title)').not('paid_at', 'is', null).order('paid_at', { ascending: false }).limit(5),
       c.from('products').select('id,title,stock').eq('active', true).eq('allow_preorder', false).lte('stock', 2).limit(5),
+      c.from('class_enrolments').select('id,name,amount_paise,paid_at,class_levels(title,level)').not('paid_at', 'is', null).order('paid_at', { ascending: false }).limit(5),
     ]);
     const w = must(ws); let taken = {};
     if (w.length) { const b = must(await c.from('bookings').select('workshop_id,seats').in('workshop_id', w.map((x) => x.id)).eq('status', 'paid')); b.forEach((x) => (taken[x.workshop_id] = (taken[x.workshop_id] || 0) + x.seats)); }
-    const recent = [...must(recentO).map((o) => ({ k: 'Order', who: o.name, amt: o.total_paise, at: o.paid_at, id: o.id })), ...must(recentB).map((o) => ({ k: o.workshops?.title || 'Workshop', who: o.name, amt: o.amount_paise, at: o.paid_at, id: o.id }))].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 6);
+    const recent = [...must(recentO).map((o) => ({ k: 'Order', who: o.name, amt: o.total_paise, at: o.paid_at, id: o.id })), ...must(recentB).map((o) => ({ k: o.workshops?.title || 'Workshop', who: o.name, amt: o.amount_paise, at: o.paid_at, id: o.id })), ...must(recentE).map((o) => ({ k: `${o.class_levels?.title || 'Class'}, ${o.class_levels?.level || ''}`, who: o.name, amt: o.amount_paise, at: o.paid_at, id: o.id }))].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 6);
     const all = must(ledger); const month = todayISO().slice(0, 7);
     return { fy, sum: summarise(all.map((e) => ({ ...e })), fy), thisMonth: summarise(all.filter((e) => e.entry_date.startsWith(month)), fy), toPack: toPack.count || 0, inbox: inbox.count || 0, ws: w, taken, recent, low: must(low) };
   });
   if (error) return <Page title="Home"><Err e={error} /></Page>;
   if (!d) return <Page title="Home"><Spin /></Page>;
+  const defPin = (() => { try { return !!sessionStorage.getItem('tbb-defpin'); } catch { return false; } })();
   return (<Page title="Home">
+    {defPin && <Link href="/admin/settings" className="ad-err" style={{ display: 'block', background: '#fff3d6', color: '#7a4b00' }}>You are still using the starting PIN (0000). Tap here to change it.</Link>}
     <div className="ad-grid">
       <Link href="/admin/orders"><Stat label="Orders to pack" value={d.toPack} sub={d.toPack ? 'Tap to see' : 'All caught up'} /></Link>
       <Link href="/admin/inbox"><Stat label="New messages" value={d.inbox} sub={d.inbox ? 'Tap to reply' : 'Nothing new'} /></Link>

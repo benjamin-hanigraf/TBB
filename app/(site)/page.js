@@ -17,7 +17,6 @@ export default async function Home() {
       <p className="eyebrow">The Artists' Commonroom</p>
       <h1>Learn to write<br />beautifully.</h1>
       <p className="lead">Calligraphy and art workshops, handwriting classes and handcrafted art supplies, made with love in Chennai.</p>
-      <div className="row"><Btn href="/workshops" icon="arrow">Book now</Btn><Btn href="/store" variant="ghost" icon="bag">Shop</Btn></div>
       <div className="shot"><Pic src={images.hero} alt="Hands practising modern calligraphy" eager w={1600} h={800} sizes="(max-width: 1100px) 100vw, 1080px" /></div>
     </div></section>
 

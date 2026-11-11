@@ -16,7 +16,7 @@ export default function Nav() {
       <ul className={open ? 'open' : ''} onClick={() => setOpen(false)}>
         {links.map(([h, t]) => <li key={h}><Link href={h} className={(h === '/' ? p === '/' : p.startsWith(h)) ? 'on' : ''}>{t}</Link></li>)}
       </ul>
-      <div className="tools"><Link href="/cart" className="cartlink" aria-label={`Cart, ${count} items`}><Icon n="bag" size={18} />{count > 0 && <span className="badge">{count}</span>}</Link><Link href="/account" className="hide-m"><Icon n="user" size={16} />{signedIn ? 'Account' : 'Log in'}</Link>
+      <div className="tools"><Link href="/cart" className="cartlink" aria-label={`Cart, ${count} items`}><Icon n="paperbag" size={22} />{count > 0 && <span className="badge">{count}</span>}</Link><Link href="/account" className="hide-m"><Icon n="user" size={16} />{signedIn ? 'Account' : 'Log in'}</Link>
         <button className="burger" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? '✕' : '☰'}</button></div>
     </div></nav>);
 }

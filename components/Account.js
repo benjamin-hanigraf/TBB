@@ -26,8 +26,8 @@ export function Login({ sb }) {
   }
   return (
     <div className="form" style={{ marginTop: 40 }}>
-      <button type="button" className="btn ghost" onClick={google}><GoogleMark /><span>Continue with Google</span></button>
-      <p className="small center" style={{ margin: '2px 0' }}>or use your email</p>
+      {process.env.NEXT_PUBLIC_GOOGLE_LOGIN === '1' && <><button type="button" className="btn ghost" onClick={google}><GoogleMark /><span>Continue with Google</span></button>
+      <p className="small center" style={{ margin: '2px 0' }}>or use your email</p></>}
       {step === 'email' ? (
         <form onSubmit={sendCode} className="form" style={{ margin: 0 }}>
           <label><span>Email <i>*</i></span><input type="email" required value={email} onChange={(e) => setEmail(cleanEmail(e.target.value))} autoComplete="email" autoCapitalize="none" spellCheck={false} /></label>
@@ -93,16 +93,20 @@ function Addresses({ sb, user }) {
 }
 
 function History({ sb, user }) {
-  const [b, setB] = useState(null); const [o, setO] = useState(null);
+  const [b, setB] = useState(null); const [o, setO] = useState(null); const [cl, setCl] = useState(null);
   useEffect(() => {
     sb.from('bookings').select('id,seats,amount_paise,status,created_at,workshops(title,starts_at)').eq('user_id', user.id).order('created_at', { ascending: false }).then(({ data }) => setB(data || []));
     sb.from('orders').select('id,total_paise,status,created_at,order_items(title,qty)').eq('user_id', user.id).order('created_at', { ascending: false }).then(({ data }) => setO(data || []));
+    sb.from('class_enrolments').select('id,amount_paise,status,created_at,student_name,class_levels(title,level)').eq('user_id', user.id).order('created_at', { ascending: false }).then(({ data }) => setCl(data || []));
   }, [sb, user.id]);
   const label = (s) => ({ paid: 'Confirmed', pending: 'Awaiting payment', cancelled: 'Cancelled', refunded: 'Refunded', transferred: 'Transferred', packed: 'Packed', shipped: 'Shipped', delivered: 'Delivered' }[s] || s);
   return (<div className="acct-list">
     <h3 className="center" style={{ marginBottom: 8 }}>Workshop bookings</h3>
     {b && !b.length && <p className="small center">No bookings yet.</p>}
     {(b || []).map((x) => (<div key={x.id} className="acct-row"><div><b>{x.workshops?.title}</b><p className="small">{x.workshops && fmtDate(x.workshops.starts_at)} · {x.seats} {x.seats > 1 ? 'seats' : 'seat'}</p></div><div className="end"><span>{rupees(x.amount_paise / 100)}</span><p className="small">{label(x.status)}</p></div></div>))}
+    <h3 className="center" style={{ margin: '40px 0 8px' }}>Writing classes</h3>
+    {cl && !cl.length && <p className="small center">No class enrolments yet.</p>}
+    {(cl || []).map((x) => (<div key={x.id} className="acct-row"><div><b>{x.class_levels?.title}, {x.class_levels?.level}</b><p className="small">For {x.student_name} · {fmtDate(x.created_at)}</p></div><div className="end"><span>{rupees(x.amount_paise / 100)}</span><p className="small">{label(x.status)}</p></div></div>))}
     <h3 className="center" style={{ margin: '40px 0 8px' }}>Orders</h3>
     {o && !o.length && <p className="small center">No orders yet.</p>}
     {(o || []).map((x) => (<div key={x.id} className="acct-row"><div><b>{(x.order_items || []).map((i) => `${i.title} × ${i.qty}`).join(', ')}</b><p className="small">{fmtDate(x.created_at)}</p></div><div className="end"><span>{rupees(x.total_paise / 100)}</span><p className="small">{label(x.status)}</p></div></div>))}

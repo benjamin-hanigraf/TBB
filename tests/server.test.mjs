@@ -46,3 +46,30 @@ test('invoice html escapes customer text', () => {
   const inv = I.buildInvoice({ kind: 'order', row: { name: '<script>alert(1)</script>', email: 'a@b.co', phone: '1', total_paise: 11800, shipping_paise: 0, status: 'paid', invoice_no: 1, created_at: '2026-11-11T00:00:00Z' }, items: [{ title: 'X"><img>', qty: 1, unit_paise: 11800 }], settings: { gst: { enabled: true, rate_percent: 18 }, business: {} } });
   const h = I.renderInvoiceHTML(inv); assert.ok(!h.includes('<script>')); assert.ok(!h.includes('<img>')); assert.equal(inv.gstAmount, 1800); assert.equal(inv.no, 'TBB/2026-27/0001');
 });
+
+test('device PIN: default 0000, hashing, tokens, lockout', async () => {
+  const N = await import('../lib/server/pin.js');
+  assert.equal(N.verifyPin('0000', undefined), true); assert.equal(N.verifyPin('1234', undefined), false); assert.equal(N.verifyPin('00000', undefined), false); assert.equal(N.verifyPin('abcd', undefined), false);
+  const rec = N.makeRecord('4821', 1); assert.ok(!JSON.stringify(rec).includes('4821'), 'PIN is never stored');
+  assert.equal(N.verifyPin('4821', rec), true); assert.equal(N.verifyPin('0000', rec), false, 'default PIN stops working once changed');
+  const t = N.makeToken('u1', 'dev1', 1); const now = Date.now();
+  assert.equal(N.checkToken(t, 'u1', 'dev1', 1), true); assert.equal(N.checkToken(t, 'u2', 'dev1', 1), false, 'other user'); assert.equal(N.checkToken(t, 'u1', 'dev2', 1), false, 'other device');
+  assert.equal(N.checkToken(t, 'u1', 'dev1', 2), false, 'PIN changed, token dead'); assert.equal(N.checkToken(t + 'x', 'u1', 'dev1', 1), false, 'tampered');
+  assert.equal(N.checkToken(N.makeToken('u1', 'dev1', 1, 1, now - 2 * 864e5), 'u1', 'dev1', 1), false, 'expired');
+  for (let i = 0; i < 5; i++) N.noteFail('lock-test'); assert.equal(N.locked('lock-test'), true); N.clearFails('lock-test'); assert.equal(N.locked('lock-test'), false);
+});
+
+test('finalize: a class enrolment is confirmed once, with ledger entry', async () => {
+  const calls = []; let status = 'pending';
+  const enr = { id: 'e1', status: 'pending', amount_paise: 600000, name: 'Anita Rao', email: 'a@x.com', phone: '9999999999', student_name: 'Kid A', student_group: 'child', student_age: 9, invoice_no: 1002, created_at: '2026-11-11T05:00:00Z', class_levels: { title: 'Basics of Handwriting', level: 'Level 1', sessions: 8 } };
+  globalThis.fetch = async (url, opts = {}) => {
+    const u = String(url); calls.push(`${opts.method || 'GET'} ${u.replace('https://db.test/rest/v1/', '').split('?')[0]}`); const ok = (d) => new Response(JSON.stringify(d), { status: 200 });
+    if (u.includes('/orders?razorpay_order_id') || u.includes('/bookings?razorpay_order_id')) return ok([]);
+    if (u.includes('/class_enrolments?razorpay_order_id')) return ok([{ ...enr, status }]);
+    if (u.includes('/class_enrolments?id=eq.e1') && opts.method === 'PATCH') { if (status !== 'pending') return ok([]); status = 'paid'; return ok([{ ...enr, status: 'paid', paid_at: '2026-11-11T05:01:00Z', razorpay_payment_id: 'pay_9' }]); }
+    if (u.includes('/settings')) return ok([{ key: 'gst', value: { enabled: false } }]); return ok(null);
+  };
+  assert.equal((await P.finalizePayment('rzp_e1', 'pay_9', 1)).error, 'amount_mismatch');
+  const a = await P.finalizePayment('rzp_e1', 'pay_9', 600000); assert.equal(a.kind, 'enrolment'); assert.equal(a.already, undefined); assert.ok(calls.includes('POST ledger_entries'));
+  const b = await P.finalizePayment('rzp_e1', 'pay_9', 600000); assert.equal(b.already, true); assert.equal(calls.filter((c) => c === 'POST ledger_entries').length, 1, 'accounts entry only once');
+});

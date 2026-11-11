@@ -2,13 +2,15 @@
 import { useEffect } from 'react';
 import { useLoad, sb, must, Page, Card, Spin, Err, Btn, F, useForm, useAction } from './kit';
 import { rupeesToPaise } from '@/lib/accounting';
+import { pinApi, setToken } from '@/lib/adminApi';
+import { useState } from 'react';
 const get = (rows, k, d) => ({ ...d, ...(rows.find((r) => r.key === k)?.value || {}) });
 export default function Settings() {
   const { data, error } = useLoad(async () => must(await sb().from('settings').select('key,value')));
   if (error) return <Page title="Settings"><Err e={error} /></Page>; if (!data) return <Page title="Settings"><Spin /></Page>;
   return (<Page title="Settings">
     <Business rows={data} /><Gst rows={data} /><Shipping rows={data} />
-    <Card title="Install this app"><p className="ad-help" style={{ margin: 0 }}>On iPhone: open this page in Safari, tap Share, then "Add to Home Screen". On Android: open the browser menu and tap "Install app". It then opens like any other app.</p></Card>
+    <PinCard /><InstallCard />
     <Card title="Sign out"><Btn variant="ghost" onClick={() => sb().auth.signOut()}>Sign out of this device</Btn></Card>
   </Page>);
 }
@@ -43,4 +45,25 @@ function Shipping({ rows }) {
   return (<Card title="Shipping"><form className="ad-form" onSubmit={(e) => { e.preventDefault(); run(() => save('shipping', { flat_paise: rupeesToPaise(f.v.flat), free_above_paise: rupeesToPaise(f.v.free) }, true), 'Saved'); }}>
     <F form={f} k="flat" label="Shipping charge per order (₹)" type="money" rule="money" required /><F form={f} k="free" label="Free shipping above (₹)" type="money" rule="money" hint="Enter 0 for no free shipping" />
     <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn></div></form></Card>);
+}
+
+function PinCard() {
+  const [run, busy] = useAction(); const [def, setDef] = useState(false); const f = useForm({ current: '', next: '', again: '' });
+  useEffect(() => { try { setDef(!!sessionStorage.getItem('tbb-defpin')); } catch {} }, []);
+  const submit = (e) => { e.preventDefault(); run(async () => {
+    if (!/^\d{4}$/.test(f.v.next)) throw new Error('The new PIN must be exactly 4 digits.'); if (f.v.next !== f.v.again) throw new Error('The two new PINs do not match.');
+    const r = await pinApi({ action: 'change', current: f.v.current, next: f.v.next });
+    if (!r.ok) throw new Error(r.status === 401 ? 'The current PIN is not right.' : r.status === 429 ? 'Too many wrong tries. Please wait 15 minutes.' : 'Could not change the PIN. Please try again.');
+    setToken(r.token); try { sessionStorage.setItem('tbb-defpin', ''); } catch {} setDef(false); f.reset({ current: '', next: '', again: '' });
+  }, 'PIN changed. Other devices will ask for the new PIN.'); };
+  const dg = { type: 'password', rule: 'digits', required: true, inputMode: 'numeric', maxLength: 4, autoComplete: 'off' };
+  return (<Card title="Device PIN"><p className="ad-help" style={{ marginTop: 0 }}>{def ? 'You are still using the starting PIN (0000). Please change it.' : 'A new device asks for this PIN the first time it signs in.'}</p>
+    <form className="ad-form" onSubmit={submit}><F form={f} k="current" label="Current PIN" {...dg} /><div /><F form={f} k="next" label="New PIN" {...dg} /><F form={f} k="again" label="New PIN again" {...dg} />
+      <div className="ad-actions full"><Btn busy={busy} icon="check">Change PIN</Btn><Btn type="button" variant="ghost" onClick={() => { setToken(''); location.reload(); }}>Lock this device now</Btn></div></form></Card>);
+}
+function InstallCard() {
+  const [can, setCan] = useState(false); useEffect(() => { setCan(!!window.__bip); }, []);
+  const install = async () => { const e = window.__bip; if (!e) return; e.prompt(); await e.userChoice; window.__bip = null; setCan(false); };
+  return (<Card title="Install this app"><p className="ad-help" style={{ marginTop: 0 }}>The app always opens at <b>/admin</b> on your website. Install it to get an app icon on your phone.</p>
+    {can && <Btn icon="download" onClick={install}>Install</Btn>}<p className="ad-help">iPhone: open this page in Safari, tap Share, then "Add to Home Screen". Android: tap the menu, then "Install app".</p></Card>);
 }

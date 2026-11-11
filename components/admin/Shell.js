@@ -6,9 +6,11 @@ import Icon from '@/components/Icons';
 import { Login } from '@/components/Account';
 import { supabase } from '@/lib/supabase-browser';
 import { ToastProvider } from './kit';
+import PinGate from './PinGate';
+import { pinApi, getToken, setToken } from '@/lib/adminApi';
 
 export const NAV = [
-  ['/admin', 'Home', 'home'], ['/admin/orders', 'Orders', 'bag'], ['/admin/workshops', 'Workshops', 'calendar'], ['/admin/products', 'Store', 'tag'],
+  ['/admin', 'Home', 'home'], ['/admin/orders', 'Orders', 'bag'], ['/admin/workshops', 'Workshops', 'calendar'], ['/admin/classes', 'Classes', 'ticket'], ['/admin/products', 'Store', 'tag'],
   ['/admin/customers', 'Customers', 'user'], ['/admin/inbox', 'Inbox', 'mail'], ['/admin/money', 'Money', 'coin'], ['/admin/tools', 'Tools', 'tool'],
   ['/admin/photos', 'Photos', 'image'], ['/admin/settings', 'Settings', 'gear'],
 ];
@@ -17,6 +19,7 @@ const active = (p, h) => (h === '/admin' ? p === '/admin' : p.startsWith(h));
 
 export default function AdminShell({ children }) {
   const sb = supabase(); const path = usePathname(); const [state, setState] = useState('loading'); const [user, setUser] = useState(null);
+  useEffect(() => { const h = (e) => { e.preventDefault(); window.__bip = e; }; window.addEventListener('beforeinstallprompt', h); return () => window.removeEventListener('beforeinstallprompt', h); }, []);
   useEffect(() => { if ('serviceWorker' in navigator) navigator.serviceWorker.register('/admin/sw.js', { scope: '/admin' }).catch(() => {}); }, []);
   useEffect(() => {
     if (!sb) { setState('nodb'); return; }
@@ -24,7 +27,12 @@ export default function AdminShell({ children }) {
     const check = async (session) => {
       if (!session) { if (on) { setUser(null); setState('login'); } return; }
       const { data } = await sb.from('profiles').select('role,full_name').eq('id', session.user.id).single();
-      if (!on) return; setUser({ ...session.user, name: data?.full_name }); setState(data?.role === 'admin' ? 'ok' : 'denied');
+      if (!on) return; setUser({ ...session.user, name: data?.full_name });
+      if (data?.role !== 'admin') { setState('denied'); return; }
+      const r = await pinApi({ action: 'status', token: getToken() });                       // is this device already trusted?
+      if (!on) return; if (r.status === 503) { setState('pin-setup'); return; }
+      try { sessionStorage.setItem('tbb-defpin', r.defaultPin ? '1' : ''); } catch {}
+      if (r.trusted) { setState('ok'); return; } setToken(''); setState('pin');
     };
     sb.auth.getSession().then(({ data }) => check(data.session));
     const { data: sub } = sb.auth.onAuthStateChange((_e, s) => check(s));
@@ -34,6 +42,7 @@ export default function AdminShell({ children }) {
   if (state === 'loading') return <div className="ad-center"><p>Loading…</p></div>;
   if (state === 'nodb') return <div className="ad-center"><p>The app is not connected to its database yet.</p></div>;
   if (state === 'login') return (<div className="ad-center"><div className="ad-login"><img src="/icons/icon-192.png" alt="Thin Black Brush" width="72" height="72" /><h1>TBB Studio</h1><p>Sign in to manage your business.</p><Login sb={sb} /></div></div>);
+  if (state === 'pin' || state === 'pin-setup') return <PinGate email={user?.email} notConfigured={state === 'pin-setup'} onDone={(def) => { try { sessionStorage.setItem('tbb-defpin', def ? '1' : ''); } catch {} setState('ok'); }} onSignOut={() => sb.auth.signOut()} />;
   if (state === 'denied') return (<div className="ad-center"><div className="ad-login"><h1>No access</h1><p>{user?.email} is not an owner account. Please sign in with the owner email.</p><button className="ad-btn" onClick={() => sb.auth.signOut()}>Sign out</button></div></div>);
   return (
     <ToastProvider><div className="ad-app">

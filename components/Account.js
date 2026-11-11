@@ -12,7 +12,7 @@ export function Login({ sb }) {
   const [step, setStep] = useState('email'); const [email, setEmail] = useState(''); const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false);
   async function sendCode(e) {
     e.preventDefault(); setBusy(true); setMsg('');
-    const { error } = await sb.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true } });
+    const { error } = await sb.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true, emailRedirectTo: `${window.location.origin}/account` } });
     setBusy(false); if (error) setMsg('We could not send the code. Please check the email address and try again.'); else setStep('code');
   }
   async function verify(e) {
@@ -31,12 +31,13 @@ export function Login({ sb }) {
       {step === 'email' ? (
         <form autoComplete="off" onSubmit={sendCode} className="form" style={{ margin: 0 }}>
           <label><span>Email <i>*</i></span><input type="email" required value={email} onChange={(e) => setEmail(cleanEmail(e.target.value))} autoComplete="off" autoCapitalize="none" spellCheck={false} /></label>
-          <button className="btn" disabled={busy}><Icon n="mail" size={17} /><span>{busy ? 'Sending…' : 'Email me a code'}</span></button>
+          <button className="btn" disabled={busy}><Icon n="mail" size={17} /><span>{busy ? 'Sending…' : 'Email me a sign-in link'}</span></button>
         </form>) : (
         <form autoComplete="off" onSubmit={verify} className="form" style={{ margin: 0 }}>
-          <p className="notice" style={{ margin: 0 }}>We sent a code to {email}. It can take a minute to arrive.</p>
-          <label><span>Code <i>*</i></span><input name="code" required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6,8}" maxLength={8} placeholder="6-digit code" /></label>
-          <button className="btn" disabled={busy}><Icon n="check" size={17} /><span>{busy ? 'Checking…' : 'Log in'}</span></button>
+          <p className="notice" style={{ margin: 0 }}>We emailed a sign-in link to {email}. Open it on this device to log in. It can take a minute to arrive, so please check your spam folder too.</p>
+          <p className="small center" style={{ margin: 0 }}>If your email shows a code instead of a link, type it here.</p>
+          <label><span>Code <em>(only if your email has one)</em></span><input name="code" required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6,8}" maxLength={8} placeholder="6-digit code" /></label>
+          <button className="btn" disabled={busy}><Icon n="check" size={17} /><span>{busy ? 'Checking…' : 'Log in with the code'}</span></button>
           <button type="button" className="btn ghost" onClick={() => { setStep('email'); setMsg(''); }}>Use a different email</button>
         </form>)}
       {msg && <p className="notice err" role="alert">{msg}</p>}

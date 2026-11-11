@@ -73,3 +73,8 @@ test('finalize: a class enrolment is confirmed once, with ledger entry', async (
   const a = await P.finalizePayment('rzp_e1', 'pay_9', 600000); assert.equal(a.kind, 'enrolment'); assert.equal(a.already, undefined); assert.ok(calls.includes('POST ledger_entries'));
   const b = await P.finalizePayment('rzp_e1', 'pay_9', 600000); assert.equal(b.already, true); assert.equal(calls.filter((c) => c === 'POST ledger_entries').length, 1, 'accounts entry only once');
 });
+
+test('receipts link the studio address to Google Maps', () => {
+  const inv = I.buildInvoice({ kind: 'order', row: { name: 'A', email: 'a@b.co', phone: '1', total_paise: 100, shipping_paise: 0, status: 'paid', invoice_no: 1, created_at: '2026-11-11T00:00:00Z' }, items: [{ title: 'X', qty: 1, unit_paise: 100 }], settings: { business: { address: '2nd Floor, Chennai' } } });
+  const h = I.renderInvoiceHTML(inv); assert.ok(h.includes('href="https://maps.app.goo.gl/WMv8SSuAmd6C3mjK7"')); assert.ok(h.includes('2nd Floor, Chennai'));
+});

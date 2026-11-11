@@ -8,7 +8,7 @@ const Card = ({ w, off }) => (<Link href={`/workshops/${w.slug}`} className="car
   <div className="body"><span className={`tag ${off ? 'off' : ''}`}>{w.cancelled ? 'Cancelled' : off ? 'Ended' : 'Open'}</span><h3>{w.title}</h3><p className="small">{fmtDate(w.starts_at)}</p><p className="small">{w.venue}</p></div></Link>);
 export default async function Workshops() {
   const all = await getWorkshops();
-  const up = all.filter(w => !isPast(w) && !w.cancelled), past = all.filter(w => isPast(w) || w.cancelled).reverse();
+  const up = all.filter(w => !isPast(w) && !w.cancelled), past = all.filter(w => isPast(w) || w.cancelled).sort((a, b) => new Date(b.starts_at) - new Date(a.starts_at)).slice(0, 3);
   return (<main>
     <section className="pagehead"><div className="wrap"><p className="eyebrow">Learn with TBB</p><h1>Workshops</h1><p className="lead">Super excited to explore art with you. Don't miss it!</p></div></section>
     <section className="section"><div className="wrap"><div className="head"><h2>Upcoming</h2></div>

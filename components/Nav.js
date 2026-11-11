@@ -10,13 +10,17 @@ const links = [['/', 'Home'], ['/workshops', 'Workshops'], ['/writing-classes', 
 export default function Nav() {
   const p = usePathname(); const [open, setOpen] = useState(false); const [signedIn, setSignedIn] = useState(false); const { count } = useCart();
   useEffect(() => { const sb = supabase(); if (!sb) return; sb.auth.getSession().then(({ data }) => setSignedIn(!!data.session)); const { data } = sb.auth.onAuthStateChange((_e, s) => setSignedIn(!!s)); return () => data.subscription.unsubscribe(); }, []);
+  useEffect(() => { document.body.style.overflow = open ? 'hidden' : ''; return () => { document.body.style.overflow = ''; }; }, [open]);
+  useEffect(() => { setOpen(false); }, [p]);
   return (
     <nav className="nav"><div className="wrap">
       <Link href="/" className="logo" aria-label="Thin Black Brush home"><img src={images.logo} alt="Thin Black Brush" width="119" height="46" /></Link>
-      <ul className={open ? 'open' : ''} onClick={() => setOpen(false)}>
+      <ul id="site-menu" className={open ? 'open' : ''} onClick={() => setOpen(false)}>
         {links.map(([h, t]) => <li key={h}><Link href={h} className={(h === '/' ? p === '/' : p.startsWith(h)) ? 'on' : ''}>{t}</Link></li>)}
+        <li className="only-m"><Link href="/account" className={p.startsWith('/account') ? 'on' : ''}>{signedIn ? 'Account' : 'Log in'}</Link></li>
       </ul>
       <div className="tools"><Link href="/cart" className="cartlink" aria-label={`Cart, ${count} items`}><Icon n="paperbag" size={22} />{count > 0 && <span className="badge">{count}</span>}</Link><Link href="/account" className="hide-m"><Icon n="user" size={16} />{signedIn ? 'Account' : 'Log in'}</Link>
-        <button className="burger" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? '✕' : '☰'}</button></div>
+        <button className="burger" aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open} aria-controls="site-menu" onClick={() => setOpen(!open)}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">{open ? <path d="M6 6l12 12M18 6 6 18" /> : <path d="M4 8h16M4 16h16" />}</svg></button></div>
     </div></nav>);
 }

@@ -17,12 +17,13 @@ export default function Settings() {
 async function save(key, value, pub) { must(await sb().from('settings').upsert({ key, value, is_public: pub })); }
 function Business({ rows }) {
   const b = get(rows, 'business', {}); const [run, busy] = useAction();
-  const f = useForm({ name: b.name || 'Thin Black Brush', phone: b.phone || '', phone2: b.phone2 || '', email: b.email || '', address: b.address || '', instagram: b.instagram || '', facebook: b.facebook || '', whatsapp: b.whatsapp || '', upi: b.upi || '' });
+  const f = useForm({ name: b.name || 'Thin Black Brush', phone: b.phone || '', phone2: b.phone2 || '', map: b.map || '', email: b.email || '', address: b.address || '', instagram: b.instagram || '', facebook: b.facebook || '', whatsapp: b.whatsapp || '', upi: b.upi || '' });
   return (<Card title="Business details"><p className="ad-help" style={{ marginTop: 0 }}>These appear on receipts and invoices.</p>
     <form className="ad-form" onSubmit={(e) => { e.preventDefault(); run(() => save('business', f.v, true), 'Saved'); }}>
       <F form={f} k="name" label="Business name" rule="name" required /><F form={f} k="email" label="Email" type="email" rule="email" required />
       <F form={f} k="phone" label="Phone" type="tel" rule="phone" required /><F form={f} k="phone2" label="Second phone" type="tel" rule="phone" />
       <div className="full"><F form={f} k="address" label="Address" type="textarea" rule="text" rows={3} required /></div>
+      <div className="full"><F form={f} k="map" label="Google Maps link" type="url" hint="Customers tap the address in receipts to open this" /></div>
       <F form={f} k="instagram" label="Instagram link" type="url" /><F form={f} k="facebook" label="Facebook link" type="url" />
       <F form={f} k="whatsapp" label="WhatsApp number" rule="digits" hint="With country code, e.g. 919962050962" /><F form={f} k="upi" label="UPI ID" />
       <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn></div></form></Card>);

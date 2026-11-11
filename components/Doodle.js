@@ -1,5 +1,0 @@
-// small hand-drawn accents, used sparingly
-export const Squiggle = ({ w = 220 }) => (<svg className="doodle" width={w} height="16" viewBox="0 0 220 16" fill="none" stroke="currentColor" strokeWidth="2.500" strokeLinecap="round" aria-hidden="true"><path d="M3 9c14-9 26-9 40 0s26 9 40 0 26-9 40 0 26 9 40 0 26-9 40 0 8 3 11 1" /></svg>);
-export const Star = ({ s = 26 }) => (<svg className="doodle" width={s} height={s} viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M16 3c1 7 3 10 13 13-10 3-12 6-13 13-1-7-3-10-13-13 10-3 12-6 13-13Z" /></svg>);
-export const Arrow = () => (<svg className="doodle" width="64" height="48" viewBox="0 0 64 48" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 6c18-4 40 2 48 30" /><path d="M42 30l10 8 6-12" /></svg>);
-export const Note = ({ children }) => <span className="hand">{children}</span>;

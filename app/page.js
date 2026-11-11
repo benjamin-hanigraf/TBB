@@ -1,6 +1,5 @@
 import Btn from '@/components/Btn';
 import InstagramFeed from '@/components/InstagramFeed';
-import { Squiggle, Star, Note } from '@/components/Doodle';
 import { rupees, isPast, fmtDate } from '@/lib/data';
 import { getWorkshops, getProducts, getImages } from '@/lib/db';
 import Link from 'next/link';
@@ -12,7 +11,7 @@ export default async function Home() {
   return (<main>
     <section className="hero"><div className="wrap">
       <p className="eyebrow">The Artists' Commonroom</p>
-      <h1>Learn to write<br />beautifully.</h1><Squiggle w={200} />
+      <h1>Learn to write<br />beautifully.</h1>
       <p className="lead">Calligraphy and art workshops, handwriting classes and handcrafted art supplies, made with love in Chennai.</p>
       <div className="row"><Btn href="/workshops" icon="arrow">Book now</Btn><Btn href="/store" variant="ghost" icon="bag">Shop</Btn></div>
       <div className="shot"><img src={images.hero} alt="Hands practising modern calligraphy" /></div>
@@ -44,7 +43,7 @@ export default async function Home() {
     </div></section>
 
     <section className="section dark"><div className="wrap head">
-      <Star /><p className="eyebrow" style={{marginTop:14}}>Custom invitations</p><h2>Design with us.</h2>
+      <p className="eyebrow">Custom invitations</p><h2>Design with us.</h2>
       <p className="lead">For corporate events, weddings and birthdays. We take care of the design and the printing.</p>
       <div className="row c"><Btn href="/custom-invitations" variant="light" icon="mail">Enquire</Btn></div></div></section>
 

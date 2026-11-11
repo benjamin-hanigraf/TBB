@@ -1,19 +1,21 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { images } from '@/lib/data';
 import Icon from './Icons';
-const links = [['/workshops', 'Workshops'], ['/writing-classes', 'Classes'], ['/store', 'Store'], ['/custom-invitations', 'Invitations'], ['/services', 'Services'], ['/collaborations', 'Collaborations'], ['/contact', 'Contact']];
+import { supabase } from '@/lib/supabase-browser';
+const links = [['/', 'Home'], ['/workshops', 'Workshops'], ['/writing-classes', 'Classes'], ['/store', 'Store'], ['/custom-invitations', 'Invitations'], ['/services', 'Services'], ['/collaborations', 'Collaborations'], ['/contact', 'Contact']];
 export default function Nav() {
-  const p = usePathname(); const [open, setOpen] = useState(false);
+  const p = usePathname(); const [open, setOpen] = useState(false); const [signedIn, setSignedIn] = useState(false);
+  useEffect(() => { const sb = supabase(); if (!sb) return; sb.auth.getSession().then(({ data }) => setSignedIn(!!data.session)); const { data } = sb.auth.onAuthStateChange((_e, s) => setSignedIn(!!s)); return () => data.subscription.unsubscribe(); }, []);
   return (
     <nav className="nav"><div className="wrap">
       <Link href="/" className="logo" aria-label="Thin Black Brush home"><img src={images.logo} alt="Thin Black Brush" /></Link>
       <ul className={open ? 'open' : ''} onClick={() => setOpen(false)}>
-        {links.map(([h, t]) => <li key={h}><Link href={h} className={p.startsWith(h) ? 'on' : ''}>{t}</Link></li>)}
+        {links.map(([h, t]) => <li key={h}><Link href={h} className={(h === '/' ? p === '/' : p.startsWith(h)) ? 'on' : ''}>{t}</Link></li>)}
       </ul>
-      <div className="tools"><Link href="/account" className="hide-m"><Icon n="user" size={16} />Log in</Link>
+      <div className="tools"><Link href="/account" className="hide-m"><Icon n="user" size={16} />{signedIn ? 'Account' : 'Log in'}</Link>
         <button className="burger" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? '✕' : '☰'}</button></div>
     </div></nav>);
 }

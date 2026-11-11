@@ -1,5 +1,4 @@
 import '@fontsource-variable/inter';
-import '@fontsource/caveat/500.css';
 import './globals.css';
 import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';

@@ -23,8 +23,9 @@ function fix(s, heading) {
   const trimmed = t.trimEnd(); const tail = t.slice(trimmed.length);
   const words = trimmed.split(/\s+/);
   if (words.length >= 3 && !heading) {           // glue the last two words (headings are balanced by CSS instead)
-    const i = trimmed.lastIndexOf(' ');
-    if (i > 0 && trimmed.length - i <= 16) t = trimmed.slice(0, i) + ' ' + trimmed.slice(i + 1) + tail;
+    const i = trimmed.lastIndexOf(' '); const prev = trimmed.lastIndexOf(' ', i - 1);
+    // never build a run too wide for a narrow card
+    if (i > 0 && trimmed.length - prev - 1 <= 22) t = trimmed.slice(0, i) + '\u00A0' + trimmed.slice(i + 1) + tail;
   }
   return t;
 }

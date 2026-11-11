@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Btn from '@/components/Btn';
+import BookWorkshop from '@/components/BookWorkshop';
 import Icon from '@/components/Icons';
 import { rupees, isPast, fmtDate, business } from '@/lib/data';
 import { getWorkshops, getWorkshop } from '@/lib/db';
@@ -21,8 +22,9 @@ export default async function Workshop({ params }) {
           <li><Icon n="pin" /><span><b>{w.venue}</b><br /><span className="muted">{w.address}</span></span></li>
           <li><Icon n="ticket" /><span>{rupees(w.price)} per person, kit included{w.friendPrice ? <><br /><span className="muted">{rupees(w.friendPrice)} each when you bring a friend</span></> : null}</span></li>
         </ul>
-        <div className="row"><Btn icon="calendar" disabled>{closed ? 'Booking closed' : 'Reserve'}</Btn><Btn href={business.whatsapp} variant="ghost" icon="chat">WhatsApp</Btn></div>
-        {closed ? <p className="fine">This workshop is over. <Link href="/workshops" style={{textDecoration:'underline'}}>See upcoming workshops</Link>.</p> : <p className="fine">Online booking opens soon. Until then, reserve your seat on WhatsApp.</p>}
+        {closed || w.seatsLeft === 0 ? <div className="row"><Btn icon="calendar" disabled>{w.cancelled ? 'Cancelled' : isPast(w) ? 'Booking closed' : 'Sold out'}</Btn><Btn href={business.whatsapp} variant="ghost" icon="chat">WhatsApp</Btn></div>
+          : <><div className="row"><BookWorkshop slug={w.slug} title={w.title} price={w.price} friendPrice={w.friendPrice} seatsLeft={w.seatsLeft} /><Btn href={business.whatsapp} variant="ghost" icon="chat">WhatsApp</Btn></div></>}
+        {closed && <p className="fine">This workshop is over. <Link href="/workshops" style={{textDecoration:'underline'}}>See upcoming workshops</Link>.</p>}
       </div></div></section>
     <section className="section soft"><div className="wrap"><div className="head"><h2>About this workshop</h2>{w.description.map((t, i) => <p key={i} className="lead">{t}</p>)}</div>
       <div className="cols2"><div><h3>You will learn</h3><ul className="plist">{w.learn.map(x => <li key={x}>{x}</li>)}</ul></div>

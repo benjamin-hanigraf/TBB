@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import Btn from '@/components/Btn';
+import AddToCart from '@/components/AddToCart';
 import Gallery from '@/components/Gallery';
 import Icon from '@/components/Icons';
 import { rupees, returnPolicy, business } from '@/lib/data';
@@ -16,8 +17,7 @@ export default async function Product({ params }) {
       <h1 style={{marginTop:p.preorder?14:0}}>{p.title}</h1><p className="price">{rupees(p.price)}</p>
       <p style={{marginTop:20,color:'#424245'}}>{p.text}</p>
       <ul className="facts">{p.details.map(d => <li key={d}><Icon n="check" size={16} /><span>{d}</span></li>)}</ul>
-      <div className="row"><Btn icon="bag" disabled>{out ? 'Out of stock' : p.preorder ? 'Pre-order' : 'Add to cart'}</Btn><Btn href={business.whatsapp} variant="ghost" icon="chat">WhatsApp</Btn></div>
-      <p className="fine">Online checkout opens soon. Until then, order on WhatsApp.</p>
+      <div className="row"><AddToCart product={{ slug: p.slug, title: p.title, price: p.price, image: p.images[0], stock: p.stock, preorder: p.preorder }} label={p.preorder ? 'Pre-order' : 'Add to cart'} /><Btn href={business.whatsapp} variant="ghost" icon="chat">WhatsApp</Btn></div>
       {p.shipping && <p className="fine"><b>Shipping.</b> {p.shipping}</p>}<p className="fine"><b>Returns.</b> {returnPolicy}</p></div>
   </div></section></main>);
 }

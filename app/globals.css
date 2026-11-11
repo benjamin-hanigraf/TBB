@@ -166,3 +166,11 @@ body{overflow-wrap:break-word}
 .form label.check{display:flex;gap:10px;align-items:center}.form label.check input{width:20px;height:20px;flex:none;padding:0;height:20px;appearance:auto;-webkit-appearance:checkbox}.form label.check span{font-weight:400}
 
 .level h3{font-size:19px}.level{padding-left:20px;padding-right:20px}.level p{text-wrap:balance}
+/* cart & checkout */
+.cartlink{position:relative}.badge{position:absolute;top:-7px;right:-9px;min-width:17px;height:17px;border-radius:9px;background:var(--ink);color:#fff;font-size:11px;display:grid;place-items:center;padding:0 4px}
+.qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:980px;background:#fff}.qty button{width:36px;height:36px;border:0;background:none;cursor:pointer;font-size:18px;color:var(--ink)}.qty span{min-width:24px;text-align:center;font-size:15px}
+.sum{display:grid;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}.sum div{display:flex;justify-content:space-between}.sum .tot{font-weight:600;font-size:19px}
+.skip{position:absolute;left:-9999px;top:8px;background:#000;color:#fff;padding:10px 16px;border-radius:8px;z-index:100}.skip:focus{left:8px}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important;animation:none!important}}
+@media print{nav,footer,.wa,.skip,.no-print,.pagehead{display:none!important}body{font-size:12pt}.section{padding:0!important}}

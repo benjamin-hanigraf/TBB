@@ -12,11 +12,10 @@ import { supabase } from '@/lib/supabase-browser';
 import { rupees } from '@/lib/data';
 export default function Checkout() {
   const { items, subtotal, itemsTotal, gstAdd, clear } = useCart(); const ship = useShipping()(subtotal); const router = useRouter();
-  const [pre, setPre] = useState({}); const [saved, setSaved] = useState([]); const [busy, setBusy] = useState(false); const [err, setErr] = useState(''); const [pick, setPick] = useState('');
+  const [pre, setPre] = useState({}); const [addr, setAddr] = useState({}); const [busy, setBusy] = useState(false); const [err, setErr] = useState('');
   useEffect(() => { const sb = supabase(); if (!sb) return; sb.auth.getSession().then(async ({ data }) => { const u = data.session?.user; if (!u) return;
-    const [{ data: p }, { data: a }] = await Promise.all([sb.from('profiles').select('full_name,phone').eq('id', u.id).single(), sb.from('addresses').select('*').eq('user_id', u.id)]);
-    setPre({ name: p?.full_name || '', email: u.email || '', phone: p?.phone || '' }); setSaved(a || []); }); }, []);
-  const addr = saved.find((a) => a.id === pick) || {};
+    const [{ data: p }, { data: last }] = await Promise.all([sb.from('profiles').select('full_name,phone').eq('id', u.id).single(), sb.from('orders').select('shipping_address,name,phone').eq('user_id', u.id).order('created_at', { ascending: false }).limit(1)]);
+    setPre({ name: p?.full_name || last?.[0]?.name || '', email: u.email || '', phone: p?.phone || last?.[0]?.phone || '' }); setAddr(last?.[0]?.shipping_address || {}); }); }, []);
   if (!items.length) return <div className="center"><p className="lead" style={{ marginTop: 0 }}>Your bag is empty.</p><div className="row c"><Btn href="/store" icon="bag">Shop</Btn></div></div>;
   async function submit(e) {
     e.preventDefault(); setBusy(true); setErr('');
@@ -40,13 +39,13 @@ export default function Checkout() {
       <label><span>Email <i>*</i></span><input name="email" type="email" required defaultValue={pre.email} key={'e' + pre.email} autoComplete="off" {...ruleProps('email')} /></label>
       <label><span>Phone <i>*</i></span><input name="phone" type="tel" required defaultValue={pre.phone} key={'p' + pre.phone} pattern="[0-9+\s\-]{10,16}" autoComplete="off" {...ruleProps('phone')} /></label>
       <h3 style={{ marginTop: 12 }}>Delivery address</h3>
-      {saved.length > 0 && <label><span>Saved addresses</span><select value={pick} onChange={(e) => setPick(e.target.value)}><option value="">Enter a new address</option>{saved.map((a) => <option key={a.id} value={a.id}>{a.label} · {a.line1}</option>)}</select></label>}
-      <label key={'r' + pick}><span>Recipient name <em>(optional)</em></span><input name="recipient" defaultValue={addr.recipient || ''} {...ruleProps('name')} /></label>
-      <label key={'l1' + pick}><span>Address line 1 <i>*</i></span><input name="line1" required defaultValue={addr.line1 || ''} autoComplete="off" {...ruleProps('text')} /></label>
-      <label key={'l2' + pick}><span>Address line 2 <em>(optional)</em></span><input name="line2" defaultValue={addr.line2 || ''} autoComplete="off" {...ruleProps('text')} /></label>
-      <label key={'c' + pick}><span>City <i>*</i></span><input name="city" required defaultValue={addr.city || ''} autoComplete="off" {...ruleProps('text')} /></label>
-      <label key={'s' + pick}><span>State <i>*</i></span><input name="state" required defaultValue={addr.state || ''} autoComplete="off" {...ruleProps('text')} /></label>
-      <label key={'z' + pick}><span>Pincode <i>*</i></span><input name="pincode" required defaultValue={addr.pincode || ''} inputMode="numeric" pattern="[0-9]{6}" autoComplete="off" {...ruleProps('pin')} /></label>
+      {addr.line1 && <p className="small" style={{ margin: 0 }}>Filled in from your last order. Change anything you need.</p>}
+      <label key={'r' + (addr.line1 || '')}><span>Recipient name <em>(optional)</em></span><input name="recipient" defaultValue={addr.recipient || ''} {...ruleProps('name')} /></label>
+      <label key={'l1' + (addr.line1 || '')}><span>Address line 1 <i>*</i></span><input name="line1" required defaultValue={addr.line1 || ''} autoComplete="off" {...ruleProps('text')} /></label>
+      <label key={'l2' + (addr.line1 || '')}><span>Address line 2 <em>(optional)</em></span><input name="line2" defaultValue={addr.line2 || ''} autoComplete="off" {...ruleProps('text')} /></label>
+      <label key={'c' + (addr.line1 || '')}><span>City <i>*</i></span><input name="city" required defaultValue={addr.city || ''} autoComplete="off" {...ruleProps('text')} /></label>
+      <label key={'s' + (addr.line1 || '')}><span>State <i>*</i></span><input name="state" required defaultValue={addr.state || ''} autoComplete="off" {...ruleProps('text')} /></label>
+      <label key={'z' + (addr.line1 || '')}><span>Pincode <i>*</i></span><input name="pincode" required defaultValue={addr.pincode || ''} inputMode="numeric" pattern="[0-9]{6}" autoComplete="off" {...ruleProps('pin')} /></label>
       <label><span>Gift message <em>(optional)</em></span><textarea name="gift" maxLength={500} {...ruleProps('sentence')} /></label>
       <div className="sum" style={{ marginTop: 8 }}>{items.map((i) => <div key={i.slug}><span>{i.title} × {i.qty}</span><span>{rupees(i.price * i.qty)}</span></div>)}
         {gstAdd > 0 && <div><span>GST (18%)</span><span>{rupees(gstAdd)}</span></div>}<div><span>Shipping</span><span>{ship === null ? '…' : ship ? rupees(ship) : 'Free'}</span></div><div className="tot"><span>Total</span><span>{rupees(subtotal + (ship || 0))}</span></div></div>

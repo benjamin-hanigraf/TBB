@@ -1,4 +1,4 @@
-import Form from '@/components/Form';
+import Btn from '@/components/Btn';
 import { collaborators, memories } from '@/lib/data';
 import { getImages } from '@/lib/db';
 export const revalidate = 60;
@@ -14,9 +14,6 @@ export default async function Collabs() {
       <div className="gal">{memories.map((m, i) => <figure key={m.cap}><img src={im.memorySrc[i] || m.src} alt={m.cap} loading="lazy" /><figcaption>{m.cap}</figcaption></figure>)}</div></div></section>
     <section className="section"><div className="wrap"><div className="head"><p className="eyebrow">Artist, brand, NGO or company?</p><h2>We would love to hear from you.</h2>
       <p className="lead">If you have a project in mind, tell us about it. We are all ears.</p></div>
-      <Form kind="collaboration" submit="Send" done="Thank you for reaching out. We will be in touch soon." fields={[
-        { name: 'name', label: 'Name', required: true }, { name: 'organisation', label: 'Organisation' },
-        { name: 'email', label: 'Email', type: 'email', required: true }, { name: 'phone', label: 'Phone', type: 'tel' },
-        { name: 'message', label: 'Your idea', type: 'textarea', required: true }]} /></div></section>
+      <div className="row c"><Btn href="/contact?topic=collaboration#message-form" icon="arrow">Collaborate</Btn></div></div></section>
   </main>);
 }

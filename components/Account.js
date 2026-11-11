@@ -59,35 +59,6 @@ function Profile({ sb, user }) {
     </form>);
 }
 
-function Addresses({ sb, user }) {
-  const [rows, setRows] = useState([]); const [adding, setAdding] = useState(false);
-  const load = useCallback(() => sb.from('addresses').select('*').eq('user_id', user.id).order('created_at').then(({ data }) => setRows(data || [])), [sb, user.id]);
-  useEffect(() => { load(); }, [load]);
-  async function add(e) {
-    e.preventDefault(); const f = Object.fromEntries(new FormData(e.target));
-    await sb.from('addresses').insert({ user_id: user.id, label: f.label, recipient: f.recipient, phone: f.phone, line1: f.line1, line2: f.line2 || null, city: f.city, state: f.state, pincode: f.pincode });
-    setAdding(false); load();
-  }
-  async function del(id) { await sb.from('addresses').delete().eq('id', id); load(); }
-  return (<div className="acct-list">
-    {rows.map((a) => (<div key={a.id} className="acct-row"><div><b>{a.label}</b><p className="small">{a.recipient}{a.phone ? ` · ${a.phone}` : ''}</p><p className="small">{[a.line1, a.line2, a.city, a.state, a.pincode].filter(Boolean).join(', ')}</p></div><button className="link" onClick={() => del(a.id)}>Remove</button></div>))}
-    {!rows.length && !adding && <p className="small center">No saved addresses yet.</p>}
-    {adding ? (
-      <form autoComplete="off" onSubmit={add} className="form" style={{ margin: '16px auto 0' }}>
-        <label><span>Label <i>*</i></span><select name="label" required defaultValue=""><option value="" disabled>Select</option><option>Home</option><option>Work</option><option>Other</option></select></label>
-        <label><span>Recipient name <i>*</i></span><input name="recipient" required {...ruleProps('name')} /></label>
-        <label><span>Phone <i>*</i></span><input name="phone" type="tel" required pattern="[0-9+\s\-]{10,16}" {...ruleProps('phone')} /></label>
-        <label><span>Address line 1 <i>*</i></span><input name="line1" required {...ruleProps('text')} /></label>
-        <label><span>Address line 2 <em>(optional)</em></span><input name="line2" {...ruleProps('text')} /></label>
-        <label><span>City <i>*</i></span><input name="city" required {...ruleProps('text')} /></label>
-        <label><span>State <i>*</i></span><input name="state" required {...ruleProps('text')} /></label>
-        <label><span>Pincode <i>*</i></span><input name="pincode" required inputMode="numeric" pattern="[0-9]{6}" title="6-digit pincode" {...ruleProps('pin')} /></label>
-        <button className="btn"><Icon n="check" size={17} /><span>Save address</span></button>
-        <button type="button" className="btn ghost" onClick={() => setAdding(false)}>Cancel</button>
-      </form>) : <div className="row c"><button className="btn ghost" onClick={() => setAdding(true)}><Icon n="pin" size={17} /><span>Add address</span></button></div>}
-  </div>);
-}
-
 function History({ sb, user }) {
   const [b, setB] = useState(null); const [o, setO] = useState(null); const [cl, setCl] = useState(null);
   useEffect(() => {
@@ -124,7 +95,6 @@ export default function Account() {
     <p className="lead" style={{ marginTop: 0 }}>Signed in as {user.email}</p>
     <div className="row c"><button className="btn ghost" onClick={() => sb.auth.signOut()}><Icon n="user" size={17} /><span>Log out</span></button></div>
     <div className="acct-sec"><h2>Your details</h2><Profile sb={sb} user={user} /></div>
-    <div className="acct-sec"><h2>Saved addresses</h2><Addresses sb={sb} user={user} /></div>
     <div className="acct-sec"><h2>Your bookings and orders</h2><History sb={sb} user={user} /></div>
   </>);
 }

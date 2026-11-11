@@ -150,6 +150,8 @@ One component: `components/Icons.js`, used as `<Icon n="bag" size={18} />`.
 - Footer contact links are four round icon buttons (phone, email, Instagram, Facebook), 40px, 1px border.
 - Prices: GST is set per product (No GST / Add 18% / Includes 18%). Shop pages show "+ 18% GST" or "incl. GST" beside the price when it applies.
 - Use **Bag** everywhere, never basket or cart.
+- **One message form.** Every enquiry (message, invitation, service, collaboration, job application) uses `components/ContactForm.js` on `/contact`. Other pages never contain a form of their own: they show a button to `/contact?topic=<message|invitation|service|collaboration|hiring>#message-form` (optionally `&for=<option>` to pre-select the second drop-down). To add a topic, add it to `TOPICS` in that file and to `KINDS` in `app/api/enquiry/route.js`.
+- Checkout fills the address from the customer's last order. There are no saved-address forms.
 
 ## 12. Motion
 

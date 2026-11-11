@@ -1,4 +1,4 @@
-import Form from '@/components/Form';
+import ContactForm from '@/components/ContactForm';
 import Icon from '@/components/Icons';
 import Btn from '@/components/Btn';
 import { business as b } from '@/lib/data';
@@ -19,12 +19,9 @@ export default function Contact() {
           <address className="cl"><a href={b.map} target="_blank" rel="noopener noreferrer" style={{ display: 'grid', gap: 3 }}>{b.address.map((l) => <span key={l}>{l}</span>)}</a></address>
           <Btn href={b.map} variant="ghost" icon="arrow" className="sm" target="_blank" rel="noopener noreferrer">Directions</Btn></div></div>
       <div className="row c"><Btn href={b.whatsapp} icon="chat">WhatsApp</Btn><Btn href={b.instagram} variant="ghost" icon="instagram">Instagram</Btn></div></div></section>
-    <section className="section soft"><div className="wrap"><div className="head"><p className="eyebrow">We are hiring</p><h2>Want to teach or work with us?</h2>
-      <p className="lead">If you have an undying passion for art and teaching, we have been looking for you.</p></div>
-      <Form kind="hiring" submit="Apply" done="Thank you for getting in touch. We will be in touch soon." fields={[
-        { name: 'name', label: 'Name', required: true }, { name: 'email', label: 'Email', type: 'email', required: true }, { name: 'phone', label: 'Phone', type: 'tel', required: true },
-        { name: 'address', label: 'Address' }, { name: 'instagram', label: 'Instagram handle', placeholder: '@yourhandle' },
-        { name: 'message', label: 'Experience', type: 'textarea', required: true },
-        { name: 'employed', label: 'Are you currently employed?', type: 'select', required: true, options: ['Yes', 'No'] }]} /></div></section>
+    <section className="section soft" id="message-form"><div className="wrap"><div className="head"><p className="eyebrow">Write to us</p><h2>How can we help?</h2>
+      <p className="lead">Choose what this is about and we will ask only what we need. Looking to teach or work with us? Choose "A job application".</p>
+      <div className="row c"><Btn href="/contact?topic=hiring#message-form" variant="ghost" icon="arrow">Apply</Btn></div></div>
+      <ContactForm /></div></section>
   </main>);
 }

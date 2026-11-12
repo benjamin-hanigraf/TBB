@@ -59,8 +59,8 @@ function Reports({ sum, fy, gstOn, kind, exportAll }) {
 async function sourceLink(e) {
   const id = e.source_id; if (!id) return null; const c = sb(); const one = async (t, cols) => (await c.from(t).select(cols).eq('id', id).maybeSingle()).data;
   if (await one('orders', 'id')) return `/manager/orders?open=${id}`;
-  const b = await one('bookings', 'workshop_id'); if (b) return `/manager/programs?tab=workshops&people=${b.workshop_id}`;
-  const en = await one('class_enrolments', 'class_id'); if (en) return `/manager/programs?tab=classes&people=${en.class_id}`;
+  const b = await one('bookings', 'workshop_id'); if (b) return `/manager/workshops?people=${b.workshop_id}`;
+  const en = await one('class_enrolments', 'class_id'); if (en) return `/manager/classes?people=${en.class_id}`;
   if (await one('invoices', 'id')) return `/manager/money?tab=invoices&open=${id}`;
   const p = await one('invoice_payments', 'invoice_id'); if (p) return `/manager/money?tab=invoices&open=${p.invoice_id}`;
   return null;

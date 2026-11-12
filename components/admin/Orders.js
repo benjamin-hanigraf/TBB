@@ -70,7 +70,7 @@ function OrderModal({ o, onClose, onSaved }) {
       <div className="full"><F form={f} k="notes" label="Private note" type="textarea" rule="sentence" rows={2} hint="Only you see this, never the customer" /></div>
     </div>
     <div className="ad-actions"><Btn busy={busy} onClick={save} icon="check">Save</Btn><Link className="ad-btn ghost" href={`/invoice/${o.id}`} target="_blank">Receipt</Link>
-      <Link className="ad-btn ghost" href={`/manager/orders?tab=labels&order=${o.id}`}>Print label</Link>{o.tracking_number && <Btn variant="ghost" busy={busy} onClick={email} icon="mail">Tracking</Btn>}{HOLDS_STOCK.includes(o.status) && <Btn variant="ghost" onClick={() => setRefund(true)}>Refund</Btn>}</div>
+      <Link className="ad-btn ghost" href={`/manager/labels?order=${o.id}`}>Print label</Link>{o.tracking_number && <Btn variant="ghost" busy={busy} onClick={email} icon="mail">Tracking</Btn>}{HOLDS_STOCK.includes(o.status) && <Btn variant="ghost" onClick={() => setRefund(true)}>Refund</Btn>}</div>
     {refund && <RefundDialog kind="order" rows={[o]} title={`Refund · ${o.name}`} onClose={() => setRefund(false)} onDone={onSaved} />}
   </Modal>);
 }

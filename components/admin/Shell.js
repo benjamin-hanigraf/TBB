@@ -10,10 +10,13 @@ import ErrorBoundary from './ErrorBoundary';
 import { pinApi, getToken, setToken, applySession, lockDevice } from '@/lib/adminApi';
 
 export const NAV = [
-  ['/manager', 'Home', 'home'], ['/manager/planner', 'Planner', 'calendardays'], ['/manager/orders', 'Orders', 'box'], ['/manager/programs', 'Programs', 'calendar'], ['/manager/products', 'Store', 'bag'],
-  ['/manager/customers', 'Customers', 'user'], ['/manager/money', 'Money', 'note'], ['/manager/inbox', 'Inbox', 'mail'], ['/manager/settings', 'Settings', 'gear'],
+  ['/manager', 'Home', 'home'], ['/manager/planner', 'Planner', 'calendardays'], ['/manager/workshops', 'Workshops', 'workshops'], ['/manager/classes', 'Classes', 'classes'], ['/manager/orders', 'Orders', 'box'],
+  ['/manager/products', 'Store', 'bag'], ['/manager/money', 'Money', 'note'], ['/manager/inbox', 'Inbox', 'mail'], ['/manager/customers', 'Customers', 'user'], ['/manager/settings', 'Settings', 'gear'],
 ];
-const TABS = [['/manager', 'Home', 'home'], ['/manager/orders', 'Orders', 'box'], ['/manager/programs', 'Programs', 'calendar'], ['/manager/money', 'Money', 'note'], ['/manager/more', 'More', 'menu']];
+// On a phone only Home, Planner and Money stay on the bottom bar; everything else is inside More.
+const TAB_PAGES = ['/manager', '/manager/planner', '/manager/money'];
+export const MORE = NAV.filter(([h]) => !TAB_PAGES.includes(h));
+const TABS = [...NAV.filter(([h]) => TAB_PAGES.includes(h)), ['/manager/more', 'More', 'menu']];
 const active = (p, h) => (h === '/manager' ? p === '/manager' : p.startsWith(h));
 /** How many Inbox messages have not been opened yet (shown as "Inbox (2)"). */
 export async function unreadCount() {
@@ -64,7 +67,7 @@ function Inner({ children }) {
         <nav aria-label="Main">{NAV.map(([h, t, ic]) => <Link key={h} href={h} className={active(path, h) ? 'on' : ''}><AIcon n={ic} />{h === '/manager/inbox' ? withCount(t, unread) : t}</Link>)}</nav>
         <div className="ad-side-f"><a href="/" target="_blank" rel="noopener">View website ↗</a><button onClick={async () => { await lockDevice(); clearCache(); location.reload(); }}><Icon n="logout" size={15} /> Log out</button></div></aside>
       <main className="ad-main" id="main"><ErrorBoundary key={path} screen>{children}</ErrorBoundary></main>
-      <nav className="ad-tabs" aria-label="Main">{TABS.map(([h, t, ic]) => <Link key={h} href={h} className={active(path, h) || (h === '/manager/more' && !TABS.slice(0, 4).some(([x]) => active(path, x))) ? 'on' : ''}><AIcon n={ic} /><span>{h === '/manager/more' ? withCount(t, unread) : t}</span></Link>)}</nav>
+      <nav className="ad-tabs" aria-label="Main">{TABS.map(([h, t, ic]) => <Link key={h} href={h} className={active(path, h) || (h === '/manager/more' && !TABS.slice(0, 3).some(([x]) => active(path, x))) ? 'on' : ''}><AIcon n={ic} /><span>{h === '/manager/more' ? withCount(t, unread) : t}</span></Link>)}</nav>
     </div></ToastProvider>);
 }
 export function AIcon({ n }) { return <Icon n={n} size={20} />; }

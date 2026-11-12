@@ -32,15 +32,15 @@ export default function Dashboard() {
     const all = must(ledger); const month = today.slice(0, 7); const td = soft(todos);
     // Today: workshops on today (a course counts on every day it runs), classes on today, to-dos due today
     const day = [
-      ...soft(near).filter((x) => { const s = istDay(x.starts_at), e = x.kind === 'course' && x.ends_at ? istDay(x.ends_at) : s; return s <= today && today <= e; }).map((x) => ({ key: `w${x.id}`, t: x.title, s: `${istDay(x.starts_at) === today ? istTime(x.starts_at) : 'Course day'}${x.status === 'draft' ? ' · draft' : ''}`, kind: 'Workshop', href: '/manager/programs' })),
-      ...soft(sess).map((x) => { const b = x.class_batches || {}; const l = b.class_levels || {}; const lv = `${l.title || 'Class'}${l.level ? `, ${l.level}` : ''}`; return { key: `c${x.id}`, t: b.solo ? `${b.name} · ${lv}` : lv, s: [x.time_text || b.time_text, b.solo ? '' : b.name].filter(Boolean).join(' · '), kind: 'Class', href: '/manager/programs?tab=classes' }; }),
+      ...soft(near).filter((x) => { const s = istDay(x.starts_at), e = x.kind === 'course' && x.ends_at ? istDay(x.ends_at) : s; return s <= today && today <= e; }).map((x) => ({ key: `w${x.id}`, t: x.title, s: `${istDay(x.starts_at) === today ? istTime(x.starts_at) : 'Course day'}${x.status === 'draft' ? ' · draft' : ''}`, kind: 'Workshop', href: '/manager/workshops' })),
+      ...soft(sess).map((x) => { const b = x.class_batches || {}; const l = b.class_levels || {}; const lv = `${l.title || 'Class'}${l.level ? `, ${l.level}` : ''}`; return { key: `c${x.id}`, t: b.solo ? `${b.name} · ${lv}` : lv, s: [x.time_text || b.time_text, b.solo ? '' : b.name].filter(Boolean).join(' · '), kind: 'Class', href: '/manager/classes' }; }),
       ...td.filter((x) => x.due_on === today).map((x) => ({ key: `t${x.id}`, t: x.title, s: '', kind: 'To-do', href: '/manager/planner' }))];
     // Needs attention: only things that are late or running out
     const owed = soft(inv).map((i) => i.total_paise - (i.invoice_payments || []).reduce((s, p) => s + p.amount_paise, 0)).filter((x) => x > 0);
     const lateTodos = td.filter((x) => x.due_on < today).length; const noAttendance = late.error ? 0 : late.count || 0;
     const attention = [
       ...(lateTodos ? [{ key: 'todo', t: `${lateTodos} ${lateTodos === 1 ? 'to-do is' : 'to-dos are'} overdue`, href: '/manager/planner' }] : []),
-      ...(noAttendance ? [{ key: 'att', t: `Attendance not taken for ${noAttendance} ${noAttendance === 1 ? 'class' : 'classes'}`, href: '/manager/programs?tab=classes' }] : []),
+      ...(noAttendance ? [{ key: 'att', t: `Attendance not taken for ${noAttendance} ${noAttendance === 1 ? 'class' : 'classes'}`, href: '/manager/classes' }] : []),
       ...(owed.length ? [{ key: 'inv', t: `${owed.length} ${owed.length === 1 ? 'invoice is' : 'invoices are'} overdue · ${money(owed.reduce((s, x) => s + x, 0))} to collect`, href: '/manager/money?tab=invoices' }] : []),
       ...must(low).map((p) => ({ key: `p${p.id}`, t: p.stock === 0 ? `${p.title} is out of stock` : `${p.title}: only ${p.stock} left`, href: '/manager/products' }))];
     return { fy, sum: summarise(all.map((e) => ({ ...e })), fy), thisMonth: summarise(all.filter((e) => e.entry_date.startsWith(month)), fy), toPack: toPack.count || 0, inbox: unread.count || 0, ws: w, taken, recent, day, attention };
@@ -51,7 +51,7 @@ export default function Dashboard() {
   return (<Page title="Home">
     {defPin && <Link href="/manager/settings" className="ad-err" style={{ display: 'block', background: '#fff3d6', color: '#7a4b00' }}>You are still using the starting PIN (0000). Tap here to change it.</Link>}
     <div className="ad-quick">
-      {[['/manager/planner', 'Calendar', 'calendardays'], ['/manager/money?tab=calculator', 'Calculator', 'calc'], ['/manager/money?tab=invoices', 'Invoice Generator', 'file'], ['/manager/orders?tab=labels', 'Label Printer', 'tag']].map(([h, t, i]) => <Link key={h} href={h}><Icon n={i} size={26} /><span>{t}</span></Link>)}
+      {[['/manager/planner', 'Calendar', 'calendardays'], ['/manager/money?tab=calculator', 'Calculator', 'calc'], ['/manager/money?tab=invoices', 'Invoice Generator', 'file'], ['/manager/labels', 'Label Printer', 'print']].map(([h, t, i]) => <Link key={h} href={h}><Icon n={i} size={26} /><span>{t}</span></Link>)}
     </div>
     <div className="ad-grid">
       <Link href="/manager/orders"><Stat label="Orders to pack" value={d.toPack} sub={d.toPack ? 'Tap to see' : 'All caught up'} /></Link>
@@ -61,8 +61,8 @@ export default function Dashboard() {
     </div>
     <Card title="Today">{d.day.length ? <div className="ad-list">{d.day.map((x) => <Link key={x.key} href={x.href} className="ad-row"><div className="main"><b>{x.t}</b>{x.s && <small>{x.s}</small>}</div><div className="end"><Badge>{x.kind}</Badge></div></Link>)}</div> : <Empty>Nothing scheduled today.</Empty>}</Card>
     {d.attention.length > 0 && <Card title="Needs attention"><div className="ad-list">{d.attention.map((x) => <Link key={x.key} href={x.href} className="ad-row"><div className="main"><b>{x.t}</b></div></Link>)}</div></Card>}
-    <Card title="Upcoming workshops" action={<Link href="/manager/programs" className="ad-help">See all</Link>}>
-      {d.ws.length ? <div className="ad-list">{d.ws.map((w) => <Link key={w.id} href="/manager/programs" className="ad-row"><div className="main"><b>{w.title}</b><small>{fmtD(w.starts_at)}</small></div><div className="end"><b>{d.taken[w.id] || 0} / {w.capacity}</b><small>seats booked</small></div></Link>)}</div> : <Empty>No upcoming workshops. Add one to start taking bookings.</Empty>}
+    <Card title="Upcoming workshops" action={<Link href="/manager/workshops" className="ad-help">See all</Link>}>
+      {d.ws.length ? <div className="ad-list">{d.ws.map((w) => <Link key={w.id} href="/manager/workshops" className="ad-row"><div className="main"><b>{w.title}</b><small>{fmtD(w.starts_at)}</small></div><div className="end"><b>{d.taken[w.id] || 0} / {w.capacity}</b><small>seats booked</small></div></Link>)}</div> : <Empty>No upcoming workshops. Add one to start taking bookings.</Empty>}
     </Card>
     <Card title="Recent payments">
       {d.recent.length ? <div className="ad-list">{d.recent.map((r) => <div key={r.k + r.id} className="ad-row" style={{ cursor: 'default' }}><div className="main"><b>{r.who}</b><small>{r.k} · {fmtDT(r.at)}</small></div><div className="end"><b>{money(r.amt)}</b></div></div>)}</div> : <Empty>Payments will appear here.</Empty>}

@@ -103,7 +103,7 @@ do $$ begin
   assert (select count(*) from bookings) = 2 and (select count(*) from orders) = 2 and (select count(*) from profiles) = 3, 'owner sees everything';
   assert pg_temp.count_of('enquiries') = 1 and pg_temp.count_of('ledger_entries') = 1 and pg_temp.count_of('invoices') = 1, 'owner sees business records';
   assert (select count(*) from workshops) = 2, 'owner sees drafts';
-  assert (select count(*) from settings) = 4, 'owner sees private settings';
+  assert (select count(*) from settings) = 6, 'owner sees private settings';
   assert not pg_temp.denied($q$update products set stock = 5 where slug='2024-maroon-planner'$q$), 'owner can edit products';
   assert not pg_temp.denied($q$insert into workshops (slug,title,starts_at,price_paise) values ('x','X', now() + interval '1 day', 100)$q$), 'owner can add workshops';
   assert not pg_temp.denied($q$update orders set status='shipped' where id='eeeeeeee-0000-0000-0000-000000000001'$q$), 'owner can update orders';

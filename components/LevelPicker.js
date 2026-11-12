@@ -18,6 +18,7 @@ export default function LevelPicker({ classes, phone, whatsapp }) {
   const reveal = (el, block) => { if (!el) return; const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches; requestAnimationFrame(() => el.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block })); };
   useEffect(() => { const sb = supabase(); if (!sb || !open) return; sb.auth.getSession().then(async ({ data }) => { const u = data.session?.user; if (!u) return; const { data: p } = await sb.from('profiles').select('full_name,phone').eq('id', u.id).single(); setPre({ name: p?.full_name || '', email: u.email || '', phone: p?.phone || '' }); }); }, [open]);
   const label = chosen ? `${chosen.title}, ${chosen.level}` : '';
+  const shown = chosen ? `${chosen.title} (${chosen.level})` : '';      // the details line above the Pay button: level in brackets
   async function submit(e) {
     e.preventDefault(); setBusy(true); setErr(''); const f = Object.fromEntries(new FormData(e.target));
     const body = { level: sel, student_name: group === 'child' ? RULES.name.done(f.student) : RULES.name.done(f.name), group, age: group === 'child' ? Number(f.age) : undefined, name: RULES.name.done(f.name), email: RULES.email.done(f.email), phone: RULES.phone.done(f.phone) };
@@ -40,7 +41,7 @@ export default function LevelPicker({ classes, phone, whatsapp }) {
         <p className="foot">{c.sessions || 8} classes</p>
 </label>))}</div>
     <div className="enrol" aria-live="polite" ref={panel}>
-      <p className="small center">{chosen ? <>You chose <b>{label}</b>, {rupees(chosen.price)}{chosen.gstMode === 'add' ? ' + 18% GST' : chosen.gstMode === 'included' ? ' incl. GST' : ''} for {chosen.sessions || 8} classes.</> : 'Choose a level to continue.'}</p>
+      <p className="small center">{chosen ? <>You chose <b>{shown}</b>, {rupees(chosen.price)}{chosen.gstMode === 'add' ? ' + 18% GST' : chosen.gstMode === 'included' ? ' incl. GST' : ''} for {chosen.sessions || 8} classes.</> : 'Choose a level to continue.'}</p>
       {!open && <div className="row c"><Btn icon="wallet" className="fixw" disabled={!chosen} onClick={() => { setOpen(true); setTimeout(() => reveal(formRef.current, 'start'), 60); }}>{chosen ? `Pay ${rupees(gstLine(chosen.price, 1, chosen.gstMode).total)}` : 'Pay'}</Btn></div>}
       {open && chosen && (
         <form autoComplete="off" onSubmit={submit} className="form" style={{ marginTop: 20 }} ref={formRef}>

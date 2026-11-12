@@ -18,10 +18,10 @@ export function buildEvents({ workshops = [], sessions = [], todos = [], events 
   const ev = [];
   for (const w of workshops) {
     if (w.status === 'cancelled') continue; const s = istDate(w.starts_at); const e = w.kind === 'course' && w.ends_at ? istDate(w.ends_at) : s;
-    for (let d = s, n = 0; d <= e && n < 120; d = addDays(d, 1), n++) ev.push({ date: d, title: w.title, kind: 'workshop', time: d === s ? istTime(w.starts_at) : '', note: w.venue_name || '', draft: w.status === 'draft', href: '/manager/programs' });
+    for (let d = s, n = 0; d <= e && n < 120; d = addDays(d, 1), n++) ev.push({ date: d, title: w.title, kind: 'workshop', time: d === s ? istTime(w.starts_at) : '', note: w.venue_name || '', draft: w.status === 'draft', href: '/manager/workshops' });
   }
   for (const s of sessions) { if (s.status === 'cancelled') continue; const b = s.class_batches; const lv = b?.class_levels; const level = `${lv?.title || 'Class'}${lv?.level ? `, ${lv.level}` : ''}`;   // one-on-one classes show the student's name
-    ev.push({ date: s.on_date, title: b?.solo ? `${b.name} · ${level}` : level, kind: 'class', time: s.time_text || b?.time_text || '', note: `Class ${s.no}${b?.solo ? '' : ` of ${b?.sessions || '?'}`}${s.status === 'done' ? ' · done' : ''}${s.moved_from ? ' · moved' : ''}`, href: '/manager/programs?tab=classes' }); }
+    ev.push({ date: s.on_date, title: b?.solo ? `${b.name} · ${level}` : level, kind: 'class', time: s.time_text || b?.time_text || '', note: `Class ${s.no}${b?.solo ? '' : ` of ${b?.sessions || '?'}`}${s.status === 'done' ? ' · done' : ''}${s.moved_from ? ' · moved' : ''}`, href: '/manager/classes' }); }
   for (const t of todos) if (t.due_on && !t.done) ev.push({ date: t.due_on, title: t.title, kind: 'todo', time: '', note: t.note || '', href: '#todo' });
   for (const e of events) { const end = e.end_date && e.end_date > e.on_date ? e.end_date : e.on_date; for (let d = e.on_date, n = 0; d <= end && n < 60; d = addDays(d, 1), n++) ev.push({ date: d, title: e.title, kind: 'event', time: d === e.on_date ? e.time_text || '' : '', note: e.note || '', event: e }); }
   return ev.sort((a, b) => a.date.localeCompare(b.date) || a.kind.localeCompare(b.kind) || a.title.localeCompare(b.title));

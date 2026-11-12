@@ -1,19 +1,34 @@
 'use client';
 // Photo gallery: a tidy wall of photos in their natural shapes, a "Show more" button, and a full-screen viewer with swipe, arrows and keyboard.
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Icon from './Icons';
 import Btn from './Btn';
 const STEP = 12;
 const src = (id) => `/img/${id}.webp`, small = (id) => `/img/${id}-640.webp`;
 
+// How many columns fit: 3 on a wide screen, 2 on a tablet or phone.
+const columnsFor = () => (typeof window !== 'undefined' && window.innerWidth <= 1000 ? 2 : 3);
+
+/** One photo. Photos added by "Show more" start invisible and fade in once their picture has loaded. */
+function WallItem({ p, i, fresh, onOpen }) {
+  const [ready, setReady] = useState(!fresh); const img = useRef();
+  useEffect(() => { if (fresh && img.current?.complete) setReady(true); }, [fresh]);       // already in the browser's memory
+  return (<button type="button" className={`wall-item ${fresh ? 'fresh' : ''} ${ready ? 'ready' : ''}`} onClick={() => onOpen(i)} aria-label={`Open photo: ${p.alt}`}>
+    <img ref={img} src={small(p.id)} srcSet={`${small(p.id)} 640w, ${src(p.id)} 1600w`} sizes="(max-width: 700px) 46vw, (max-width: 1100px) 31vw, 340px" alt={p.alt} width={p.w} height={p.h} loading={i < 6 ? 'eager' : 'lazy'} decoding="async" onLoad={() => setReady(true)} onError={() => setReady(true)} /></button>);
+}
+
 export default function PhotoWall({ photos }) {
-  const [count, setCount] = useState(STEP); const [open, setOpen] = useState(null);
+  const [count, setCount] = useState(STEP); const [open, setOpen] = useState(null); const [cols, setCols] = useState(3); const [from, setFrom] = useState(null);
+  useLayoutEffect(() => { const fit = () => setCols(columnsFor()); fit(); window.addEventListener('resize', fit); return () => window.removeEventListener('resize', fit); }, []);
   const list = photos; const shown = list.slice(0, count);
+  // Each photo goes into the shortest column at the moment it is placed, in order. Adding more photos only ever adds to the bottoms of the columns:
+  // a photo already on screen keeps its column and its place, so nothing above jumps or reorders.
+  const columns = Array.from({ length: cols }, () => ({ h: 0, items: [] }));
+  shown.forEach((p, i) => { const c = columns.reduce((a, b) => (b.h < a.h ? b : a)); c.items.push({ p, i }); c.h += (p.h || 1) / (p.w || 1); });
   return (<div className="wall">
-    <div className="wall-grid">{shown.map((p, i) => (
-      <button key={p.id} type="button" className="wall-item" onClick={() => setOpen(i)} aria-label={`Open photo: ${p.alt}`}>
-        <img src={small(p.id)} srcSet={`${small(p.id)} 640w, ${src(p.id)} 1600w`} sizes="(max-width: 700px) 46vw, (max-width: 1100px) 31vw, 340px" alt={p.alt} width={p.w} height={p.h} loading={i < 6 ? 'eager' : 'lazy'} decoding="async" /></button>))}</div>
-    {count < list.length && <div className="row c"><Btn variant="ghost" icon="plus" onClick={() => setCount((c) => c + STEP)}>Show more</Btn></div>}
+    <div className="wall-grid">{columns.map((c, k) => (
+      <div className="wall-col" key={k}>{c.items.map(({ p, i }) => <WallItem key={p.id} p={p} i={i} fresh={from !== null && i >= from} onOpen={setOpen} />)}</div>))}</div>
+    {count < list.length && <div className="row c"><Btn variant="ghost" icon="plus" onClick={() => { setFrom(count); setCount((c) => c + STEP); }}>Show more</Btn></div>}
     {open !== null && <Viewer list={shown} start={open} onClose={() => setOpen(null)} />}
   </div>);
 }

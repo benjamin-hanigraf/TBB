@@ -42,6 +42,13 @@ export function useAction() {            // wraps a save/delete so errors become
 export const Page = ({ title, action, children, back }) => (
   <div className="ad-page"><header className="ad-head">{back && <a className="ad-back" href={back} aria-label="Back"><Icon n="left" /></a>}<h1>{title}</h1><div className="ad-act">{action}</div></header>{children}</div>);
 export const Card = ({ title, children, action, tight }) => (<section className={`ad-card ${tight ? 'tight' : ''}`}>{(title || action) && <div className="ad-card-h"><h2>{title}</h2>{action}</div>}{children}</section>);
+/** A card whose title is a button with a down arrow: tap to open or close. The contents stay on the page while closed, so a form keeps what was typed. */
+export function Fold({ title, children, open: start = false, tight = true, big = false }) {
+  const [open, setOpen] = useState(start);
+  return (<section className={`ad-fold ${open ? 'open' : ''} ${big ? 'big' : ''}`}>
+    <button type="button" className="ad-fold-h" aria-expanded={open} onClick={() => setOpen(!open)}><h2>{title}</h2><Icon n="chevdown" size={18} /></button>
+    <div className={`ad-fold-b ${tight ? '' : 'pad'}`} hidden={!open}>{children}</div></section>);
+}
 export const Stat = ({ label, value, sub, tone }) => (<div className={`ad-stat ${tone || ''}`}><span>{label}</span><b>{value}</b>{sub && <em>{sub}</em>}</div>);
 export const Badge = ({ children, tone = '' }) => <span className={`ad-badge ${tone}`}>{children}</span>;
 export const Empty = ({ children }) => <p className="ad-empty">{children}</p>;
@@ -50,9 +57,15 @@ export const Spin = () => <div className="ad-empty"><Dots /></div>;
 export const Err = ({ e }) => <p className="ad-err" role="alert">{e?.message || 'Could not load. Please check your connection and try again.'}</p>;
 export const Btn = ({ icon, children, variant = '', busy, ...p }) => (<button className={`ad-btn ${variant}`} disabled={busy || p.disabled} {...p}>{icon && <Icon n={icon} size={16} />}<span>{children}</span></button>);
 
+// Several windows can be open at once (a window can open another one, or close its parent). The page behind is frozen while at least one is open,
+// and freed again only when the last one closes, in whatever order they close.
+let locks = 0;
+const lockPage = () => { if (locks++ === 0) document.body.style.overflow = 'hidden'; };
+const unlockPage = () => { locks = Math.max(0, locks - 1); if (locks === 0) document.body.style.overflow = ''; };
 export function Modal({ title, onClose, children, wide }) {
   const ref = useRef();
-  useEffect(() => { const k = (e) => e.key === 'Escape' && onClose(); document.addEventListener('keydown', k); const prev = document.body.style.overflow; document.body.style.overflow = 'hidden'; ref.current?.focus(); return () => { document.removeEventListener('keydown', k); document.body.style.overflow = prev; }; }, [onClose]);
+  useEffect(() => { lockPage(); ref.current?.focus(); return unlockPage; }, []);
+  useEffect(() => { const k = (e) => e.key === 'Escape' && onClose(); document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k); }, [onClose]);
   return (<div className="ad-modal-bg" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
     <div className={`ad-modal ${wide ? 'wide' : ''}`} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={ref}>
       <div className="ad-modal-h"><h2>{title}</h2><button className="ad-x" onClick={onClose} aria-label="Close">✕</button></div><div className="ad-modal-b">{children}</div></div></div>);

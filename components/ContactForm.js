@@ -7,15 +7,13 @@ import { ruleProps, ruleFor } from '@/lib/rules';
 import { RULES } from '@/lib/format';
 
 export const TOPICS = {
-  message: { label: 'A general message', kind: 'contact', phone: false, ask: 'Your message', submit: 'Send', done: 'Thank you for getting in touch. We will get back to you soon.' },
-  invitation: { label: 'A custom invitation', kind: 'invitation', phone: true, ask: 'What do you have in mind?', submit: 'Send', done: 'Thank you for getting in touch. We will get back to you at the earliest.' },
   service: { label: 'A custom service', kind: 'service', phone: true, ask: 'What would you like us to customise?', submit: 'Send', done: 'Thanks for submitting. We will call you soon.' },
+  invitation: { label: 'A custom invitation', kind: 'invitation', phone: true, ask: 'What do you have in mind?', submit: 'Send', done: 'Thank you for getting in touch. We will get back to you at the earliest.' },
   collaboration: { label: 'A collaboration', kind: 'collaboration', phone: false, ask: 'Your idea', submit: 'Send', done: 'Thank you for reaching out. We will be in touch soon.' },
   hiring: { label: 'An employment enquiry', kind: 'hiring', phone: true, ask: 'Experience', submit: 'Apply', done: 'Thank you for getting in touch. We will be in touch soon.' },
 };
 const HEADS = {
   '': ['How can we help?', 'Choose what this is about and we will ask only what we need.'],
-  message: ['We would love to hear from you.', 'Ask us anything about our workshops, classes or the store.'],
   invitation: ['Let us design your invitation.', 'Tell us about the occasion and we will send you an estimate.'],
   service: ['Tell us what you need.', 'Describe what you would like made and we will call you.'],
   collaboration: ['Let us make something together.', 'Share your idea and we will be in touch.'],
@@ -27,7 +25,7 @@ const CUSTOMISE = ['Invitations', 'Stationery', 'Calligraphy artwork', 'Gifts', 
 
 function Inner() {
   const sp = useSearchParams(); const fromUrl = sp.get('topic'); const pre = sp.get('for') || '';
-  const [topic, setTopic] = useState(TOPICS[fromUrl] ? fromUrl : ''); const [state, setState] = useState('idle'); const ref = useRef();
+  const [topic, setTopic] = useState(TOPICS[fromUrl] ? fromUrl : 'service'); const [state, setState] = useState('idle'); const ref = useRef();
   useEffect(() => { if (TOPICS[fromUrl]) setTopic(fromUrl); }, [fromUrl]);
   const t = TOPICS[topic];
   async function onSubmit(e) {
@@ -50,7 +48,7 @@ function Inner() {
     <form ref={ref} autoComplete="off" onSubmit={onSubmit} className="form">
       <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hp" aria-hidden="true" />
       <label><span>What is this about? <i aria-hidden="true"> *</i></span>
-        <select name="topic" required value={topic} onChange={(e) => { setTopic(e.target.value); setState('idle'); }}><option value="" disabled>Select</option>{Object.entries(TOPICS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select></label>
+        <select name="topic" required value={topic} onChange={(e) => { setTopic(e.target.value); setState('idle'); }}>{Object.entries(TOPICS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select></label>
       {t && <>
         {text('name', 'Name', { required: true })}
         {topic === 'collaboration' && text('organisation', 'Organisation')}
@@ -69,4 +67,4 @@ function Inner() {
       {state === 'error' && <p className="notice err" role="alert">We could not send that. Please check your details and try again.</p>}
     </form></>);
 }
-export default function ContactForm() { return <Suspense fallback={<Head topic="" />}><Inner /></Suspense>; }
+export default function ContactForm() { return <Suspense fallback={<Head topic="service" />}><Inner /></Suspense>; }

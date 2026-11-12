@@ -16,7 +16,7 @@ export default function Checkout() {
   useEffect(() => { const sb = supabase(); if (!sb) return; sb.auth.getSession().then(async ({ data }) => { const u = data.session?.user; if (!u) return;
     const [{ data: p }, { data: last }] = await Promise.all([sb.from('profiles').select('full_name,phone').eq('id', u.id).single(), sb.from('orders').select('shipping_address,name,phone').eq('user_id', u.id).order('created_at', { ascending: false }).limit(1)]);
     setPre({ name: p?.full_name || last?.[0]?.name || '', email: u.email || '', phone: p?.phone || last?.[0]?.phone || '' }); setAddr(last?.[0]?.shipping_address || {}); }); }, []);
-  if (!items.length) return <div className="center"><p className="lead" style={{ marginTop: 0 }}>Your bag is empty.</p><div className="row c"><Btn href="/store" icon="bag">Visit Store</Btn></div></div>;
+  if (!items.length) return <div className="center"><p className="lead" style={{ marginTop: 0 }}>Shop for thoughtfully made stationery.</p><div className="row c"><Btn href="/store" icon="bag">Visit Store</Btn></div></div>;
   async function submit(e) {
     e.preventDefault(); setBusy(true); setErr('');
     const f = Object.fromEntries(new FormData(e.target)); const R = RULES;

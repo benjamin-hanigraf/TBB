@@ -20,6 +20,7 @@ const P = {
   list: <path d="M3 6h.01M3 12h.01M3 18h.01M8 6h13M8 12h13M8 18h13" />,
   logout: <><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /></>,
   calendardays: <><rect x="3.5" y="5" width="17" height="15" rx="3" /><path d="M8 3v4M16 3v4M3.5 10h17" /><path d="M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01" /></>,
+  whatsapp: <><path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" /><path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" /></>,
   close: <path d="M6 6l12 12M18 6 6 18" />,
   card: <><rect width="20" height="14" x="2" y="5" rx="2" /><path d="M2 10h20" /><path d="M6 14h2" /></>,
   rupee: <><path d="m14 20-8-8h4c5.333 0 5.333-8 0-8" /><path d="M6 4h12" /><path d="M6 8h12" /></>,

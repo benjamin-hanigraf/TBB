@@ -52,7 +52,7 @@ export default async function Home() {
       <div className="invband">{images.invites.map((s, i) => <Pic key={i} src={s} alt="Custom invitation by Thin Black Brush" w={600} h={750} sizes="(max-width: 700px) 30vw, 260px" />)}</div>
       <div className="row c"><Btn href="/custom-invitations" variant="light" icon="mail">Enquire</Btn></div></div></section>
 
-    <CustomWork />
+    <CustomWork soft />
 
     <InstagramFeed />
   </main>);

@@ -75,3 +75,71 @@ Open question
 
 == Deploy ==
 - Owner asked: bring dev up to date with claude/zealous-turing-jqe6sd (Vercel deploys dev). Fast-forward only, nothing on dev lost.
+
+== Batch: Manager design and feature round (owner request, Nov 2026) ==
+Known bug first
+- Adding a class enrolment fails: "ledger_entries_amount_paise_check" (amount must be > 0). A free/zero amount must not write an accounts entry.
+General (all Manager pages)
+- New icon for Calculator; Label printer icon = a printer
+- Workshops and Classes become their own pages, each with its own icon
+- Page order: Home, Planner, Workshops, Classes, Orders, Store, Money, Inbox, Customers, Settings
+- Phone bottom bar: Home, Planner, Money, More (everything else inside More)
+- Collapsed lists: a downward arrow instead of a "Show" button
+- Fix icons that are off-centre in their round/square container (e.g. reports/transactions)
+- List titles ("To pack", "Upcoming"...) get the same comfortable spacing from the corner everywhere
+- Clear text hierarchy in lists: list title vs items (size, weight, grey shades), same few styles everywhere
+- Fix: scrolling sometimes gets stuck on any page
+- No horizontal page scrolling anywhere, any device or size (Manager AND website)
+- Remove all Import/Export buttons from pages; one simple "Data" area in Settings
+- Fix: Delete "tap again" button has light grey fill with white text (invisible)
+- Past/completed lists: no count in the title
+Home
+- Title "Hello Rahi"
+- Top tiles: 1) new messages / orders to pack (whichever is active) 2) receivables with invoice count small 3) income this month with expense small 4) profit this month with this year small. Round to nearest rupee in all amount reports.
+- List order: Today, Upcoming workshops, Recent payments, Needs attention (collapsed)
+- Needs attention items open that exact item (e.g. the overdue invoice), not just the page
+Planner
+- "Rent-out" (studio rented to others): new calendar type, shown differently, income goes into accounts
+- Classes on the calendar show the participant's name only
+- Clash warning (same day and time) before adding classes, workshops, events, to-dos, rent-outs; ask to confirm
+- Tap month to pick a month, tap year to move across years
+- "Coming up" collapsed in calendar and to-do; overdue and anytime shown inside Today; "Done" renamed "Completed", no count
+Orders
+- Label printer: button next to Add order (not a tab); back button on the label page
+- "Added by hand" becomes "Added manually" everywhere
+- Manually added orders can be edited
+- Status tags reduced to Paid and Shipped (with buttons in the right places); courier and tracking only when marked Shipped; remove private note
+- Receipts (website and Manager) match the invoice design
+- List order: To ship, Awaiting payment, Shipped (collapsed, first 5, "Show more" adds 10 each time), Cancelled or refunded. Check whether "cancelled" is really needed.
+- Order numbers shown everywhere; Settings gets order number prefix, format and starting number
+Label printer
+- "FROM" and "TO" tags on cells
+- From: single-line logo on top, address below, full width, legible font
+- To: address runs continuously (wraps only at the cell edge), pincode after state as "PIN - 600024", same font size as From
+- Only one line between two stacked labels (no double border)
+Workshops
+- When a booking is cancelled, offer people from the waitlist for the empty seat
+- "Transfer to another date" is a separate option that frees the seat
+- Early-bird price shown on the website
+- Way to mark a workshop cancelled
+- Lists: Upcoming (drafts stay here even after their date, at the end), Past (collapsed, no count; published and cancelled go here). Cancelled is never shown on the website.
+- Row layout: Published tag, Participants, Edit same height, on the right; image centred with the text; on phone buttons go below
+Classes
+- Remove extra-thick/large type on class type in list
+- Classes are one-on-one only: remove batches and group structures; fix enrolment error; remove "Missed" (a student cannot miss a class); Restore, Delete, Cancel, Move, Add buttons all the same size
+Store
+- Shipping note and return note set once in Settings, auto-filled in product edit, still editable
+Customers
+- Purchases: no status tag; show order number instead of date
+- More space between "added from / added on" row and the Call/WhatsApp/Email row
+- Blank email or phone stays blank (no "No email")
+Inbox
+- Message window: fewer buttons, one clear main action
+- List row: two icon buttons left of the date: toggle attended / not attended, toggle read / unread
+- Two lists: Not attended (open), Attended (collapsed); remove the type filter
+- Rename "dealt with" to "attended"
+Settings
+- Find out why the Google Maps link is not saved
+- Invoice and quotation number prefix/format with a live preview and leading zeros
+- Space between Save settings and the Device PIN box
+- Every Settings section collapsible (accordion)

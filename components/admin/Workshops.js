@@ -1,11 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, F, PhotoField, useForm, useAction, Confirm, fmtD, fmtDT, dmyToISO, isoToDMY, slugify, STATUS_TONE, download } from './kit';
-import { MessageModal, RefundModal, Waitlist } from './WorkshopTools';
+import { useLoad, sb, must, every, Page, Card, Fold, Badge, Empty, Spin, Err, Modal, Btn, F, PhotoField, useForm, useAction, Confirm, fmtD, fmtDT, dmyToISO, isoToDMY, slugify } from './kit';
+import { MessageModal, RefundModal, Waitlist, CancelWorkshop } from './WorkshopTools';
+import { useClash } from './Clash';
+import { slotFromStart } from '@/lib/clash';
 import { GST_MODES } from '@/lib/gst';
 import { AddSignup, BookingModal } from './ManualEntry';
-import { money, toCSV, rupeesToPaise } from '@/lib/accounting';
+import { money, rupeesToPaise } from '@/lib/accounting';
 import { photo } from '@/lib/photo';
 
 const HOURS = Array.from({ length: 12 }, (_, i) => String(i + 1)); const MINS = ['00', '15', '30', '45'];
@@ -30,22 +32,26 @@ export default function Workshops() {
   useEffect(() => { if (sp.get('new')) setEdit({}); }, [sp]);
   useEffect(() => { const id = sp.get('people'); const w = id && data?.ws.find((x) => x.id === id); if (w) setAtt(w); }, [sp, data]);   // a link from Accounts opens that workshop's participants
   if (error) return <Page title="Workshops"><Err e={error} /></Page>; if (!data) return <Page title="Workshops"><Spin /></Page>;
-  const now = Date.now(); const up = data.ws.filter((w) => new Date(w.starts_at) >= now).reverse(), past = data.ws.filter((w) => new Date(w.starts_at) < now);
+  // Upcoming: not over yet, drafts last (a draft stays here even after its date). Past: over, or cancelled (a cancelled workshop is never shown on the website).
+  const now = Date.now(); const endOf = (w) => new Date(w.kind === 'course' && w.ends_at ? w.ends_at : w.starts_at);
+  const isPast = (w) => w.status === 'cancelled' || (w.status !== 'draft' && endOf(w) < now);
+  const up = data.ws.filter((w) => !isPast(w)).sort((a, b) => (a.status === 'draft') - (b.status === 'draft') || new Date(a.starts_at) - new Date(b.starts_at));
+  const past = data.ws.filter(isPast).sort((a, b) => new Date(b.starts_at) - new Date(a.starts_at));
   const line = (w) => (
-    <div key={w.id} className="ad-row" style={{ cursor: 'default', alignItems: 'flex-start' }}>
+    <div key={w.id} className="ws-row">
       {w.image_path ? <img className="ad-thumb" src={photo(w.image_path)} alt="" /> : <div className="ad-thumb" />}
-      <div className="main"><b>{w.title}</b><small>{fmtDT(w.starts_at)}{w.kind === 'course' && w.ends_at ? ` to ${fmtD(w.ends_at)}` : ''} · {w.venue_name || 'Venue not set'}</small><small>{data.taken[w.id] || 0} of {w.capacity} seats booked · {money(w.price_paise)}</small>
-        <div className="row-actions"><Badge tone={w.status === 'published' ? 'ok' : w.status === 'cancelled' ? 'bad' : ''}>{w.status === 'published' ? 'Published' : w.status === 'cancelled' ? 'Cancelled' : 'Draft'}</Badge><Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setAtt(w)}>Participants</Btn><Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setEdit(w)}>Edit</Btn></div></div></div>);
+      <div className="ws-text"><b>{w.title}</b><small>{fmtDT(w.starts_at)}{w.kind === 'course' && w.ends_at ? ` to ${fmtD(w.ends_at)}` : ''} · {w.venue_name || 'Venue not set'}</small><small>{data.taken[w.id] || 0} of {w.capacity} seats booked · {money(w.price_paise)}</small></div>
+      <div className="ws-act"><Badge tone={w.status === 'published' ? 'ok' : w.status === 'cancelled' ? 'bad' : ''}>{w.status === 'published' ? 'Published' : w.status === 'cancelled' ? 'Cancelled' : 'Draft'}</Badge><Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setAtt(w)}>Participants</Btn><Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setEdit(w)}>Edit</Btn></div></div>);
   return (<Page title="Workshops" action={<Btn icon="plus" onClick={() => setEdit({})}>New workshop</Btn>}>
     <Card title={`Upcoming (${up.length})`} tight>{up.length ? <div className="ad-list">{up.map(line)}</div> : <Empty>No upcoming workshops. Tap "New workshop" to add one.</Empty>}</Card>
-    <Card title={`Past (${past.length})`} tight>{past.length ? <div className="ad-list">{past.map(line)}</div> : <Empty>Nothing here yet.</Empty>}</Card>
+    {past.length > 0 && <Fold title="Past"><div className="ad-list">{past.map(line)}</div></Fold>}
     {edit && <WorkshopForm key={edit.id || `new-${edit.title || ''}`} w={edit} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); reload(); }} onCopy={(x) => setEdit({ ...x, id: undefined, slug: undefined, starts_at: null, ends_at: null, early_until: null, status: 'draft', title: `${x.title} (copy)` })} />}
     {att && <Attendees w={att} taken={data.taken[att.id] || 0} onClose={() => setAtt(null)} onChanged={reload} />}
   </Page>);
 }
 
 function WorkshopForm({ w, onClose, onSaved, onCopy }) {
-  const t = toISTParts(w.starts_at); const te = toISTParts(w.ends_at); const isNew = !w.id; const [run, busy] = useAction();
+  const t = toISTParts(w.starts_at); const te = toISTParts(w.ends_at); const isNew = !w.id; const [run, busy] = useAction(); const [check, clashDialog] = useClash(); const [cancelling, setCancelling] = useState(false);
   const f = useForm({ title: w.title || '', kind: w.kind || 'workshop', summary: w.summary || '', description: w.description || '', venue_name: w.venue_name || '', venue_address: w.venue_address || '', map_link: w.map_link || '',
     date: t.date, endDate: w.kind === 'course' && w.ends_at ? te.date : '', h: t.h, m: t.m, ap: t.ap, price: w.price_paise != null ? String(w.price_paise / 100) : '', friend: w.friend_price_paise ? String(w.friend_price_paise / 100) : '',
     gst_mode: w.gst_mode || 'none', early: w.early_price_paise != null ? String(w.early_price_paise / 100) : '', earlyUntil: isoToDMY(w.early_until), capacity: String(w.capacity || 12),
@@ -57,6 +63,10 @@ function WorkshopForm({ w, onClose, onSaved, onCopy }) {
     const price = rupeesToPaise(v.price); if (!v.title.trim()) throw new Error('Please add a title.'); if (!(+v.capacity > 0)) throw new Error('Seats must be 1 or more.');
     if (!!v.early !== !!v.earlyUntil) throw new Error('For an early-bird price, please fill in both the price and the date it ends.');
     let eu = null; if (v.early) { eu = dmyToISO(v.earlyUntil); if (!eu) throw new Error('Please enter the early-bird end date as DD/MM/YYYY.'); if (rupeesToPaise(v.early) >= price) throw new Error('The early-bird price should be lower than the normal price.'); }
+    if ((nextStatus || status) !== 'draft') {       // a published workshop must not overlap something else planned (a draft is only a plan)
+      const ist = new Date(new Date(starts).getTime() + 5.5 * 3600e3); const first = ist.toISOString().slice(0, 10); const last = ends ? new Date(new Date(ends).getTime() + 5.5 * 3600e3).toISOString().slice(0, 10) : first; const dates = [first];
+      for (let d = first; d < last && dates.length < 60;) { const n = new Date(`${d}T00:00:00Z`); n.setUTCDate(n.getUTCDate() + 1); d = n.toISOString().slice(0, 10); dates.push(d); }
+      if (!(await check(dates.map((d) => ({ date: d, slot: slotFromStart(ist.getUTCHours() * 60 + ist.getUTCMinutes()), label: `Workshop: ${v.title}` })), { kind: 'workshop', id: w.id }))) return; }
     const row = { title: v.title, kind: v.kind, summary: v.summary || null, description: v.description || null, venue_name: v.venue_name || null, venue_address: v.venue_address || null, map_link: v.map_link || null, starts_at: starts, ends_at: ends,
       price_paise: price, friend_price_paise: v.friend ? rupeesToPaise(v.friend) : null, early_price_paise: v.early ? rupeesToPaise(v.early) : null, early_until: eu, gst_mode: v.gst_mode, capacity: +v.capacity, includes: lines(v.includes), learn: lines(v.learn), note: v.note || null, image_path: v.image[0] || null, status: nextStatus || status };
     if (isNew) { let slug = slugify(v.title); const tryInsert = async (s) => sb().from('workshops').insert({ ...row, slug: s });
@@ -96,29 +106,33 @@ function WorkshopForm({ w, onClose, onSaved, onCopy }) {
       <div className="full"><F form={f} k="note" label="Note" rule="sentence" /></div>
       <PhotoField label="Photo" paths={f.v.image} onChange={(p) => f.set('image', p)} folder="workshops" />
       <div className="ad-actions full"><Btn busy={busy} icon="check">{isNew ? 'Save draft' : 'Save'}</Btn>
-        {status === 'published' ? <Btn type="button" variant="ghost" busy={busy} onClick={() => save(null, 'draft')}>Unpublish</Btn> : <Btn type="button" variant="ghost" busy={busy} onClick={() => save(null, 'published')}>Publish</Btn>}
+        {status === 'published' ? <Btn type="button" variant="ghost" busy={busy} onClick={() => save(null, 'draft')}>Unpublish</Btn> : status === 'cancelled' ? <Btn type="button" variant="ghost" busy={busy} onClick={() => save(null, 'draft')}>Reopen as draft</Btn> : <Btn type="button" variant="ghost" busy={busy} onClick={() => save(null, 'published')}>Publish</Btn>}
+        {!isNew && status !== 'cancelled' && <Btn type="button" variant="ghost" onClick={() => setCancelling(true)}>Cancel workshop</Btn>}
         {!isNew && <Btn type="button" variant="ghost" onClick={() => onCopy(w)}>Copy</Btn>}
         {!isNew && <Confirm onYes={remove}>Delete</Confirm>}</div>
     </form>
+    {cancelling && <CancelWorkshop w={w} onClose={() => setCancelling(false)} onDone={onSaved} />}
+    {clashDialog}
     {blocked > 0 && <Modal title="This workshop cannot be deleted" onClose={() => setBlocked(0)}><p style={{ marginTop: 0 }}>It has <b>{blocked}</b> {blocked === 1 ? 'booking' : 'bookings'}, and your records and accounts need them. You can hide the workshop from the website instead. Nothing is lost.</p><div className="ad-actions full"><Btn busy={busy} onClick={hide}>Hide it</Btn><Btn variant="ghost" onClick={() => setBlocked(0)}>Keep it</Btn></div></Modal>}</Modal>);
 }
 
 function Attendees({ w, taken, onClose, onChanged }) {
-  const [add, setAdd] = useState(false); const [one, setOne] = useState(null); const [msg, setMsg] = useState(null); const [refund, setRefund] = useState(false);
+  const [add, setAdd] = useState(false); const [one, setOne] = useState(null); const [msg, setMsg] = useState(null); const [refund, setRefund] = useState(false); const [book, setBook] = useState(null);
   const { data, error, reload } = useLoad(async () => must(await sb().from('bookings').select('*,workshops(title,starts_at)').eq('workshop_id', w.id).in('status', ['paid', 'pending', 'transferred']).order('created_at')), [w.id]);
-  const rows = (data || []).filter((b) => b.status !== 'pending' || b.channel === 'manual'); const seats = rows.filter((b) => b.status === 'paid').reduce((s, b) => s + b.seats, 0);
+  const rows = (data || []).filter((b) => b.status !== 'pending' || b.channel === 'manual'); const seats = rows.filter((b) => b.status === 'paid').reduce((s, b) => s + b.seats, 0); const left = Math.max(0, w.capacity - seats);
   const changed = () => { reload(); onChanged(); };
   return (<Modal title={`Participants · ${w.title}`} onClose={onClose} wide>
     {error && <Err e={error} />}{!data && !error && <Spin />}
-    {data && <><p className="ad-help" style={{ marginTop: 0 }}>{seats} of {w.capacity} seats booked · {fmtD(w.starts_at)}</p>
+    {data && <><p className="ad-help" style={{ marginTop: 0 }}>{seats} of {w.capacity} seats booked · {left} free · {fmtD(w.starts_at)}</p>
       {rows.length ? <div className="ad-list">{rows.map((b) => <button key={b.id} className="ad-row" onClick={() => setOne(b)}><div className="main"><b>{b.name}</b><small>{[b.phone, b.email].filter(Boolean).join(' · ')}</small></div><div className="end"><b>{money(b.amount_paise)}</b><small>{b.seats} {b.seats > 1 ? 'seats' : 'seat'}</small><Badge tone={b.status === 'paid' ? 'ok' : b.status === 'pending' ? 'warn' : ''}>{b.status === 'pending' ? 'not paid' : b.status}</Badge></div></button>)}</div> : <Empty>No participants yet.</Empty>}
       <div className="ad-actions full"><Btn icon="plus" onClick={() => setAdd(true)}>Add sign-up</Btn>{rows.some((b) => b.status === 'paid') && <Btn variant="ghost" icon="mail" onClick={() => setMsg({ audience: 'workshop', id: w.id, title: w.title, people: rows.filter((b) => b.status === 'paid') })}>Message all</Btn>}
-        {rows.length > 0 && <Btn variant="ghost" icon="fileout" onClick={() => download(`${w.slug}-participants.csv`, toCSV(rows, [{ label: 'Name', key: 'name' }, { label: 'Email', key: 'email' }, { label: 'Phone', key: 'phone' }, { label: 'Seats', key: 'seats' }, { label: 'Status', key: 'status' }, { label: 'Paid', get: (b) => b.amount_paise / 100 }]))}>Export</Btn>}</div>
-      <Waitlist workshop={w} onMessage={(people) => setMsg({ audience: 'waitlist', id: w.id, title: `${w.title} waitlist`, people })} />
+</div>
+      <Waitlist workshop={w} left={left} onBook={setBook} onMessage={(people) => setMsg({ audience: 'waitlist', id: w.id, title: `${w.title} waitlist`, people })} />
       {rows.some((b) => b.status === 'paid') && w.status !== 'cancelled' && <div className="ad-actions" style={{ marginTop: 22 }}><Btn variant="ghost" className="ad-btn ghost danger-text" onClick={() => setRefund(true)}>Cancel and refund everyone</Btn></div>}</>}
     {msg && <MessageModal {...msg} onClose={() => setMsg(null)} />}
     {refund && <RefundModal workshop={w} bookings={rows} onClose={() => setRefund(false)} onDone={() => { changed(); }} />}
-    {add && <AddSignup w={w} taken={taken} onClose={() => setAdd(false)} onSaved={() => { setAdd(false); changed(); }} />}
+    {add && <AddSignup w={w} taken={seats} onClose={() => setAdd(false)} onSaved={() => { setAdd(false); changed(); }} />}
+    {book && <AddSignup w={w} taken={seats} prefill={{ name: book.name, email: book.email, phone: book.phone, seats: book.seats, waitlistId: book.id }} onClose={() => setBook(null)} onSaved={() => { setBook(null); changed(); }} />}
     {one && <BookingModal b={one} onClose={() => setOne(null)} onSaved={() => { setOne(null); changed(); }} />}
   </Modal>);
 }

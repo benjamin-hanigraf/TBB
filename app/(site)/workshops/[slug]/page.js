@@ -25,7 +25,7 @@ export default async function Workshop({ params }) {
         <ul className="facts">
           <li><Icon n="calendar" /><span><b>{fmtDate(w.starts_at)}{w.kind === 'course' && w.ends_at && fmtDate(w.ends_at) !== fmtDate(w.starts_at) ? ` to ${fmtDate(w.ends_at)}` : ''}</b></span></li>
           <li><Icon n="pin" /><span><b>{w.venue}</b><br /><span className="muted">{w.address}</span></span></li>
-          <li><Icon n="note" /><span>{rupees(w.price)}{w.gstMode === 'add' ? ' + 18% GST' : w.gstMode === 'included' ? ' incl. GST' : ''} per person, kit included{w.regularPrice ? <><br /><span className="muted">Early-bird price until {fmtDate(w.earlyUntil)}. Then {rupees(w.regularPrice)}.</span></> : null}{w.friendPrice ? <><br /><span className="muted">{rupees(w.friendPrice)} each when you bring a friend</span></> : null}</span></li>
+          <li><Icon n="note" /><span>{w.regularPrice ? <><b>{rupees(w.price)}</b> <s className="muted">{rupees(w.regularPrice)}</s></> : rupees(w.price)}{w.gstMode === 'add' ? ' + 18% GST' : w.gstMode === 'included' ? ' incl. GST' : ''} per person, kit included{w.regularPrice ? <><br /><span className="tag">Early bird</span> <span className="early">Save {rupees(w.regularPrice - w.price)} when you book by {fmtDate(w.earlyUntil)}</span></> : null}{w.friendPrice ? <><br /><span className="muted">{rupees(w.friendPrice)} each when you bring a friend</span></> : null}</span></li>
         </ul>
         {closed ? <div className="row"><Btn icon="calendar" disabled>{w.cancelled ? 'Cancelled' : 'Booking closed'}</Btn><Btn href={business.whatsapp} variant="ghost" icon="chat">WhatsApp</Btn></div>
           : w.seatsLeft === 0 ? <div className="row"><WaitlistForm slug={w.slug} /></div>

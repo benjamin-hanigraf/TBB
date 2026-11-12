@@ -187,3 +187,8 @@ input,textarea,select,[contenteditable="true"]{-webkit-user-select:text;user-sel
 img,svg{-webkit-user-drag:none;user-drag:none}
 .settings-save{margin:8px 0 32px}
 .tags{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+/* workshops list: picture, text, then the tag and buttons on the right, all the same height */
+.ws-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 12px;border-bottom:1px solid #f0f0f3}.ws-row:last-child{border-bottom:0}
+.ws-text{min-width:0;display:grid;gap:2px}.ws-text b{font-weight:500;font-size:16px;color:#1d1d1f;overflow-wrap:anywhere}.ws-text small{color:#6e6e73;font-size:13px;line-height:1.4}
+.ws-act{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}.ws-act .ad-btn,.ws-act .ad-badge{min-height:34px;display:inline-flex;align-items:center;justify-content:center;padding:0 14px;font-size:13px;border-radius:980px;box-sizing:border-box}
+@media(max-width:640px){.ws-row{grid-template-columns:auto minmax(0,1fr)}.ws-act{grid-column:1/-1;justify-content:flex-start}}

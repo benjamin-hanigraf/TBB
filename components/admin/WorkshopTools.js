@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { sb, must, useLoad, Modal, Btn, F, useForm, useAction, useToast, Empty, Err, Spin, Badge, fmtD } from './kit';
+import { sb, must, every, useLoad, Modal, Btn, F, useForm, useAction, useToast, Empty, Err, Spin, Badge, fmtD } from './kit';
 import { adminPost } from '@/lib/adminApi';
 import { RefundDialog } from './Refund';
 import { money } from '@/lib/accounting';
@@ -43,14 +43,31 @@ export function RefundModal({ workshop, bookings, onClose, onDone }) {
   </Modal>);
 }
 
-/** People waiting for a seat in a sold-out workshop. */
-export function Waitlist({ workshop, onMessage }) {
+/** People waiting for a seat. When seats are free (for example after a cancellation) each person who fits can be booked in one tap. */
+export function Waitlist({ workshop, left = 0, onBook, onMessage }) {
   const { data, error, reload } = useLoad(async () => must(await sb().from('workshop_waitlist').select('*').eq('workshop_id', workshop.id).order('created_at')), [workshop.id]);
   const [run] = useAction();
   if (error) return <Err e={error} />; if (!data) return <Spin />; if (!data.length) return null;
+  const msg = (p) => `Hi ${p.name.split(' ')[0]}, a seat has opened up for ${workshop.title}. Would you like it?`;
   return (<><p className="ad-section-t" style={{ marginTop: 22 }}>Waitlist ({data.length})</p>
+    {left > 0 && <p className="ad-help" style={{ margin: '8px 0 0' }}>{left} {left === 1 ? 'seat is' : 'seats are'} free. Book someone from the waitlist below.</p>}
     <div className="ad-list">{data.map((p) => <div key={p.id} className="ad-row" style={{ cursor: 'default' }}><div className="main"><b>{p.name}</b><small>{[p.phone, p.email].filter(Boolean).join(' · ')} · {p.seats} {p.seats > 1 ? 'seats' : 'seat'} · since {fmtD(p.created_at)}{p.notified_at ? ` · contacted ${fmtD(p.notified_at)}` : ''}</small></div>
-      <div className="end">{wa(p.phone, `Hi ${p.name.split(' ')[0]}, a seat has opened up for ${workshop.title}. Would you like it?`) && <a className="ad-btn ghost sm" target="_blank" rel="noopener" onClick={() => { sb().from('workshop_waitlist').update({ notified_at: new Date().toISOString() }).eq('id', p.id).then(() => reload()); }} href={wa(p.phone, `Hi ${p.name.split(' ')[0]}, a seat has opened up for ${workshop.title}. Would you like it?`)}>WhatsApp</a>}
+      <div className="end row-actions" style={{ display: 'flex', margin: 0 }}>{left >= p.seats && onBook && <Btn className="ad-btn sm" onClick={() => onBook(p)}>Book</Btn>}
+        {wa(p.phone, msg(p)) && <a className="ad-btn ghost sm" target="_blank" rel="noopener" onClick={() => { sb().from('workshop_waitlist').update({ notified_at: new Date().toISOString() }).eq('id', p.id).then(() => reload()); }} href={wa(p.phone, msg(p))}>WhatsApp</a>}
         <button className="ad-btn ghost sm" onClick={() => run(async () => { must(await sb().from('workshop_waitlist').delete().eq('id', p.id)); reload(); })}>Remove</button></div></div>)}</div>
-    <div className="ad-actions"><Btn variant="ghost" icon="mail" onClick={() => onMessage(data)}>Email the waitlist</Btn></div></>);
+    <div className="row-actions" style={{ marginTop: 12 }}><Btn variant="ghost" icon="mail" onClick={() => onMessage(data)}>Email the waitlist</Btn></div></>);
+}
+
+/** Mark a workshop as cancelled (it disappears from the website). If people have paid, offer to refund them first. */
+export function CancelWorkshop({ w, onClose, onDone }) {
+  const [run, busy] = useAction(); const [refund, setRefund] = useState(false);
+  const { data, error } = useLoad(async () => must(await every(() => sb().from('bookings').select('*,workshops(title,starts_at)').eq('workshop_id', w.id).eq('status', 'paid').order('created_at').order('id'))), [w.id]);
+  const cancelOnly = () => run(async () => { must(await sb().from('workshops').update({ status: 'cancelled' }).eq('id', w.id)); onDone(); }, 'Workshop cancelled');
+  if (refund && data) return <RefundModal workshop={w} bookings={data} onClose={() => { onDone(); }} onDone={() => onDone()} />;
+  return (<Modal title={`Cancel · ${w.title}`} onClose={onClose}>
+    {error && <Err e={error} />}{!data && !error && <Spin />}
+    {data && (data.length ? <><p style={{ marginTop: 0 }}><b>{data.length}</b> {data.length === 1 ? 'booking has' : 'bookings have'} been paid. Cancelling hides the workshop from the website. You can refund them now, or cancel and sort the money out yourself.</p>
+        <div className="ad-actions full"><Btn onClick={() => setRefund(true)}>Cancel and refund</Btn><Btn variant="ghost" busy={busy} onClick={cancelOnly}>Cancel without refunds</Btn><Btn variant="ghost" onClick={onClose}>Keep it</Btn></div></>
+      : <><p style={{ marginTop: 0 }}>Nobody has paid for this workshop yet. Cancelling hides it from the website.</p><div className="ad-actions full"><Btn busy={busy} onClick={cancelOnly}>Cancel workshop</Btn><Btn variant="ghost" onClick={onClose}>Keep it</Btn></div></>)}
+  </Modal>);
 }

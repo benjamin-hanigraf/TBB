@@ -1,11 +1,11 @@
 'use client';
 // Orders, workshop sign-ups and class enrolments that were agreed directly (not through the website).
 import { useState } from 'react';
-import { sb, must, Modal, Btn, F, useForm, useAction, useToast, useLoad, fmtD } from './kit';
+import { sb, must, every, Modal, Btn, F, useForm, useAction, useToast, useLoad, fmtD } from './kit';
 import { CustomerSuggest, useCustomers, ensureCustomer } from './pickers';
 import { syncPaymentsToLedger } from '@/lib/ledgerSync';
 import { gstLine } from '@/lib/gst';
-import { money, rupeesToPaise } from '@/lib/accounting';
+import { money, rupeesToPaise, todayISO } from '@/lib/accounting';
 import { RULES } from '@/lib/format';
 
 export const PAY_OPTIONS = [['paid', 'Paid'], ['pending', 'Not paid yet']];
@@ -55,15 +55,19 @@ export function AddOrder({ products, order, onClose, onSaved }) {
     <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn><Btn type="button" variant="ghost" onClick={onClose}>Cancel</Btn></div></form></Modal>);
 }
 
-export function AddSignup({ w, taken, onClose, onSaved }) {
+/** Add a sign-up by hand. With prefill (a person from the waitlist) the details and seats start filled in, and that waitlist entry is removed once they are booked. */
+export function AddSignup({ w, taken, prefill, onClose, onSaved }) {
   const { data: customers } = useCustomers(); const [run, busy] = useAction();
-  const f = useForm({ name: '', phone: '', email: '', seats: '1', amount: String(w.price_paise / 100), pay: 'paid', method: 'upi' });
+  const unit = w.early_price_paise != null && w.early_until && w.early_until >= todayISO() ? w.early_price_paise : w.price_paise;      // today's price (early-bird while it lasts)
+  const seats0 = String(prefill?.seats || 1);
+  const f = useForm({ name: prefill?.name || '', phone: prefill?.phone || '', email: prefill?.email || '', seats: seats0, amount: String((unit * Number(seats0)) / 100), pay: 'paid', method: 'upi' });
   const save = (e) => { e.preventDefault(); return run(async () => {
     const seats = Math.max(1, parseInt(f.v.seats || '1', 10)); if (taken + seats > w.capacity) throw new Error(`Only ${Math.max(0, w.capacity - taken)} seat(s) are left.`); if (!f.v.name.trim()) throw new Error('Please add the name.');
     const paid = f.v.pay === 'paid';
     must(await sb().from('bookings').insert({ workshop_id: w.id, name: f.v.name, email: f.v.email || '', phone: f.v.phone || '', seats, amount_paise: rupeesToPaise(f.v.amount), status: paid ? 'paid' : 'pending', channel: 'manual', payment_method: paid ? f.v.method : null, paid_at: paid ? nowISO() : null }));
-    await ensureCustomer({ name: f.v.name, email: f.v.email, phone: f.v.phone }); if (paid) await syncPaymentsToLedger(sb()); onSaved(); }, 'Sign-up added'); };
-  return (<Modal title={`Add sign-up · ${w.title}`} onClose={onClose}><form className="ad-form" onSubmit={save}>
+    if (prefill?.waitlistId) await sb().from('workshop_waitlist').delete().eq('id', prefill.waitlistId);            // booked now, so no longer waiting
+    await ensureCustomer({ name: f.v.name, email: f.v.email, phone: f.v.phone }); if (paid) await syncPaymentsToLedger(sb()); onSaved(); }, prefill ? 'Booked from the waitlist' : 'Sign-up added'); };
+  return (<Modal title={`${prefill ? 'Book from waitlist' : 'Add sign-up'} · ${w.title}`} onClose={onClose}><form className="ad-form" onSubmit={save}>
     <Person f={f} customers={customers} /><F form={f} k="seats" label="Seats" rule="digits" required inputMode="numeric" /><F form={f} k="amount" label="Total amount (₹)" type="money" rule="money" required hint="Change it if you gave a discount" />
     <PaymentFields f={f} />
     <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn><Btn type="button" variant="ghost" onClick={onClose}>Cancel</Btn></div></form></Modal>);
@@ -100,19 +104,38 @@ function useStatusSave({ table, row, f, label, extra = {}, onSaved }) {
     if (becamePaid) await syncPaymentsToLedger(sb()); onSaved(); }, label);
   return [save, busy];
 }
-const statusOptions = (cur, transferredLabel) => (cur === 'refunded' ? [['refunded', 'Refunded']] : [['pending', 'Not paid yet'], ['paid', 'Confirmed'], ['transferred', transferredLabel], ['cancelled', 'Cancelled']]);
+const statusOptions = (cur, transferredLabel) => (cur === 'refunded' ? [['refunded', 'Refunded']] : [['pending', 'Not paid yet'], ['paid', 'Confirmed'], ...(transferredLabel || cur === 'transferred' ? [['transferred', transferredLabel || 'Transferred']] : []), ['cancelled', 'Cancelled']]);
 const refundable = (r) => ['paid', 'transferred'].includes(r.status);
 export function BookingModal({ b, onClose, onSaved }) {
-  const f = useForm({ status: b.status, method: b.payment_method || 'upi' }); const [refund, setRefund] = useState(false);
+  const f = useForm({ status: b.status, method: b.payment_method || 'upi' }); const [refund, setRefund] = useState(false); const [transfer, setTransfer] = useState(false);
   const [save, busy] = useStatusSave({ table: 'bookings', row: b, f, label: 'Sign-up updated', onSaved }); const wa = waLink(b.phone);
   return (<Modal title={b.name} onClose={onClose}>
     <p style={{ marginTop: 0 }}><b>{b.workshops?.title}</b><br />{b.seats} {b.seats > 1 ? 'seats' : 'seat'} · {money(b.amount_paise)}<br /><span className="ad-help">{b.email} · {b.phone}</span></p>
     <p className="ad-help">Booked {fmtDT(b.created_at)}{b.channel === 'manual' ? ' · added manually' : ''}{b.razorpay_payment_id ? ` · Payment ID ${b.razorpay_payment_id}` : ''}</p>
-    <div className="ad-form"><F form={f} k="status" label="Status" type="select" required options={statusOptions(b.status, 'Transferred to another date or person')} />
+    <div className="ad-form"><F form={f} k="status" label="Status" type="select" required options={statusOptions(b.status)} />
       {b.status === 'pending' && ['paid', 'transferred'].includes(f.v.status) && <F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} />}</div>
-    <p className="ad-help">Tickets are non-refundable but can be transferred. To give money back, use Refund.</p>
-    <div className="ad-actions full"><Btn busy={busy} onClick={save} icon="check">Save</Btn><Link className="ad-btn ghost" href={`/invoice/${b.id}`} target="_blank">Receipt</Link>{wa && <a className="ad-btn ghost" href={wa} target="_blank" rel="noopener">WhatsApp</a>}{refundable(b) && <Btn variant="ghost" onClick={() => setRefund(true)}>Refund</Btn>}</div>
-    {refund && <RefundDialog kind="booking" rows={[b]} title={`Refund · ${b.name}`} onClose={() => setRefund(false)} onDone={onSaved} />}</Modal>);
+    <p className="ad-help">Tickets are non-refundable but can be moved to another date with Transfer. To give money back, use Refund.</p>
+    <div className="ad-actions full"><Btn busy={busy} onClick={save} icon="check">Save</Btn><Link className="ad-btn ghost" href={`/invoice/${b.id}`} target="_blank">Receipt</Link>{wa && <a className="ad-btn ghost" href={wa} target="_blank" rel="noopener">WhatsApp</a>}{b.status === 'paid' && <Btn variant="ghost" onClick={() => setTransfer(true)}>Transfer</Btn>}{refundable(b) && <Btn variant="ghost" onClick={() => setRefund(true)}>Refund</Btn>}</div>
+    {refund && <RefundDialog kind="booking" rows={[b]} title={`Refund · ${b.name}`} onClose={() => setRefund(false)} onDone={onSaved} />}
+    {transfer && <TransferDialog b={b} onClose={() => setTransfer(false)} onDone={onSaved} />}</Modal>);
+}
+/** Move a paid booking to another workshop (another date). The same booking is moved, so the seat is freed here, taken there, and the payment record stays as it is. */
+function TransferDialog({ b, onClose, onDone }) {
+  const [run, busy] = useAction(); const [to, setTo] = useState('');
+  const { data, error } = useLoad(async () => {
+    const c = sb(); const ws = must(await every(() => c.from('workshops').select('id,title,starts_at,capacity').eq('status', 'published').gte('starts_at', new Date().toISOString()).neq('id', b.workshop_id).order('starts_at').order('id')));
+    const bk = ws.length ? must(await every(() => c.from('bookings').select('workshop_id,seats').eq('status', 'paid').in('workshop_id', ws.map((w) => w.id)).order('id'))) : []; const taken = {};
+    bk.forEach((x) => { taken[x.workshop_id] = (taken[x.workshop_id] || 0) + x.seats; }); return ws.map((w) => ({ ...w, left: w.capacity - (taken[w.id] || 0) }));
+  }, [b.id]);
+  const go = () => run(async () => {
+    const w = (data || []).find((x) => x.id === to); if (!w) throw new Error('Please choose the new workshop.'); if (w.left < b.seats) throw new Error(`Only ${Math.max(0, w.left)} seat(s) are free there.`);
+    const note = `Transferred from ${b.workshops?.title || 'another workshop'} on ${fmtD(new Date().toISOString())}`;
+    must(await sb().from('bookings').update({ workshop_id: w.id, notes: [b.notes, note].filter(Boolean).join('\n') }).eq('id', b.id)); onDone(); }, 'Transferred');
+  return (<Modal title={`Transfer · ${b.name}`} onClose={onClose}>
+    <p className="ad-help" style={{ marginTop: 0 }}>Moves {b.seats} {b.seats > 1 ? 'seats' : 'seat'} from <b>{b.workshops?.title}</b> to another date. The seat becomes free here and no payment is changed.</p>
+    {error && <p className="ad-err">{error.message}</p>}
+    {data && (data.length ? <div className="ad-form"><div className="full"><label className="ad-field"><span>Move to <i> *</i></span><select value={to} onChange={(e) => setTo(e.target.value)}><option value="">Choose a workshop</option>{data.map((w) => <option key={w.id} value={w.id} disabled={w.left < b.seats}>{w.title} · {fmtD(w.starts_at)} · {w.left > 0 ? `${w.left} free` : 'full'}</option>)}</select></label></div></div> : <p className="ad-empty">There is no other upcoming workshop to move to.</p>)}
+    <div className="ad-actions full"><Btn busy={busy} disabled={!to} icon="check" onClick={go}>Transfer</Btn><Btn variant="ghost" onClick={onClose}>Cancel</Btn></div></Modal>);
 }
 export function EnrolModal({ e, onClose, onSaved }) {
   const f = useForm({ status: e.status, method: e.payment_method || 'upi' }); const [refund, setRefund] = useState(false);

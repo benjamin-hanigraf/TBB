@@ -15,7 +15,7 @@ export default function PinGate({ onDone, notConfigured }) {
   return (<div className="ad-center"><form className="ad-pin" onSubmit={(e) => { e.preventDefault(); submit(pin); }}>
     <img src="/icons/icon-192.png" alt="Thin Black Brush" width="64" height="64" />
     <h1>Enter your PIN</h1><p className="ad-help" style={{ margin: '4px 0 0' }}>Manager access. This device will be remembered after you enter it once.</p>
-    {notConfigured && <p className="ad-err" style={{ marginTop: 16, textAlign: 'left', fontSize: 14 }}><b>Almost ready.</b> The website still needs one setting before the PIN can work. Open the <a href="/check" style={{ textDecoration: 'underline' }}>setup check</a> to see exactly what to add.</p>}
+    {notConfigured && <p className="ad-err" style={{ marginTop: 16, textAlign: 'left', fontSize: 14 }}><b>Almost ready.</b> The website still needs one setting before the PIN can work. Please add the <b>SUPABASE_SECRET_KEY</b> setting in your hosting dashboard, then reload.</p>}
     <input ref={input} className={`ad-pininput ${shake ? 'shake' : ''}`} type="password" inputMode="numeric" pattern="[0-9]*" maxLength={4} autoComplete="off" aria-label="4-digit PIN" placeholder="••••" disabled={busy}
       value={pin} onChange={(e) => { const v = e.target.value.replace(/\D/g, '').slice(0, 4); setPin(v); if (v.length === 4) setTimeout(() => submit(v), 80); }} />
     <div style={{ height: 24, marginTop: 14 }}>{busy && <Dots />}</div>

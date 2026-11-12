@@ -10,10 +10,10 @@ import ErrorBoundary from './ErrorBoundary';
 import { pinApi, getToken, setToken, applySession, lockDevice } from '@/lib/adminApi';
 
 export const NAV = [
-  ['/manager', 'Home', 'home'], ['/manager/calendar', 'Calendar', 'calendardays'], ['/manager/todo', 'To-do', 'listcheck'], ['/manager/orders', 'Orders', 'box'], ['/manager/workshops', 'Workshops', 'calendar'], ['/manager/classes', 'Classes', 'chair'], ['/manager/products', 'Store', 'bag'],
-  ['/manager/customers', 'Customers', 'user'], ['/manager/invoices', 'Invoices', 'file'], ['/manager/inbox', 'Inbox', 'mail'], ['/manager/money', 'Accounts', 'note'], ['/manager/calculator', 'Calculator', 'calc'], ['/manager/labels', 'Labels', 'tag'], ['/manager/settings', 'Settings', 'gear'],
+  ['/manager', 'Home', 'home'], ['/manager/planner', 'Planner', 'calendardays'], ['/manager/orders', 'Orders', 'box'], ['/manager/programs', 'Programs', 'calendar'], ['/manager/products', 'Store', 'bag'],
+  ['/manager/customers', 'Customers', 'user'], ['/manager/money', 'Money', 'note'], ['/manager/inbox', 'Inbox', 'mail'], ['/manager/settings', 'Settings', 'gear'],
 ];
-const TABS = [['/manager', 'Home', 'home'], ['/manager/orders', 'Orders', 'box'], ['/manager/workshops', 'Workshops', 'calendar'], ['/manager/money', 'Accounts', 'note'], ['/manager/more', 'More', 'menu']];
+const TABS = [['/manager', 'Home', 'home'], ['/manager/orders', 'Orders', 'box'], ['/manager/programs', 'Programs', 'calendar'], ['/manager/money', 'Money', 'note'], ['/manager/more', 'More', 'menu']];
 const active = (p, h) => (h === '/manager' ? p === '/manager' : p.startsWith(h));
 const setDefFlag = (v) => { try { sessionStorage.setItem('tbb-defpin', v ? '1' : ''); } catch {} };
 

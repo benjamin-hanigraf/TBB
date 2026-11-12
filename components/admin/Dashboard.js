@@ -29,17 +29,17 @@ export default function Dashboard() {
   return (<Page title="Home">
     {defPin && <Link href="/manager/settings" className="ad-err" style={{ display: 'block', background: '#fff3d6', color: '#7a4b00' }}>You are still using the starting PIN (0000). Tap here to change it.</Link>}
     <div className="ad-quick">
-      {[['/manager/calendar', 'Calendar', 'calendardays'], ['/manager/calculator', 'Calculator', 'calc'], ['/manager/invoices', 'Invoice Generator', 'file'], ['/manager/labels', 'Label Printer', 'tag']].map(([h, t, i]) => <Link key={h} href={h}><Icon n={i} size={26} /><span>{t}</span></Link>)}
+      {[['/manager/planner', 'Calendar', 'calendardays'], ['/manager/money?tab=calculator', 'Calculator', 'calc'], ['/manager/money?tab=invoices', 'Invoice Generator', 'file'], ['/manager/orders?tab=labels', 'Label Printer', 'tag']].map(([h, t, i]) => <Link key={h} href={h}><Icon n={i} size={26} /><span>{t}</span></Link>)}
     </div>
     <div className="ad-grid">
       <Link href="/manager/orders"><Stat label="Orders to pack" value={d.toPack} sub={d.toPack ? 'Tap to see' : 'All caught up'} /></Link>
       <Link href="/manager/inbox"><Stat label="New messages" value={d.inbox} sub={d.inbox ? 'Tap to read' : 'Nothing new'} /></Link>
-      <Link href="/manager/todo"><Stat label="To-do due" value={d.tasks} sub={d.tasks ? 'Due today or late' : 'Nothing due'} /></Link>
+      <Link href="/manager/planner"><Stat label="To-do due" value={d.tasks} sub={d.tasks ? 'Due today or late' : 'Nothing due'} /></Link>
       <Stat label="Income this month" value={money(d.thisMonth.moneyIn)} />
       <Stat label="Profit this month" value={money(d.thisMonth.profit)} tone={d.thisMonth.profit < 0 ? 'bad' : 'good'} sub={`This year: ${money(d.sum.profit)}`} />
     </div>
-    <Card title="Upcoming workshops" action={<Link href="/manager/workshops" className="ad-help">See all</Link>}>
-      {d.ws.length ? <div className="ad-list">{d.ws.map((w) => <Link key={w.id} href="/manager/workshops" className="ad-row"><div className="main"><b>{w.title}</b><small>{fmtD(w.starts_at)}</small></div><div className="end"><b>{d.taken[w.id] || 0} / {w.capacity}</b><small>seats booked</small></div></Link>)}</div> : <Empty>No upcoming workshops. Add one to start taking bookings.</Empty>}
+    <Card title="Upcoming workshops" action={<Link href="/manager/programs" className="ad-help">See all</Link>}>
+      {d.ws.length ? <div className="ad-list">{d.ws.map((w) => <Link key={w.id} href="/manager/programs" className="ad-row"><div className="main"><b>{w.title}</b><small>{fmtD(w.starts_at)}</small></div><div className="end"><b>{d.taken[w.id] || 0} / {w.capacity}</b><small>seats booked</small></div></Link>)}</div> : <Empty>No upcoming workshops. Add one to start taking bookings.</Empty>}
     </Card>
     <Card title="Recent payments">
       {d.recent.length ? <div className="ad-list">{d.recent.map((r) => <div key={r.k + r.id} className="ad-row" style={{ cursor: 'default' }}><div className="main"><b>{r.who}</b><small>{r.k} · {fmtDT(r.at)}</small></div><div className="end"><b>{money(r.amt)}</b><Badge tone="ok">Paid</Badge></div></div>)}</div> : <Empty>Payments will appear here.</Empty>}

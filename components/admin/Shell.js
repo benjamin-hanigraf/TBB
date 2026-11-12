@@ -52,7 +52,7 @@ function Inner({ children }) {
   if (state === 'pin' || state === 'pin-setup') return <PinGate notConfigured={state === 'pin-setup'} onDone={(def) => { setDefFlag(def); setState('ok'); }} />;
   return (
     <ToastProvider><div className="ad-app">
-      <aside className="ad-side"><Link href="/manager" className="ad-brand"><img src="/img/logo.png" alt="Thin Black Brush" height="40" /><span>Manager</span></Link>
+      <aside className="ad-side"><Link href="/manager" className="ad-brand"><img src="/brand/logo-stacked-light.svg" alt="Thin Black Brush" height="40" /><span>Manager</span></Link>
         <nav aria-label="Main">{NAV.map(([h, t, ic]) => <Link key={h} href={h} className={active(path, h) ? 'on' : ''}><AIcon n={ic} />{t}</Link>)}</nav>
         <div className="ad-side-f"><a href="/" target="_blank" rel="noopener">View website ↗</a><button onClick={async () => { await lockDevice(); clearCache(); location.reload(); }}><Icon n="logout" size={15} /> Log out</button></div></aside>
       <main className="ad-main" id="main">{children}</main>

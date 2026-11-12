@@ -4,9 +4,8 @@ export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thinblackbrush.com'),
   title: { default: "Thin Black Brush - The Artists' Commonroom", template: '%s | Thin Black Brush' },
   description: 'Art and calligraphy workshops, writing classes, custom invitations and handcrafted art supplies in Chennai.',
-  openGraph: { type: 'website', siteName: 'Thin Black Brush', locale: 'en_IN', images: ['/img/cb028c51a9.webp'] },
+  openGraph: { type: 'website', siteName: 'Thin Black Brush', locale: 'en_IN', images: ['/brand/logo-stacked-light.png'] },
   twitter: { card: 'summary_large_image' },
-  icons: { icon: '/img/9ec99f62d1.webp', apple: '/icons/icon-192.png' },
 };
 export const viewport = { width: 'device-width', initialScale: 1, themeColor: '#ffffff' };
 export default function RootLayout({ children }) {

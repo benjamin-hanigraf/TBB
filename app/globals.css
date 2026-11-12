@@ -239,3 +239,4 @@ footer .ficons{display:flex;gap:6px;justify-content:flex-end;margin-top:12px;mar
 .invband{display:grid;grid-template-columns:repeat(3,minmax(0,260px));gap:16px;justify-content:center;margin:40px auto 0}.invband img{width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;border-radius:16px}@media(max-width:700px){.invband{gap:10px;margin-top:32px}.invband img{border-radius:12px}}
 footer .fr .fh{justify-content:flex-end}@media(max-width:700px){footer .fr .fh{justify-content:flex-start}}
 .wall{margin-top:48px}
+footer .flogo{height:54px!important;width:auto}footer .fr .fh{height:54px}

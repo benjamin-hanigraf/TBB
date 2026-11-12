@@ -140,6 +140,10 @@ The gallery lives at the bottom of the Workshops page (`/workshops#gallery`), bu
 | Back button | `components/BackNav.js`. Only on detail pages (workshop, product, bag, checkout), never on main pages |
 | Footer | `components/Footer.js` |
 
+## Logos
+Both logos are vector SVG, traced from the original high-resolution artwork, in `public/brand/`:
+`logo-stacked-light.svg` / `logo-stacked-dark.svg` and `logo-line-light.svg` / `logo-line-dark.svg`. **Light** = black ink for light backgrounds, **dark** = white ink for dark backgrounds. The **stacked logo is the one to use everywhere** (nav, footer, invoices, labels, app icons, emails). `logo-stacked-light.png` (2400 px, transparent) exists for emails and link previews. The browser tab icon is `app/icon.svg`, which switches to white ink in dark mode. App icons are `public/icons/icon-192.png`, `icon-512.png`, `maskable-512.png`, and `app/apple-icon.png`.
+
 ## 11. Navigation and footer
 
 - **Nav:** sticky, 64px high, white at 82% opacity with blur and a hairline bottom border. Logo left. Links 14px `#424245`, active link black + 600. Right side: **bag icon (with a black count badge), login icon, burger**. Below 960px the links collapse into a full-screen white menu (links 19px, hairline separators). The burger is a black three-line icon.

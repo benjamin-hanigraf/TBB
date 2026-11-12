@@ -14,7 +14,7 @@ export default function Nav() {
   useEffect(() => { setOpen(false); }, [p]);
   return (
     <nav className="nav"><div className="wrap">
-      <Link href="/" className="logo" aria-label="Thin Black Brush home"><img src={images.logo} alt="Thin Black Brush" width="119" height="46" /></Link>
+      <Link href="/" className="logo" aria-label="Thin Black Brush home"><img src={images.logo} alt="Thin Black Brush" width="122" height="46" /></Link>
       <ul id="site-menu" className={open ? 'open' : ''} onClick={() => setOpen(false)}>
         {links.map(([h, t]) => <li key={h}><Link href={h} className={(h === '/' ? p === '/' : p.startsWith(h)) ? 'on' : ''}>{t}</Link></li>)}
       </ul>

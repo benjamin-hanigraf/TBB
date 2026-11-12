@@ -48,7 +48,7 @@ export default function Labels() {
     </div>
     {labels.length ? <FitA4 pages={pages.length}><div className="lbl-pages">{pages.map((rows, pi) => (<div className="lbl-page" key={pi}>{rows.map((l) => (
       <div className="lbl2" key={l.key}>
-        <div className="from"><img src="/img/logo.png" alt="" className="lg" /><div className="tx"><b>{biz.name || 'Thin Black Brush'}</b><span style={{ whiteSpace: 'pre-line' }}>{biz.address || ADDRESS_TEXT}</span>{biz.phone && <span>Ph: {biz.phone}</span>}</div></div>
+        <div className="from"><img src="/brand/logo-stacked-light.svg" alt="" className="lg" /><div className="tx"><b>{biz.name || 'Thin Black Brush'}</b><span style={{ whiteSpace: 'pre-line' }}>{biz.address || ADDRESS_TEXT}</span>{biz.phone && <span>Ph: {biz.phone}</span>}</div></div>
         <div className="to"><b>{l.to}</b>{l.lines.map((x) => <span key={x}>{x}</span>)}{l.phone && <span>Ph: {l.phone}</span>}</div></div>))}</div>))}</div></FitA4>
       : <p className="ad-empty ad-noprint">Choose parcels or add an address to see your labels here.</p>}
   </Page>);

@@ -8,7 +8,7 @@ export function InvoiceSheet({ d }) {
   const gst = d.gstOn; const c = d.calc;
   return (<div className="inv-sheet">
     <div className="inv-head">
-      <img src="/img/logo.png" alt="Thin Black Brush" className="inv-logo" />
+      <img src="/brand/logo-stacked-light.svg" alt="Thin Black Brush" className="inv-logo" />
       <div className="inv-biz"><b>{d.biz.name}</b>{d.biz.address && <span style={{ whiteSpace: 'pre-line' }}>{d.biz.address}</span>}{d.biz.phone && <span>{d.biz.phone}</span>}{d.biz.email && <span>{d.biz.email}</span>}{gst && d.biz.gstin && <span>GSTIN {d.biz.gstin}</span>}</div>
     </div>
     <div className="inv-meta">

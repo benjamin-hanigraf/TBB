@@ -146,3 +146,4 @@ Settings
 - PIN login page (/manager): redo the whole page, tidy: alignment, sizing, positions (owner request, added mid-round)
 - Website: cancelled workshops must not appear anywhere (list, detail page by direct link, sitemap, home, search engines). Owner request, repeated.
 - Website gallery: "Show more" must only add photos below with a short fade-in; photos already on screen must never move or reorder (owner request)
+- Website class enrolment: in the small details line above the Pay button, show the level in brackets instead of between commas, e.g. "Handwriting (Level 1)" (owner request)

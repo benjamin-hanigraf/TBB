@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import Icon from './Icons';
-import { business as b, images } from '@/lib/data';
-export default function Footer() {
+import { images } from '@/lib/data';
+import { getBusiness } from '@/lib/db';
+export default async function Footer() {
+  const b = await getBusiness();
   return (<>
     <footer><div className="wrap">
       <div className="cols">

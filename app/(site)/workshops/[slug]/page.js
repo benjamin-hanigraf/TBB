@@ -5,13 +5,14 @@ import Pic from '@/components/Pic';
 import JsonLd from '@/components/JsonLd';
 import BookWorkshop from '@/components/BookWorkshop';
 import Icon from '@/components/Icons';
-import { rupees, isPast, fmtDate, business } from '@/lib/data';
+import { rupees, isPast, fmtDate } from '@/lib/data';
+import { getBusiness } from '@/lib/db';
 import { getWorkshops, getWorkshop } from '@/lib/db';
 export const revalidate = 60;
 export async function generateStaticParams() { return (await getWorkshops()).map(w => ({ slug: w.slug })); }
 export async function generateMetadata({ params }) { const { slug } = await params; return { title: (await getWorkshop(slug))?.title }; }
 export default async function Workshop({ params }) {
-  const { slug } = await params; const w = await getWorkshop(slug); if (!w) notFound();
+  const { slug } = await params; const w = await getWorkshop(slug); if (!w) notFound(); const business = await getBusiness();
   const closed = isPast(w) || w.cancelled;
   const label = w.cancelled ? 'Cancelled' : isPast(w) ? 'Ended' : w.seatsLeft === 0 ? 'Sold out' : 'Book now';
   return (<main>

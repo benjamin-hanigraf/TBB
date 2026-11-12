@@ -1,12 +1,12 @@
 import Btn from '@/components/Btn';
 import Pic from '@/components/Pic';
 import Icon from '@/components/Icons';
-import { business } from '@/lib/data';
-import { getImages, getClasses } from '@/lib/db';
+import { getImages, getClasses, getBusiness } from '@/lib/db';
 import LevelPicker from '@/components/LevelPicker';
 export const metadata = { title: 'Writing Classes', description: 'Handwriting and calligraphy classes for children aged 5 to 15, plus tailor-made courses for adults, in Chennai.' };
 export const revalidate = 60;
 export default async function Classes() {
+  const business = await getBusiness();
   const [im, levels] = await Promise.all([getImages(), getClasses()]);
   return (<main>
     <section className="pagehead"><div className="wrap"><p className="eyebrow">Writing classes</p><h1>Handwriting and calligraphy</h1>

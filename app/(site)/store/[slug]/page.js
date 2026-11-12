@@ -4,13 +4,14 @@ import JsonLd from '@/components/JsonLd';
 import AddToCart from '@/components/AddToCart';
 import Gallery from '@/components/Gallery';
 import Icon from '@/components/Icons';
-import { rupees, returnPolicy, business } from '@/lib/data';
+import { rupees, returnPolicy } from '@/lib/data';
+import { getBusiness } from '@/lib/db';
 import { getProducts, getProduct } from '@/lib/db';
 export const revalidate = 60;
 export async function generateStaticParams() { return (await getProducts()).map(p => ({ slug: p.slug })); }
 export async function generateMetadata({ params }) { const { slug } = await params; return { title: (await getProduct(slug))?.title }; }
 export default async function Product({ params }) {
-  const { slug } = await params; const p = await getProduct(slug); if (!p) notFound();
+  const { slug } = await params; const p = await getProduct(slug); if (!p) notFound(); const business = await getBusiness();
   const out = p.stock <= 0 && !p.preorder;
   return (<main><JsonLd data={{ '@context': 'https://schema.org', '@type': 'Product', name: p.title, description: p.text, image: p.images, brand: { '@type': 'Brand', name: 'Thin Black Brush' }, offers: { '@type': 'Offer', price: p.price, priceCurrency: 'INR', availability: out ? 'https://schema.org/OutOfStock' : p.preorder ? 'https://schema.org/PreOrder' : 'https://schema.org/InStock' } }} /><section className="section"><div className="wrap split top">
     <Gallery images={p.images} alt={p.title} />

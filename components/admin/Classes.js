@@ -10,7 +10,7 @@ import { fmtDay } from '@/lib/dates';
 const lines = (s) => String(s || '').split('\n').map((x) => x.trim()).filter(Boolean);
 
 export default function Classes() {
-  const toast = useToast(); const [edit, setEdit] = useState(null); const [people, setPeople] = useState(null);
+  const toast = useToast(); const [edit, setEdit] = useState(null); const [people, setPeople] = useState(null); const [autoOpen, setAutoOpen] = useState(null);
   const { data, error, reload } = useLoad(async () => {
     const c = sb(); const [l, e, t, s] = await Promise.all([c.from('class_levels').select('*').order('sort_order'), every(() => c.from('class_enrolments').select('id,class_id').in('status', ['paid', 'transferred']).order('id')),
       c.from('class_types').select('*').order('sort_order'), every(() => c.from('class_sessions').select('enrolment_id,status').neq('status', 'cancelled').order('id'))]);
@@ -18,7 +18,11 @@ export default function Classes() {
     must(e).forEach((x) => { n[x.class_id] = (n[x.class_id] || 0) + 1; if (!scheduled.has(x.id)) loose[x.class_id] = (loose[x.class_id] || 0) + 1; });
     return { levels: must(l), n, loose, types: must(t) };
   });
-  useEffect(() => { let id = null; try { id = new URLSearchParams(window.location.search).get('people'); } catch {} const l = id && data?.levels.find((x) => x.id === id); if (l) setPeople(l); }, [data]);   // a link from Accounts opens that level's students
+  useEffect(() => {          // a link from Accounts (?people=<level>) or from Home (?student=<student>) opens that level's students, or that one student's classes
+    let id = null, st = null; try { const q = new URLSearchParams(window.location.search); id = q.get('people'); st = q.get('student'); } catch {}
+    if (id) { const l = data?.levels.find((x) => x.id === id); if (l) setPeople(l); }
+    else if (st && data) sb().from('class_enrolments').select('class_id').eq('id', st).maybeSingle().then((r) => { const l = data.levels.find((x) => x.id === r.data?.class_id); if (l) { setAutoOpen(st); setPeople(l); } });
+  }, [data]);
   if (error) return <Page title="Classes"><Err e={error} /></Page>; if (!data) return <Page title="Classes"><Spin /></Page>;
   const tone = (name) => Math.max(0, data.types.findIndex((t) => t.name === name)) % 4;
   const reorder = async (arr) => { try { for (let i = 0; i < arr.length; i++) if (arr[i].sort_order !== i + 1) must(await sb().from('class_levels').update({ sort_order: i + 1 }).eq('id', arr[i].id)); toast('Order saved'); reload(); } catch (e) { toast(e.message || 'Could not save the order.', 'err'); } };
@@ -29,7 +33,7 @@ export default function Classes() {
         <div className="end"><b>{money(c.price_paise)}</b>{!c.active && <Badge>Hidden</Badge>}{data.loose[c.id] > 0 && <Badge tone="warn">{data.loose[c.id]} to schedule</Badge>}<Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setPeople(c)}>Students</Btn></div></div>)} /> : <Empty>No levels yet.</Empty>}</Card>
     {data.levels.length > 1 && <p className="ad-help" style={{ textAlign: 'center' }}>Drag the handle to change the order on the website. "To schedule" means students who paid but have no class dates yet: open Students, then Classes.</p>}
     {edit && <Form c={edit} types={data.types} count={data.levels.length} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); reload(); }} />}
-    {people && <Participants level={people} onClose={() => setPeople(null)} onChanged={reload} />}
+    {people && <Participants level={people} autoOpen={autoOpen} onClose={() => { setPeople(null); setAutoOpen(null); }} onChanged={reload} />}
   </Page>);
 }
 
@@ -65,13 +69,14 @@ function Form({ c, types, count, onClose, onSaved }) {
 }
 
 /** The students of one level: payment and details on tap, their class dates on the Classes button. */
-function Participants({ level, onClose, onChanged }) {
+function Participants({ level, autoOpen, onClose, onChanged }) {
   const [add, setAdd] = useState(false); const [one, setOne] = useState(null); const [sched, setSched] = useState(null);
   const { data, error, reload } = useLoad(async () => {
     const rows = must(await every(() => sb().from('class_enrolments').select('*,class_levels(title,level)').eq('class_id', level.id).in('status', ['paid', 'pending', 'transferred']).order('created_at').order('id')));
     const sess = must(await every(() => sb().from('class_sessions').select('enrolment_id,on_date,status,time_text,class_enrolments!inner(class_id)').eq('class_enrolments.class_id', level.id).order('on_date').order('id')));
     return { rows, sess };
   }, [level.id]);
+  useEffect(() => { if (!autoOpen || !data) return; const x = data.rows.find((r) => r.id === autoOpen); if (x) setSched(x); }, [autoOpen, data]);
   const today = todayISO(); const changed = () => { reload(); onChanged(); };
   const rows = (data?.rows || []).filter((x) => x.status !== 'pending' || x.channel === 'manual');
   const summary = (x) => { const mine = data.sess.filter((s) => s.enrolment_id === x.id && s.status !== 'cancelled'); const done = mine.filter((s) => s.status === 'done').length; const next = mine.find((s) => s.status === 'scheduled' && s.on_date >= today);

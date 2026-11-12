@@ -24,7 +24,7 @@ export function PaymentFields({ f }) {
 
 export function AddOrder({ products, onClose, onSaved }) {
   const { data: customers } = useCustomers(); const [run, busy] = useAction(); const toast = useToast();
-  const f = useForm({ name: '', phone: '', email: '', line1: '', line2: '', city: '', state: '', pincode: '', shipping: '', pay: 'paid', method: 'upi' });
+  const f = useForm({ name: '', phone: '', email: '', line1: '', line2: '', city: '', state: '', pincode: '', shipping: '', pay: 'paid', method: 'upi', notes: '' });
   const [items, setItems] = useState([{ slug: '', qty: '1' }]);
   const set = (i, k, v) => setItems((a) => a.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
   const lines = items.map((x) => { const p = products.find((q) => q.slug === x.slug); const qty = Math.max(1, parseInt(x.qty || '1', 10)); return p ? { p, qty, g: gstLine(p.price_paise, qty, p.gst_mode) } : null; }).filter(Boolean);
@@ -33,11 +33,16 @@ export function AddOrder({ products, onClose, onSaved }) {
     if (!lines.length) throw new Error('Please choose at least one product.'); if (!f.v.name.trim()) throw new Error('Please add the customer name.');
     const paid = f.v.pay === 'paid';
     const addr = { recipient: f.v.name, phone: f.v.phone, line1: f.v.line1, line2: f.v.line2, city: f.v.city, state: f.v.state, pincode: f.v.pincode };
-    const o = must(await sb().from('orders').insert({ name: f.v.name, email: f.v.email || '', phone: f.v.phone || '', shipping_address: addr, subtotal_paise: subtotal, shipping_paise: ship, total_paise: total, status: paid ? 'paid' : 'pending', channel: 'manual', payment_method: paid ? f.v.method : null, paid_at: paid ? nowISO() : null }).select().single());
-    must(await sb().from('order_items').insert(lines.map((l) => ({ order_id: o.id, product_id: l.p.id, title: l.p.title, unit_paise: l.p.price_paise, qty: l.qty, gst_paise: l.p.gst_mode === 'none' ? 0 : l.g.gst }))));
-    if (paid) for (const l of lines) await sb().from('products').update({ stock: Math.max(0, l.p.stock - l.qty) }).eq('id', l.p.id);
+    const itemRows = lines.map((l) => ({ product_id: l.p.id, title: l.p.title, unit_paise: l.p.price_paise, qty: l.qty, gst_paise: l.p.gst_mode === 'none' ? 0 : l.g.gst }));
+    // Saved in one step in the database: the order, its items, the stock and the accounts entry all go in together, or nothing does.
+    const r = await sb().rpc('admin_add_order', { p: { name: f.v.name, email: f.v.email || '', phone: f.v.phone || '', address: addr, subtotal_paise: subtotal, shipping_paise: ship, total_paise: total, pay: paid ? 'paid' : 'pending', method: f.v.method, notes: f.v.notes || '', items: itemRows } });
+    if (r.error && /admin_add_order/.test(r.error.message || '')) {     // database update not run yet: the older step-by-step way
+      const o = must(await sb().from('orders').insert({ name: f.v.name, email: f.v.email || '', phone: f.v.phone || '', shipping_address: addr, subtotal_paise: subtotal, shipping_paise: ship, total_paise: total, status: paid ? 'paid' : 'pending', channel: 'manual', payment_method: paid ? f.v.method : null, paid_at: paid ? nowISO() : null }).select().single());
+      must(await sb().from('order_items').insert(itemRows.map((x) => ({ ...x, order_id: o.id }))));
+      if (paid) { for (const l of lines) await sb().from('products').update({ stock: Math.max(0, l.p.stock - l.qty) }).eq('id', l.p.id); await syncPaymentsToLedger(sb()); }
+    } else must(r);
     await ensureCustomer({ name: f.v.name, email: f.v.email, phone: f.v.phone, address_line1: f.v.line1, address_line2: f.v.line2, city: f.v.city, state: f.v.state, pincode: f.v.pincode });
-    if (paid) await syncPaymentsToLedger(sb()); onSaved(); }, 'Order added'); };
+    onSaved(); }, 'Order added'); };
   return (<Modal title="Add order" onClose={onClose} wide><form className="ad-form" onSubmit={save}>
     <Person f={f} customers={customers} extra />
     <div className="full"><p className="ad-section-t">Products</p>
@@ -48,6 +53,7 @@ export function AddOrder({ products, onClose, onSaved }) {
     <F form={f} k="line1" label="Address line 1" rule="text" /><F form={f} k="line2" label="Address line 2" rule="text" /><F form={f} k="city" label="City" rule="text" /><F form={f} k="state" label="State" rule="text" /><F form={f} k="pincode" label="Pincode" rule="pin" inputMode="numeric" />
     <F form={f} k="shipping" label="Shipping charge (₹)" type="money" rule="money" />
     <PaymentFields f={f} />
+    <div className="full"><F form={f} k="notes" label="Private note" type="textarea" rule="sentence" rows={2} hint="Only you see this" /></div>
     <p className="full ad-help" style={{ margin: 0 }}>Total: <b>{money(total)}</b>{lines.some((l) => l.p.gst_mode === 'add') ? ' (includes GST where it applies)' : ''}</p>
     <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn><Btn type="button" variant="ghost" onClick={onClose}>Cancel</Btn></div></form></Modal>);
 }

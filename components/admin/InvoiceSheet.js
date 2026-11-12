@@ -24,6 +24,7 @@ export function InvoiceSheet({ d }) {
       {gst && <><div><span>Taxable value</span><span>{money(c.taxable)}</span></div><div><span>CGST</span><span>{money(c.cgst)}</span></div><div><span>SGST</span><span>{money(c.sgst)}</span></div></>}
       <div className="grand"><span>Total</span><span>{money(c.total)}</span></div>
       {d.paid && <div className="paid"><span>Paid{d.method ? ` by ${d.method}` : ''}{d.paidOn ? ` on ${isoToDMY(d.paidOn)}` : ''}</span><span>{money(c.total)}</span></div>}
+      {!d.paid && d.paidPaise > 0 && <><div><span>Paid so far</span><span>{money(d.paidPaise)}</span></div><div className="paid"><span>Balance due</span><span>{money(d.balance)}</span></div></>}
     </div>
     <div className="inv-foot">
       <div>{d.biz.upi && <><p className="inv-label">Pay by UPI</p><p className="inv-sub">{d.biz.upi}</p></>}{d.notes && <><p className="inv-label" style={{ marginTop: 10 }}>Notes</p><p className="inv-sub" style={{ whiteSpace: 'pre-wrap' }}>{d.notes}</p></>}</div>

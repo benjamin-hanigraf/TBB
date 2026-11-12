@@ -34,7 +34,9 @@ export default function CalendarPanel({ version = 0 }) {
       c.from('class_sessions').select('id,no,on_date,status,moved_from,class_batches(name,time_text,sessions,class_levels(title,level))').order('on_date').limit(3000),
       c.from('todos').select('id,title,note,due_on,done').eq('done', false).not('due_on', 'is', null),
       c.from('events').select('*').order('on_date')]);
-    return { workshops: must(w), sessions: must(s), todos: must(t), events: must(e) };
+    // Show whatever loaded. A missing table (database update not run yet) should not blank the whole calendar.
+    const missing = []; const ok = (r, name) => { if (!r.error) return r.data || []; missing.push(name); console.error('calendar', name, r.error); return []; };
+    return { workshops: ok(w, 'workshops'), sessions: ok(s, 'class sessions'), todos: ok(t, 'to-dos'), events: ok(e, 'events'), missing };
   }, [version]);
   const events = useMemo(() => (data ? buildEvents(data) : []), [data]);
   const by = useMemo(() => { const m = {}; events.forEach((e) => (m[e.date] ||= []).push(e)); return m; }, [events]);
@@ -46,6 +48,7 @@ export default function CalendarPanel({ version = 0 }) {
   const row = (e, i, showDate) => { const inner = (<><div className="main"><b>{e.title}</b><small>{[showDate && new Date(`${e.date}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }), e.time, e.note].filter(Boolean).join(' · ') || KINDS[e.kind]}</small></div><div className="end">{e.draft && <Badge>Draft</Badge>}<span className={`kindtag ${e.kind}`}>{KINDS[e.kind]}</span></div></>);
     return e.event ? <button key={i} className="ad-row" onClick={() => setEdit(e.event)}>{inner}</button> : <Link key={i} href={e.href} className="ad-row">{inner}</Link>; };
   return (<>
+    {data.missing?.length > 0 && <p className="ad-err" role="alert">Could not load {data.missing.join(', ')}. If this keeps happening, the latest database update (supabase/v8.sql) may not have been run yet.</p>}
     <Card>
       <div className="cal-head"><button className="ad-x" aria-label="Previous month" onClick={() => go(-1)}><Icon n="left" size={18} /></button><h2>{MONTHS[m - 1]} {y}</h2><button className="ad-x" aria-label="Next month" onClick={() => go(1)}><Icon n="right" size={18} /></button>
         <button className="ad-btn ghost sm" onClick={() => { setYm(today.slice(0, 7)); setSel(today); }}>Today</button><button className="ad-btn sm" onClick={() => setEdit({ on_date: sel })}><Icon n="plus" size={14} /><span>Event</span></button></div>

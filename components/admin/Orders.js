@@ -19,7 +19,7 @@ export default function Orders() {
     return { orders: must(o), products: must(p) };
   });
   if (error) return <Page title="Orders"><Err e={error} /></Page>; if (!data) return <Page title="Orders"><Spin /></Page>;
-  const has = (x) => !q || JSON.stringify([x.name, x.email, x.phone, x.invoice_no]).toLowerCase().includes(q.toLowerCase());
+  const has = (x) => !q || JSON.stringify([x.name, x.email, x.phone, x.invoice_no, x.notes]).toLowerCase().includes(q.toLowerCase());
   const list = data.orders.filter(has);
   const sections = [['To pack', list.filter((o) => ['paid', 'packed'].includes(o.status)), 'Nothing to pack right now.'], ['Shipped', list.filter((o) => ['shipped', 'delivered'].includes(o.status)), 'Nothing shipped yet.'],
     ['Awaiting payment', list.filter((o) => o.status === 'pending'), null], ['Cancelled or refunded', list.filter((o) => ['cancelled', 'refunded'].includes(o.status)), null]];
@@ -34,8 +34,8 @@ export default function Orders() {
 }
 
 function OrderModal({ o, onClose, onSaved }) {
-  const f = useForm({ status: o.status, carrier: o.tracking_carrier || '', number: o.tracking_number || '', method: o.payment_method || 'upi' }); const [run, busy] = useAction(); const toast = useToast();
-  const save = () => run(async () => { const becamePaid = o.status === 'pending' && f.v.status !== 'pending'; must(await sb().from('orders').update({ status: f.v.status, tracking_carrier: f.v.carrier || null, tracking_number: f.v.number || null, ...(becamePaid ? { paid_at: new Date().toISOString(), payment_method: f.v.method } : {}) }).eq('id', o.id)); if (becamePaid) await syncPaymentsToLedger(sb()); if (f.v.status === 'refunded' && o.status !== 'refunded') await recordRefund(sb(), { source_id: o.id, amount_paise: o.total_paise, party: o.name, description: `Refund for order ${o.invoice_no ?? ''}`.trim() }); onSaved(); }, 'Order updated');
+  const f = useForm({ status: o.status, carrier: o.tracking_carrier || '', number: o.tracking_number || '', method: o.payment_method || 'upi', notes: o.notes || '' }); const [run, busy] = useAction(); const toast = useToast();
+  const save = () => run(async () => { const becamePaid = o.status === 'pending' && f.v.status !== 'pending'; must(await sb().from('orders').update({ status: f.v.status, tracking_carrier: f.v.carrier || null, tracking_number: f.v.number || null, notes: f.v.notes.trim() || null, ...(becamePaid ? { paid_at: new Date().toISOString(), payment_method: f.v.method } : {}) }).eq('id', o.id)); if (becamePaid) await syncPaymentsToLedger(sb()); if (f.v.status === 'refunded' && o.status !== 'refunded') await recordRefund(sb(), { source_id: o.id, amount_paise: o.total_paise, party: o.name, description: `Refund for order ${o.invoice_no ?? ''}`.trim() }); onSaved(); }, 'Order updated');
   const email = () => run(async () => {
     const { data } = await supabase().auth.getSession(); const r = await fetch('/api/manager/email', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ type: 'shipped', order_id: o.id }) });
     if (!r.ok) throw new Error('Could not send the email. Please check the email settings.');
@@ -51,8 +51,9 @@ function OrderModal({ o, onClose, onSaved }) {
       <F form={f} k="status" label="Status" type="select" required options={ORDER_STATUS} />
       {o.status === 'pending' && f.v.status !== 'pending' && <F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} />}
       <F form={f} k="carrier" label="Courier" rule="text" placeholder="e.g. India Post" /><F form={f} k="number" label="Tracking number" rule="code" />
+      <div className="full"><F form={f} k="notes" label="Private note" type="textarea" rule="sentence" rows={2} hint="Only you see this, never the customer" /></div>
     </div>
     <div className="ad-actions"><Btn busy={busy} onClick={save} icon="check">Save</Btn><Link className="ad-btn ghost" href={`/invoice/${o.id}`} target="_blank">Receipt</Link>
-      <Link className="ad-btn ghost" href={`/manager/labels?order=${o.id}`}>Print label</Link>{o.tracking_number && <Btn variant="ghost" busy={busy} onClick={email} icon="mail">Tracking</Btn>}</div>
+      <Link className="ad-btn ghost" href={`/manager/orders?tab=labels&order=${o.id}`}>Print label</Link>{o.tracking_number && <Btn variant="ghost" busy={busy} onClick={email} icon="mail">Tracking</Btn>}</div>
   </Modal>);
 }

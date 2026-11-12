@@ -1,0 +1,41 @@
+THIN BLACK BRUSH - EDIT LOG
+Every edit asked for or approved, written here before work starts. Newest at the bottom.
+Branch with the work: claude/zealous-turing-jqe6sd
+
+== Done before this log (Nov 2026) ==
+- Hosting moved from Netlify to Vercel until the site goes live; README updated
+- Finished Manager items left half-done by the old account: quotations, credit notes, part payments, payment reminders, one invoice number series, one-step manual orders, private order notes, customer totals, Settings for gateway fee and number prefixes
+- Calendar shows what it can if a database table is missing
+- Dummy test data: supabase/dummy.sql (10+ rows per table) and supabase/dummy-remove.sql (run before launch)
+
+== Batch: Manager audit fixes (approved) ==
+Fixes
+- Return stock when an order is cancelled or refunded
+- Reduce stock when a manual "not paid yet" order is later marked paid
+- Record refunds with the real payment method, not always "razorpay"
+- One refund flow everywhere; keep payment provider neutral (Razorpay or Paytm)
+- Always allow "mark as refunded" when the money was sent back some other way
+- Home "Orders to pack" count must match the Orders page (paid + packed)
+- Class progress must not count cancelled classes
+- Deleting a product that was ordered: offer to hide it instead of an error
+- Changing the PIN signs out every other device
+- One broken screen must not take down the whole app
+Adds
+- "Download everything" backup button in Settings
+- Home: "Today" card (workshops, classes, to-dos for today) and a separate "Needs attention" card
+- Badge for new Inbox messages on the mobile More tab
+- Tap an automatic accounts entry to open where it came from
+- Inbox: filter by type
+Removes / changes
+- Remove the unused /manager/offline page
+- Waitlist: mark a person as contacted when WhatsApp/email is tapped
+- Inbox: separate "read" from "dealt with"
+- To-do: rename "Remind me on" to "Due on"
+- Orders: collapse delivered orders older than 30 days
+Not doing (owner's choice)
+- Website photos screen: owner will add it
+- Forcing a PIN change away from the starting PIN
+- "Make a quotation" from an Inbox message: owner will add it
+- Home shortcuts stay
+Open question
+- Class level day/time/start fields: classes are one-on-one on chosen dates, not weekly batches. Decide before removing anything.

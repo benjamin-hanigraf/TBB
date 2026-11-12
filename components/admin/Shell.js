@@ -15,13 +15,21 @@ export const NAV = [
 ];
 const TABS = [['/manager', 'Home', 'home'], ['/manager/orders', 'Orders', 'box'], ['/manager/programs', 'Programs', 'calendar'], ['/manager/money', 'Money', 'note'], ['/manager/more', 'More', 'menu']];
 const active = (p, h) => (h === '/manager' ? p === '/manager' : p.startsWith(h));
+/** How many Inbox messages have not been opened yet (shown as "Inbox (2)"). */
+export async function unreadCount() {
+  const c = adminClient(); if (!c) return 0; let r = await c.from('enquiries').select('id', { count: 'exact', head: true }).is('read_at', null);
+  if (r.error) r = await c.from('enquiries').select('id', { count: 'exact', head: true }).eq('handled', false);   // before database update v9
+  return r.count || 0;
+}
+const withCount = (t, n) => (n ? `${t} (${n})` : t);
 const setDefFlag = (v) => { try { sessionStorage.setItem('tbb-defpin', v ? '1' : ''); } catch {} };
 
 export default function AdminShell({ children }) {
   return <ErrorBoundary><Inner>{children}</Inner></ErrorBoundary>;
 }
 function Inner({ children }) {
-  const path = usePathname(); const [state, setState] = useState('loading');
+  const path = usePathname(); const [state, setState] = useState('loading'); const [unread, setUnread] = useState(0);
+  useEffect(() => { if (state === 'ok') unreadCount().then(setUnread).catch(() => {}); }, [state, path]);
   useEffect(() => { window.__adminReady = true; const t = setTimeout(() => setState((s) => (s === 'loading' ? 'error' : s)), 10000); return () => clearTimeout(t); }, []);
   useEffect(() => { const h = (e) => { e.preventDefault(); window.__bip = e; }; window.addEventListener('beforeinstallprompt', h); return () => window.removeEventListener('beforeinstallprompt', h); }, []);
   useEffect(() => { if ('serviceWorker' in navigator) navigator.serviceWorker.register('/manager/sw.js', { scope: '/manager' }).catch(() => {}); }, []);
@@ -40,7 +48,7 @@ function Inner({ children }) {
           if (!data.session) { const s = await pinApi({ action: 'session' }); if (!s.ok) { setToken(''); setState('pin'); return; } await applySession(s.session); }
           if (on) setState('ok'); return;
         }
-        setToken(''); clearCache(); await adminClient().auth.signOut().catch(() => {}); if (on) setState('pin');
+        setToken(''); clearCache(); await adminClient().auth.signOut({ scope: 'local' }).catch(() => {}); if (on) setState('pin');
       } catch (e) { console.error(e); if (on) setState('error'); }
     })();
     return () => { on = false; };
@@ -53,10 +61,10 @@ function Inner({ children }) {
   return (
     <ToastProvider><div className="ad-app">
       <aside className="ad-side"><Link href="/manager" className="ad-brand"><img src="/brand/logo-stacked-light.svg" alt="Thin Black Brush" height="40" /><span>Manager</span></Link>
-        <nav aria-label="Main">{NAV.map(([h, t, ic]) => <Link key={h} href={h} className={active(path, h) ? 'on' : ''}><AIcon n={ic} />{t}</Link>)}</nav>
+        <nav aria-label="Main">{NAV.map(([h, t, ic]) => <Link key={h} href={h} className={active(path, h) ? 'on' : ''}><AIcon n={ic} />{h === '/manager/inbox' ? withCount(t, unread) : t}</Link>)}</nav>
         <div className="ad-side-f"><a href="/" target="_blank" rel="noopener">View website ↗</a><button onClick={async () => { await lockDevice(); clearCache(); location.reload(); }}><Icon n="logout" size={15} /> Log out</button></div></aside>
-      <main className="ad-main" id="main">{children}</main>
-      <nav className="ad-tabs" aria-label="Main">{TABS.map(([h, t, ic]) => <Link key={h} href={h} className={active(path, h) || (h === '/manager/more' && !TABS.slice(0, 4).some(([x]) => active(path, x))) ? 'on' : ''}><AIcon n={ic} /><span>{t}</span></Link>)}</nav>
+      <main className="ad-main" id="main"><ErrorBoundary key={path} screen>{children}</ErrorBoundary></main>
+      <nav className="ad-tabs" aria-label="Main">{TABS.map(([h, t, ic]) => <Link key={h} href={h} className={active(path, h) || (h === '/manager/more' && !TABS.slice(0, 4).some(([x]) => active(path, x))) ? 'on' : ''}><AIcon n={ic} /><span>{h === '/manager/more' ? withCount(t, unread) : t}</span></Link>)}</nav>
     </div></ToastProvider>);
 }
 export function AIcon({ n }) { return <Icon n={n} size={20} />; }

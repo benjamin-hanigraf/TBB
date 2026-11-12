@@ -93,37 +93,41 @@ export function AddEnrol({ level, onClose, onSaved }) {
 // ---- view / change one sign-up or enrolment (status, mark paid, refund) ----
 import Link from 'next/link';
 import { fmtDT } from './kit';
-import { recordRefund } from '@/lib/ledgerSync';
+import { RefundDialog } from './Refund';
 const waLink = (p) => { const d = String(p || '').replace(/\D/g, '').slice(-10); return d.length === 10 ? `https://wa.me/91${d}` : null; };
-function useStatusSave({ table, row, f, label, desc, amount, gst = 0, party, extra = {}, onSaved }) {
+// Status changes here never refund: refunds go through the Refund button, so the money and the accounts always match.
+function useStatusSave({ table, row, f, label, extra = {}, onSaved }) {
   const [run, busy] = useAction();
   const save = () => run(async () => {
-    const becamePaid = row.status === 'pending' && f.v.status !== 'pending';
+    const becamePaid = row.status === 'pending' && ['paid', 'transferred'].includes(f.v.status);
     must(await sb().from(table).update({ status: f.v.status, ...extra, ...(becamePaid ? { paid_at: nowISO(), payment_method: f.v.method } : {}) }).eq('id', row.id));
-    if (f.v.status === 'refunded' && row.status !== 'refunded') await recordRefund(sb(), { source_id: row.id, amount_paise: amount, gst_paise: gst, party, description: `Refund: ${desc}` });
     if (becamePaid) await syncPaymentsToLedger(sb()); onSaved(); }, label);
   return [save, busy];
 }
+const statusOptions = (cur, transferredLabel) => (cur === 'refunded' ? [['refunded', 'Refunded']] : [['pending', 'Not paid yet'], ['paid', 'Confirmed'], ['transferred', transferredLabel], ['cancelled', 'Cancelled']]);
+const refundable = (r) => ['paid', 'transferred'].includes(r.status);
 export function BookingModal({ b, onClose, onSaved }) {
-  const f = useForm({ status: b.status, method: b.payment_method || 'upi' });
-  const [save, busy] = useStatusSave({ table: 'bookings', row: b, f, label: 'Sign-up updated', desc: b.workshops?.title || 'workshop', amount: b.amount_paise, gst: b.gst_paise || 0, party: b.name, onSaved }); const wa = waLink(b.phone);
+  const f = useForm({ status: b.status, method: b.payment_method || 'upi' }); const [refund, setRefund] = useState(false);
+  const [save, busy] = useStatusSave({ table: 'bookings', row: b, f, label: 'Sign-up updated', onSaved }); const wa = waLink(b.phone);
   return (<Modal title={b.name} onClose={onClose}>
     <p style={{ marginTop: 0 }}><b>{b.workshops?.title}</b><br />{b.seats} {b.seats > 1 ? 'seats' : 'seat'} · {money(b.amount_paise)}<br /><span className="ad-help">{b.email} · {b.phone}</span></p>
     <p className="ad-help">Booked {fmtDT(b.created_at)}{b.channel === 'manual' ? ' · added by hand' : ''}{b.razorpay_payment_id ? ` · Payment ID ${b.razorpay_payment_id}` : ''}</p>
-    <div className="ad-form"><F form={f} k="status" label="Status" type="select" required options={[['pending', 'Not paid yet'], ['paid', 'Confirmed'], ['transferred', 'Transferred to another date or person'], ['cancelled', 'Cancelled'], ['refunded', 'Refunded']]} />
-      {b.status === 'pending' && f.v.status !== 'pending' && f.v.status !== 'cancelled' && <F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} />}</div>
-    <p className="ad-help">Tickets are non-refundable but can be transferred. Online refunds are made in the Razorpay dashboard.</p>
-    <div className="ad-actions full"><Btn busy={busy} onClick={save} icon="check">Save</Btn><Link className="ad-btn ghost" href={`/invoice/${b.id}`} target="_blank">Receipt</Link>{wa && <a className="ad-btn ghost" href={wa} target="_blank" rel="noopener">WhatsApp</a>}</div></Modal>);
+    <div className="ad-form"><F form={f} k="status" label="Status" type="select" required options={statusOptions(b.status, 'Transferred to another date or person')} />
+      {b.status === 'pending' && ['paid', 'transferred'].includes(f.v.status) && <F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} />}</div>
+    <p className="ad-help">Tickets are non-refundable but can be transferred. To give money back, use Refund.</p>
+    <div className="ad-actions full"><Btn busy={busy} onClick={save} icon="check">Save</Btn><Link className="ad-btn ghost" href={`/invoice/${b.id}`} target="_blank">Receipt</Link>{wa && <a className="ad-btn ghost" href={wa} target="_blank" rel="noopener">WhatsApp</a>}{refundable(b) && <Btn variant="ghost" onClick={() => setRefund(true)}>Refund</Btn>}</div>
+    {refund && <RefundDialog kind="booking" rows={[b]} title={`Refund · ${b.name}`} onClose={() => setRefund(false)} onDone={onSaved} />}</Modal>);
 }
 export function EnrolModal({ e, onClose, onSaved }) {
   const { data: batches } = useLoad(async () => must(await sb().from('class_batches').select('id,name,starts_on').eq('class_id', e.class_id).order('starts_on', { ascending: false })), [e.class_id]);
-  const f = useForm({ status: e.status, method: e.payment_method || 'upi', batch: e.batch_id || '' });
-  const [save, busy] = useStatusSave({ table: 'class_enrolments', row: e, f, label: 'Enrolment updated', desc: `${e.class_levels?.title || 'class'}, ${e.class_levels?.level || ''}`, amount: e.amount_paise, gst: e.gst_paise || 0, party: e.name, extra: { batch_id: f.v.batch || null }, onSaved }); const wa = waLink(e.phone);
+  const f = useForm({ status: e.status, method: e.payment_method || 'upi', batch: e.batch_id || '' }); const [refund, setRefund] = useState(false);
+  const [save, busy] = useStatusSave({ table: 'class_enrolments', row: e, f, label: 'Enrolment updated', extra: { batch_id: f.v.batch || null }, onSaved }); const wa = waLink(e.phone);
   return (<Modal title={e.student_name} onClose={onClose}>
     <p style={{ marginTop: 0 }}><b>{e.class_levels?.title}, {e.class_levels?.level}</b><br />{e.student_group === 'child' ? `Child, age ${e.student_age}` : 'Adult'} · {money(e.amount_paise)}</p>
     <p className="ad-help">{e.student_group === 'child' ? `Parent or guardian: ${e.name} · ` : ''}{e.email} · {e.phone}<br />{fmtDT(e.created_at)}{e.channel === 'manual' ? ' · added by hand' : ''}{e.razorpay_payment_id ? ` · Payment ID ${e.razorpay_payment_id}` : ''}</p>
-    <div className="ad-form"><F form={f} k="status" label="Status" type="select" required options={[['pending', 'Not paid yet'], ['paid', 'Confirmed'], ['transferred', 'Moved to another batch'], ['cancelled', 'Cancelled'], ['refunded', 'Refunded']]} />
-      {e.status === 'pending' && f.v.status !== 'pending' && f.v.status !== 'cancelled' && <F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} />}
+    <div className="ad-form"><F form={f} k="status" label="Status" type="select" required options={statusOptions(e.status, 'Moved to another batch')} />
+      {e.status === 'pending' && ['paid', 'transferred'].includes(f.v.status) && <F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} />}
       {batches?.length > 0 && <F form={f} k="batch" label="Batch" type="select" options={[['', 'Not placed yet'], ...batches.map((b) => [b.id, b.name || `Batch from ${fmtD(b.starts_on)}`])]} />}</div>
-    <div className="ad-actions full"><Btn busy={busy} onClick={save} icon="check">Save</Btn><Link className="ad-btn ghost" href={`/invoice/${e.id}`} target="_blank">Receipt</Link>{wa && <a className="ad-btn ghost" href={wa} target="_blank" rel="noopener">WhatsApp</a>}</div></Modal>);
+    <div className="ad-actions full"><Btn busy={busy} onClick={save} icon="check">Save</Btn><Link className="ad-btn ghost" href={`/invoice/${e.id}`} target="_blank">Receipt</Link>{wa && <a className="ad-btn ghost" href={wa} target="_blank" rel="noopener">WhatsApp</a>}{refundable(e) && <Btn variant="ghost" onClick={() => setRefund(true)}>Refund</Btn>}</div>
+    {refund && <RefundDialog kind="enrolment" rows={[e]} title={`Refund · ${e.student_name}`} onClose={() => setRefund(false)} onDone={onSaved} />}</Modal>);
 }

@@ -71,3 +71,7 @@ test('student progress counts only classes that were held', () => {
   const s = [{ id: 'a', status: 'done' }, { id: 'b', status: 'done' }, { id: 'c', status: 'scheduled' }]; const att = [{ session_id: 'a', enrolment_id: 'e1', present: true }, { session_id: 'b', enrolment_id: 'e1', present: false }, { session_id: 'a', enrolment_id: 'e2', present: true }];
   assert.deepEqual(B.progress(s, att, 'e1'), { attended: 1, held: 2, total: 3, missed: 1 }); assert.deepEqual(B.progress(s, att, 'e3'), { attended: 0, held: 2, total: 3, missed: 2 });
 });
+test('student progress does not count cancelled classes', () => {
+  const s = [{ id: 'a', status: 'done' }, { id: 'b', status: 'cancelled' }, { id: 'c', status: 'scheduled' }];
+  assert.deepEqual(B.progress(s, [{ session_id: 'a', enrolment_id: 'e1', present: true }], 'e1'), { attended: 1, held: 1, total: 2, missed: 0 });
+});

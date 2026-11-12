@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { sb, must, useLoad, Modal, Btn, F, useForm, useAction, useToast, Empty, Err, Spin, Badge, fmtD } from './kit';
 import { adminPost } from '@/lib/adminApi';
+import { RefundDialog } from './Refund';
 import { money } from '@/lib/accounting';
 const wa = (phone, text) => { const d = String(phone || '').replace(/\D/g, '').slice(-10); return d.length === 10 ? `https://wa.me/91${d}?text=${encodeURIComponent(text)}` : null; };
 
@@ -24,26 +25,21 @@ export function MessageModal({ audience, id, title, people, onClose }) {
   </Modal>);
 }
 
-/** Cancel a workshop and refund the people who paid. Online payments go back through Razorpay; cash or UPI payments are only marked (you return that money yourself). */
+/** Cancel a workshop and refund the people who paid: choose who, then refund online or record refunds you sent yourself. */
 export function RefundModal({ workshop, bookings, onClose, onDone }) {
   const paid = bookings.filter((b) => b.status === 'paid'); const [pick, setPick] = useState(() => Object.fromEntries(paid.map((b) => [b.id, true]))); const [cancel, setCancel] = useState(true);
-  const f = useForm({ reason: 'The workshop has been cancelled.' }); const [run, busy] = useAction(); const [res, setRes] = useState(null);
-  const chosen = paid.filter((b) => pick[b.id]); const total = chosen.reduce((s, b) => s + b.amount_paise, 0); const online = chosen.filter((b) => b.razorpay_payment_id).length;
-  const go = () => run(async () => {
-    const r = await adminPost('/api/manager/refund', { kind: 'booking', ids: chosen.map((b) => b.id), reason: f.v.reason });
-    if (!r.ok) throw new Error('Could not refund. Nothing was changed.'); setRes(r.results);
-    if (cancel) must(await sb().from('workshops').update({ status: 'cancelled' }).eq('id', workshop.id)); onDone(); });
+  const [run, busy] = useAction(); const [step, setStep] = useState('pick');
+  const chosen = paid.filter((b) => pick[b.id]); const total = chosen.reduce((s, b) => s + b.amount_paise, 0);
+  const next = () => run(async () => {
+    if (cancel && workshop.status !== 'cancelled') must(await sb().from('workshops').update({ status: 'cancelled' }).eq('id', workshop.id));
+    if (!chosen.length) { onDone(); onClose(); return; } setStep('refund'); }, cancel && !chosen.length ? 'Workshop cancelled' : undefined);
+  if (step === 'refund') return <RefundDialog kind="booking" rows={chosen} title={`Refund · ${workshop.title}`} reasonDefault={cancel ? 'The workshop has been cancelled.' : ''} cancelled={cancel} onClose={() => { onDone(); onClose(); }} onDone={() => { onDone(); onClose(); }} />;
   return (<Modal title={`Cancel and refund · ${workshop.title}`} onClose={onClose} wide>
-    {res ? <><p style={{ marginTop: 0 }}><b>{res.filter((x) => x.ok).length}</b> of {res.length} refunded.</p>
-      <div className="ad-list">{res.map((x) => { const b = bookings.find((q) => q.id === x.id); return <div key={x.id} className="ad-row" style={{ cursor: 'default' }}><span>{b?.name}</span>{x.ok ? <Badge tone="ok">{x.mode === 'razorpay' ? 'Refunded online' : 'Marked refunded (return it yourself)'}</Badge> : <Badge tone="bad">{x.error}</Badge>}</div>; })}</div>
-      <div className="ad-actions full"><Btn onClick={onClose}>Done</Btn></div></>
-    : <>
-      <p className="ad-help" style={{ marginTop: 0 }}>Everyone below paid for this workshop. Choose who to refund. Online payments are returned through Razorpay automatically. Payments taken in cash or UPI are only marked as refunded, so return that money yourself.</p>
-      {paid.length ? <div className="ad-list">{paid.map((b) => <label key={b.id} className="ad-row" style={{ cursor: 'pointer' }}><span style={{ display: 'flex', gap: 12, alignItems: 'center' }}><input type="checkbox" checked={!!pick[b.id]} onChange={(e) => setPick((p) => ({ ...p, [b.id]: e.target.checked }))} /><span className="main"><b>{b.name}</b><small>{b.seats} {b.seats > 1 ? 'seats' : 'seat'} · {b.razorpay_payment_id ? 'paid online' : `paid by ${b.payment_method || 'hand'}`}</small></span></span><b>{money(b.amount_paise)}</b></label>)}</div> : <Empty>Nobody has paid yet.</Empty>}
-      <div className="ad-form" style={{ marginTop: 14 }}><div className="full"><F form={f} k="reason" label="Message to them" rule="sentence" hint="Included in the email each person receives" /></div>
-        <div className="full"><F form={{ v: { c: cancel }, set: (k, v) => setCancel(v) }} k="c" label="Also mark this workshop as cancelled" type="check" /></div></div>
-      <p style={{ margin: '14px 0 0' }}>Refunding <b>{chosen.length}</b> {chosen.length === 1 ? 'person' : 'people'}: <b>{money(total)}</b> ({online} online).</p>
-      <div className="ad-actions full"><Btn busy={busy} disabled={!chosen.length && !cancel} onClick={go}>{chosen.length ? `Refund ${money(total)}` : 'Cancel workshop'}</Btn><Btn variant="ghost" onClick={onClose}>Back</Btn></div></>}
+    <p className="ad-help" style={{ marginTop: 0 }}>Everyone below paid for this workshop. Choose who to refund. Next, you choose to refund online or to record refunds you sent yourself.</p>
+    {paid.length ? <div className="ad-list">{paid.map((b) => <label key={b.id} className="ad-row" style={{ cursor: 'pointer' }}><span style={{ display: 'flex', gap: 12, alignItems: 'center' }}><input type="checkbox" checked={!!pick[b.id]} onChange={(e) => setPick((p) => ({ ...p, [b.id]: e.target.checked }))} /><span className="main"><b>{b.name}</b><small>{b.seats} {b.seats > 1 ? 'seats' : 'seat'} · {b.razorpay_payment_id ? 'paid online' : `paid by ${b.payment_method || 'hand'}`}</small></span></span><b>{money(b.amount_paise)}</b></label>)}</div> : <Empty>Nobody has paid yet.</Empty>}
+    <div className="ad-form" style={{ marginTop: 14 }}><div className="full"><F form={{ v: { c: cancel }, set: (k, v) => setCancel(v) }} k="c" label="Also mark this workshop as cancelled" type="check" /></div></div>
+    <p style={{ margin: '14px 0 0' }}>Refunding <b>{chosen.length}</b> {chosen.length === 1 ? 'person' : 'people'}: <b>{money(total)}</b>.</p>
+    <div className="ad-actions full"><Btn busy={busy} disabled={!chosen.length && !cancel} onClick={next}>{chosen.length ? 'Next' : 'Cancel workshop'}</Btn><Btn variant="ghost" onClick={onClose}>Back</Btn></div>
   </Modal>);
 }
 
@@ -53,8 +49,8 @@ export function Waitlist({ workshop, onMessage }) {
   const [run] = useAction();
   if (error) return <Err e={error} />; if (!data) return <Spin />; if (!data.length) return null;
   return (<><p className="ad-section-t" style={{ marginTop: 22 }}>Waitlist ({data.length})</p>
-    <div className="ad-list">{data.map((p) => <div key={p.id} className="ad-row" style={{ cursor: 'default' }}><div className="main"><b>{p.name}</b><small>{[p.phone, p.email].filter(Boolean).join(' · ')} · {p.seats} {p.seats > 1 ? 'seats' : 'seat'} · since {fmtD(p.created_at)}</small></div>
-      <div className="end">{wa(p.phone, `Hi ${p.name.split(' ')[0]}, a seat has opened up for ${workshop.title}. Would you like it?`) && <a className="ad-btn ghost sm" target="_blank" rel="noopener" href={wa(p.phone, `Hi ${p.name.split(' ')[0]}, a seat has opened up for ${workshop.title}. Would you like it?`)}>WhatsApp</a>}
+    <div className="ad-list">{data.map((p) => <div key={p.id} className="ad-row" style={{ cursor: 'default' }}><div className="main"><b>{p.name}</b><small>{[p.phone, p.email].filter(Boolean).join(' · ')} · {p.seats} {p.seats > 1 ? 'seats' : 'seat'} · since {fmtD(p.created_at)}{p.notified_at ? ` · contacted ${fmtD(p.notified_at)}` : ''}</small></div>
+      <div className="end">{wa(p.phone, `Hi ${p.name.split(' ')[0]}, a seat has opened up for ${workshop.title}. Would you like it?`) && <a className="ad-btn ghost sm" target="_blank" rel="noopener" onClick={() => { sb().from('workshop_waitlist').update({ notified_at: new Date().toISOString() }).eq('id', p.id).then(() => reload()); }} href={wa(p.phone, `Hi ${p.name.split(' ')[0]}, a seat has opened up for ${workshop.title}. Would you like it?`)}>WhatsApp</a>}
         <button className="ad-btn ghost sm" onClick={() => run(async () => { must(await sb().from('workshop_waitlist').delete().eq('id', p.id)); reload(); })}>Remove</button></div></div>)}</div>
     <div className="ad-actions"><Btn variant="ghost" icon="mail" onClick={() => onMessage(data)}>Email the waitlist</Btn></div></>);
 }

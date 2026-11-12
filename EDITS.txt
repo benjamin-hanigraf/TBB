@@ -39,3 +39,20 @@ Not doing (owner's choice)
 - Home shortcuts stay
 Open question
 - Class level day/time/start fields: classes are one-on-one on chosen dates, not weekly batches. Decide before removing anything.
+
+== Standing guidance from the owner ==
+- Small business: keep accounting simple, short and easy. It is only a record, no accounting jargon.
+- Home dashboard: minimal, useful, not crowded.
+- Do not change the visual design (colours, fonts, layout styles).
+- Classes are one-on-one on chosen dates, not weekly batches (affects class scheduling).
+- Keep payment provider neutral (Razorpay now, maybe Paytm).
+
+== Batch: audit fixes, decisions while working ==
+- Home: "Today" card added; "Needs attention" shows only when something needs it; "Running low" folded into it; "To-do due" number removed (covered by Today and Needs attention)
+- Refunds: one "Refund" button on orders, bookings and enrolments: "Refund online" or "I sent it back myself" (pick UPI, bank, cash...). Status lists no longer offer "Refunded" directly.
+- Unpaid booking/enrolment changed to "Cancelled" no longer gets a payment date (small bug found while fixing)
+- "Log out" signs out this device only
+- Inbox count shown as text, e.g. "Inbox (2)" and "More (2)", so no new styling
+- Backup file is JSON with every table (photos not included)
+- New database update needed: supabase/v9.sql (run after v8)
+- Status: all items in this batch done and tested (Nov 2026), on branch claude/zealous-turing-jqe6sd

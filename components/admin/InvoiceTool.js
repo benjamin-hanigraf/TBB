@@ -11,6 +11,7 @@ import { RULES } from '@/lib/format';
 import { ADDRESS_TEXT } from '@/lib/address';
 import { adminClient as supabase } from '@/lib/supabase-admin';
 
+const param = (k) => { try { return new URLSearchParams(window.location.search).get(k); } catch { return null; } };   // a link from elsewhere in the app (e.g. Accounts) can open one item
 const SORTS = [['new', 'Newest first'], ['old', 'Oldest first'], ['high', 'Highest amount'], ['low', 'Lowest amount'], ['name', 'Customer A to Z']];
 const RATES = ['0', '5', '12', '18', '28'];
 const TYPES = [['invoice', 'Invoice'], ['quotation', 'Quotation'], ['credit_note', 'Credit note']];
@@ -67,6 +68,7 @@ export default function InvoiceTool() {
     const by = { new: (a, b) => b.issue_date.localeCompare(a.issue_date) || b.created_at.localeCompare(a.created_at), old: (a, b) => a.issue_date.localeCompare(b.issue_date), high: (a, b) => b.total_paise - a.total_paise, low: (a, b) => a.total_paise - b.total_paise, name: (a, b) => a.customer_name.localeCompare(b.customer_name) };
     return r.sort(by[sort]);
   }, [data, q, show, sort]);
+  useEffect(() => { const id = param('open'); const i = id && data?.list.find((x) => x.id === id); if (i) setEdit(i); }, [data]);
   if (error) return <Page title="Invoices"><Err e={error} /></Page>; if (!data) return <Page title="Invoices"><Spin /></Page>;
   if (edit) return <Editor inv={edit} data={data} onOpen={setEdit} onBack={() => { setEdit(null); reload(); }} />;
   const owed = data.list.filter((i) => typeOf(i) === 'invoice' && i.status !== 'cancelled').reduce((s, i) => s + balanceOf(i, data.payments).balance, 0);

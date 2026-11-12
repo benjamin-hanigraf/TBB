@@ -40,7 +40,12 @@ function ProductForm({ p, rowsCount, onClose, onSaved }) {
     else must(await sb().from('products').update(row).eq('id', p.id));
     onSaved();
   }, 'Product saved'); };
-  const remove = () => run(async () => { must(await sb().from('products').delete().eq('id', p.id)); onSaved(); }, 'Product deleted');
+  const [blocked, setBlocked] = useState(0);
+  const remove = () => run(async () => {
+    const { count } = await sb().from('order_items').select('id', { count: 'exact', head: true }).eq('product_id', p.id);
+    if (count > 0) { setBlocked(count); return; }                                           // it was ordered: offer to hide it instead of failing
+    must(await sb().from('products').delete().eq('id', p.id)); onSaved(); }, 'Product deleted');
+  const hide = () => run(async () => { must(await sb().from('products').update({ active: false }).eq('id', p.id)); onSaved(); }, 'Product hidden from the store');
   return (<Modal title={isNew ? 'Add product' : 'Edit product'} onClose={onClose} wide>
     <form onSubmit={save} className="ad-form">
       <div className="full"><F form={f} k="title" label="Name" rule="title" required /></div>
@@ -52,5 +57,6 @@ function ProductForm({ p, rowsCount, onClose, onSaved }) {
       <F form={f} k="shipping_note" label="Shipping note" rule="sentence" /><F form={f} k="return_note" label="Return note" rule="sentence" />
       <PhotoField label="Photos" paths={f.v.images} onChange={(a) => f.set('images', a)} folder="products" max={8} />
       <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn>{!isNew && <Btn type="button" variant="ghost" busy={busy} onClick={(e) => save(e, true)}>Copy</Btn>}{!isNew && <Confirm onYes={remove}>Delete</Confirm>}</div>
-    </form></Modal>);
+    </form>
+    {blocked > 0 && <Modal title="This product cannot be deleted" onClose={() => setBlocked(0)}><p style={{ marginTop: 0 }}>It is in <b>{blocked}</b> {blocked === 1 ? 'order' : 'orders'}, and your records and receipts need it. You can hide it from the store instead. Nothing is lost.</p><div className="ad-actions full"><Btn busy={busy} onClick={hide}>Hide it</Btn><Btn variant="ghost" onClick={() => setBlocked(0)}>Keep it</Btn></div></Modal>}</Modal>);
 }

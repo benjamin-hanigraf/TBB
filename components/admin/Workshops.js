@@ -28,6 +28,7 @@ export default function Workshops() {
     const taken = {}; must(b).forEach((x) => (taken[x.workshop_id] = (taken[x.workshop_id] || 0) + x.seats)); return { ws: must(ws), taken };
   });
   useEffect(() => { if (sp.get('new')) setEdit({}); }, [sp]);
+  useEffect(() => { const id = sp.get('people'); const w = id && data?.ws.find((x) => x.id === id); if (w) setAtt(w); }, [sp, data]);   // a link from Accounts opens that workshop's participants
   if (error) return <Page title="Workshops"><Err e={error} /></Page>; if (!data) return <Page title="Workshops"><Spin /></Page>;
   const now = Date.now(); const up = data.ws.filter((w) => new Date(w.starts_at) >= now).reverse(), past = data.ws.filter((w) => new Date(w.starts_at) < now);
   const line = (w) => (

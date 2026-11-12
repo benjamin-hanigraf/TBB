@@ -1,6 +1,6 @@
 -- ============ DUMMY TEST DATA (made by tools/make_dummy_sql.py, do not edit by hand) ============
 -- Fills every table with at least 10 varied rows so every screen of the website and the Manager app can be tried.
--- Run AFTER schema.sql, seed.sql and v2.sql to v8.sql. Run it once; to take everything out again run supabase/dummy-remove.sql.
+-- Run AFTER schema.sql, seed.sql and v2.sql to v9.sql. Run it once; to take everything out again run supabase/dummy-remove.sql.
 -- Every dummy row has an id starting with dededede- and every dummy person uses an @example.com email.
 -- Dummy workshops, products and classes are named "Demo ..." and DO show on the public website while they are in the database.
 -- Website receipt numbers are not used up: dummy orders, bookings and enrolments use numbers 9001 and up.
@@ -218,42 +218,42 @@ insert into orders (id, name, email, phone, shipping_address, subtotal_paise, sh
 ('dededede-0009-4000-8000-000000000014', 'Sneha Pillai', 'sneha.p@example.com', '+91 98765 00014', '{"recipient": "Sneha Pillai", "phone": "+91 98765 00014", "line1": "23, Test Street", "line2": "", "city": "Chennai", "state": "Tamil Nadu", "pincode": "600020"}'::jsonb, 354000, 6000, 360000, null, 'packed', null, null, 'order_demo_or014', 'pay_demo_or014', 9214, 'website', 'razorpay', null, ((current_date + -14) + time '20:00') at time zone 'Asia/Kolkata', ((current_date + -14) + time '20:03') at time zone 'Asia/Kolkata'),
 ('dededede-0009-4000-8000-000000000015', 'Anita Rao', 'anita.rao@example.com', '+91 98765 00001', '{"recipient": "Anita Rao", "phone": "+91 98765 00001", "line1": "10, Test Street", "line2": "", "city": "Chennai", "state": "Tamil Nadu", "pincode": "600024"}'::jsonb, 270000, 6000, 276000, null, 'paid', null, null, 'order_demo_or015', 'pay_demo_or015', 9215, 'website', 'razorpay', null, ((current_date + -12) + time '20:00') at time zone 'Asia/Kolkata', ((current_date + -12) + time '20:03') at time zone 'Asia/Kolkata');
 
-insert into order_items (id, order_id, product_id, title, unit_paise, qty, gst_paise) values
-('dededede-000a-4000-8000-000000000001', 'dededede-0009-4000-8000-000000000001', 'dededede-0002-4000-8000-000000000001', 'Demo: A5 Sketchbook', 65000, 2, 0),
-('dededede-000a-4000-8000-000000000002', 'dededede-0009-4000-8000-000000000002', 'dededede-0002-4000-8000-000000000002', 'Demo: Calligraphy Nib Set of 5', 90000, 1, 13729),
-('dededede-000a-4000-8000-000000000003', 'dededede-0009-4000-8000-000000000002', 'dededede-0002-4000-8000-000000000005', 'Demo: Practice Pad 100 Sheets', 35000, 2, 0),
-('dededede-000a-4000-8000-000000000004', 'dededede-0009-4000-8000-000000000003', 'dededede-0002-4000-8000-000000000006', 'Demo: Lettering Gift Box', 320000, 1, 57600),
-('dededede-000a-4000-8000-000000000005', 'dededede-0009-4000-8000-000000000004', 'dededede-0002-4000-8000-000000000009', 'Demo: Watercolour Tin of 12', 150000, 1, 27000),
-('dededede-000a-4000-8000-000000000006', 'dededede-0009-4000-8000-000000000004', 'dededede-0002-4000-8000-000000000010', 'Demo: Handmade Paper Sampler', 25000, 3, 0),
-('dededede-000a-4000-8000-000000000007', 'dededede-0009-4000-8000-000000000005', 'dededede-0002-4000-8000-000000000011', 'Demo: Gold Pearl Ink', 60000, 1, 0),
-('dededede-000a-4000-8000-000000000008', 'dededede-0009-4000-8000-000000000006', 'dededede-0002-4000-8000-000000000001', 'Demo: A5 Sketchbook', 65000, 1, 0),
-('dededede-000a-4000-8000-000000000009', 'dededede-0009-4000-8000-000000000007', 'dededede-0002-4000-8000-000000000007', 'Demo: Brush Pen Trio', 55000, 1, 8390),
-('dededede-000a-4000-8000-000000000010', 'dededede-0009-4000-8000-000000000008', 'dededede-0002-4000-8000-000000000004', 'Demo: Custom Engraved Holder (pre-order)', 210000, 1, 37800),
-('dededede-000a-4000-8000-000000000011', 'dededede-0009-4000-8000-000000000009', 'dededede-0002-4000-8000-000000000012', 'Demo: A4 LED Lightbox', 280000, 1, 42712),
-('dededede-000a-4000-8000-000000000012', 'dededede-0009-4000-8000-000000000009', 'dededede-0002-4000-8000-000000000002', 'Demo: Calligraphy Nib Set of 5', 90000, 1, 13729),
-('dededede-000a-4000-8000-000000000013', 'dededede-0009-4000-8000-000000000010', 'dededede-0002-4000-8000-000000000005', 'Demo: Practice Pad 100 Sheets', 35000, 5, 0),
-('dededede-000a-4000-8000-000000000014', 'dededede-0009-4000-8000-000000000011', 'dededede-0002-4000-8000-000000000001', 'Demo: A5 Sketchbook', 65000, 1, 0),
-('dededede-000a-4000-8000-000000000015', 'dededede-0009-4000-8000-000000000011', 'dededede-0002-4000-8000-000000000003', 'Demo: Sumi Ink 60 ml', 45000, 1, 0),
-('dededede-000a-4000-8000-000000000016', 'dededede-0009-4000-8000-000000000012', 'dededede-0002-4000-8000-000000000010', 'Demo: Handmade Paper Sampler', 25000, 10, 0),
-('dededede-000a-4000-8000-000000000017', 'dededede-0009-4000-8000-000000000013', 'dededede-0002-4000-8000-000000000006', 'Demo: Lettering Gift Box', 320000, 2, 115200),
-('dededede-000a-4000-8000-000000000018', 'dededede-0009-4000-8000-000000000014', 'dededede-0002-4000-8000-000000000009', 'Demo: Watercolour Tin of 12', 150000, 2, 54000),
-('dededede-000a-4000-8000-000000000019', 'dededede-0009-4000-8000-000000000015', 'dededede-0002-4000-8000-000000000002', 'Demo: Calligraphy Nib Set of 5', 90000, 3, 41186);
+insert into order_items (id, order_id, product_id, title, unit_paise, qty, gst_paise, stock_taken) values
+('dededede-000a-4000-8000-000000000001', 'dededede-0009-4000-8000-000000000001', 'dededede-0002-4000-8000-000000000001', 'Demo: A5 Sketchbook', 65000, 2, 0, 2),
+('dededede-000a-4000-8000-000000000002', 'dededede-0009-4000-8000-000000000002', 'dededede-0002-4000-8000-000000000002', 'Demo: Calligraphy Nib Set of 5', 90000, 1, 13729, 1),
+('dededede-000a-4000-8000-000000000003', 'dededede-0009-4000-8000-000000000002', 'dededede-0002-4000-8000-000000000005', 'Demo: Practice Pad 100 Sheets', 35000, 2, 0, 2),
+('dededede-000a-4000-8000-000000000004', 'dededede-0009-4000-8000-000000000003', 'dededede-0002-4000-8000-000000000006', 'Demo: Lettering Gift Box', 320000, 1, 57600, 1),
+('dededede-000a-4000-8000-000000000005', 'dededede-0009-4000-8000-000000000004', 'dededede-0002-4000-8000-000000000009', 'Demo: Watercolour Tin of 12', 150000, 1, 27000, 1),
+('dededede-000a-4000-8000-000000000006', 'dededede-0009-4000-8000-000000000004', 'dededede-0002-4000-8000-000000000010', 'Demo: Handmade Paper Sampler', 25000, 3, 0, 3),
+('dededede-000a-4000-8000-000000000007', 'dededede-0009-4000-8000-000000000005', 'dededede-0002-4000-8000-000000000011', 'Demo: Gold Pearl Ink', 60000, 1, 0, null),
+('dededede-000a-4000-8000-000000000008', 'dededede-0009-4000-8000-000000000006', 'dededede-0002-4000-8000-000000000001', 'Demo: A5 Sketchbook', 65000, 1, 0, null),
+('dededede-000a-4000-8000-000000000009', 'dededede-0009-4000-8000-000000000007', 'dededede-0002-4000-8000-000000000007', 'Demo: Brush Pen Trio', 55000, 1, 8390, null),
+('dededede-000a-4000-8000-000000000010', 'dededede-0009-4000-8000-000000000008', 'dededede-0002-4000-8000-000000000004', 'Demo: Custom Engraved Holder (pre-order)', 210000, 1, 37800, 1),
+('dededede-000a-4000-8000-000000000011', 'dededede-0009-4000-8000-000000000009', 'dededede-0002-4000-8000-000000000012', 'Demo: A4 LED Lightbox', 280000, 1, 42712, 1),
+('dededede-000a-4000-8000-000000000012', 'dededede-0009-4000-8000-000000000009', 'dededede-0002-4000-8000-000000000002', 'Demo: Calligraphy Nib Set of 5', 90000, 1, 13729, 1),
+('dededede-000a-4000-8000-000000000013', 'dededede-0009-4000-8000-000000000010', 'dededede-0002-4000-8000-000000000005', 'Demo: Practice Pad 100 Sheets', 35000, 5, 0, null),
+('dededede-000a-4000-8000-000000000014', 'dededede-0009-4000-8000-000000000011', 'dededede-0002-4000-8000-000000000001', 'Demo: A5 Sketchbook', 65000, 1, 0, 1),
+('dededede-000a-4000-8000-000000000015', 'dededede-0009-4000-8000-000000000011', 'dededede-0002-4000-8000-000000000003', 'Demo: Sumi Ink 60 ml', 45000, 1, 0, 1),
+('dededede-000a-4000-8000-000000000016', 'dededede-0009-4000-8000-000000000012', 'dededede-0002-4000-8000-000000000010', 'Demo: Handmade Paper Sampler', 25000, 10, 0, 10),
+('dededede-000a-4000-8000-000000000017', 'dededede-0009-4000-8000-000000000013', 'dededede-0002-4000-8000-000000000006', 'Demo: Lettering Gift Box', 320000, 2, 115200, 2),
+('dededede-000a-4000-8000-000000000018', 'dededede-0009-4000-8000-000000000014', 'dededede-0002-4000-8000-000000000009', 'Demo: Watercolour Tin of 12', 150000, 2, 54000, 2),
+('dededede-000a-4000-8000-000000000019', 'dededede-0009-4000-8000-000000000015', 'dededede-0002-4000-8000-000000000002', 'Demo: Calligraphy Nib Set of 5', 90000, 3, 41186, 3);
 
--- inbox: every kind of enquiry, handled and not
+-- inbox: every kind of enquiry: unread, read but not dealt with, and dealt with
 
-insert into enquiries (id, kind, name, email, phone, message, details, handled, created_at) values
-('dededede-000c-4000-8000-000000000001', 'contact', 'Anita Rao', 'anita.rao@example.com', '+91 98765 00001', 'Do you have weekend batches?', '{"topic": "Classes"}'::jsonb, true, ((current_date + 0) + time '11:00') at time zone 'Asia/Kolkata'),
-('dededede-000c-4000-8000-000000000002', 'invitation', 'Vikram Iyer', 'vikram.iyer@example.com', '+91 98765 00002', 'Wedding invitations for 250 guests, hand lettered names.', '{"event": "Wedding", "quantity": 250, "date": "February"}'::jsonb, false, ((current_date + -2) + time '11:00') at time zone 'Asia/Kolkata'),
-('dededede-000c-4000-8000-000000000003', 'service', 'Meera Krishnan', 'meera.k@example.com', '+91 98765 00003', 'Live calligraphy at our store launch.', '{"service": "Live event", "city": "Chennai"}'::jsonb, false, ((current_date + -4) + time '11:00') at time zone 'Asia/Kolkata'),
-('dededede-000c-4000-8000-000000000004', 'collaboration', 'Rohan Mehta', 'rohan.mehta@example.com', '+91 98765 00004', 'Brand collaboration for Diwali hampers.', '{"brand": "Demo Sweets Co."}'::jsonb, true, ((current_date + -6) + time '11:00') at time zone 'Asia/Kolkata'),
-('dededede-000c-4000-8000-000000000005', 'hiring', 'Fatima Sheikh', 'fatima.s@example.com', '+91 98765 00005', 'I would love to teach kids art on weekends.', '{"role": "Teacher", "portfolio": "https://example.com/portfolio"}'::jsonb, false, ((current_date + -8) + time '11:00') at time zone 'Asia/Kolkata'),
-('dededede-000c-4000-8000-000000000006', 'contact', 'Arjun Nair', 'arjun.nair@example.com', '+91 98765 00006', 'Is the nib set compatible with my holder?', '{"topic": "Store"}'::jsonb, false, ((current_date + -10) + time '11:00') at time zone 'Asia/Kolkata'),
-('dededede-000c-4000-8000-000000000007', 'invitation', 'Priya Sundaram', 'priya.s@example.com', '+91 98765 00007', 'Baby shower invitations, pastel colours.', '{"event": "Baby shower", "quantity": 60}'::jsonb, true, ((current_date + -12) + time '11:00') at time zone 'Asia/Kolkata'),
-('dededede-000c-4000-8000-000000000008', 'service', 'Karthik Raman', 'karthik.r@example.com', '+91 98765 00008', 'Corporate workshop for 30 people.', '{"service": "Corporate workshop", "people": 30}'::jsonb, false, ((current_date + -14) + time '11:00') at time zone 'Asia/Kolkata'),
-('dededede-000c-4000-8000-000000000009', 'contact', 'Divya Menon', 'divya.menon@example.com', '+91 98765 00009', 'Can I pay by bank transfer?', '{"topic": "Payments"}'::jsonb, false, ((current_date + -16) + time '11:00') at time zone 'Asia/Kolkata'),
-('dededede-000c-4000-8000-000000000010', 'collaboration', 'Sanjay Gupta', 'sanjay.g@example.com', '+91 98765 00010', 'School art week partnership.', '{"organisation": "Demo Public School"}'::jsonb, true, ((current_date + -18) + time '11:00') at time zone 'Asia/Kolkata'),
-('dededede-000c-4000-8000-000000000011', 'hiring', 'Lakshmi Venkat', 'lakshmi.v@example.com', '+91 98765 00011', 'Internship for the summer?', '{"role": "Intern"}'::jsonb, false, ((current_date + -20) + time '11:00') at time zone 'Asia/Kolkata'),
-('dededede-000c-4000-8000-000000000012', 'contact', 'Neha Joshi', 'neha.joshi@example.com', '+91 98765 00012', 'Please call me back about the kids camp.', '{"topic": "Workshops"}'::jsonb, false, ((current_date + -22) + time '11:00') at time zone 'Asia/Kolkata');
+insert into enquiries (id, kind, name, email, phone, message, details, handled, read_at, created_at) values
+('dededede-000c-4000-8000-000000000001', 'contact', 'Anita Rao', 'anita.rao@example.com', '+91 98765 00001', 'Do you have weekend batches?', '{"topic": "Classes"}'::jsonb, true, ((current_date + 0) + time '12:00') at time zone 'Asia/Kolkata', ((current_date + 0) + time '11:00') at time zone 'Asia/Kolkata'),
+('dededede-000c-4000-8000-000000000002', 'invitation', 'Vikram Iyer', 'vikram.iyer@example.com', '+91 98765 00002', 'Wedding invitations for 250 guests, hand lettered names.', '{"event": "Wedding", "quantity": 250, "date": "February"}'::jsonb, false, ((current_date + -2) + time '12:00') at time zone 'Asia/Kolkata', ((current_date + -2) + time '11:00') at time zone 'Asia/Kolkata'),
+('dededede-000c-4000-8000-000000000003', 'service', 'Meera Krishnan', 'meera.k@example.com', '+91 98765 00003', 'Live calligraphy at our store launch.', '{"service": "Live event", "city": "Chennai"}'::jsonb, false, null, ((current_date + -4) + time '11:00') at time zone 'Asia/Kolkata'),
+('dededede-000c-4000-8000-000000000004', 'collaboration', 'Rohan Mehta', 'rohan.mehta@example.com', '+91 98765 00004', 'Brand collaboration for Diwali hampers.', '{"brand": "Demo Sweets Co."}'::jsonb, true, ((current_date + -6) + time '12:00') at time zone 'Asia/Kolkata', ((current_date + -6) + time '11:00') at time zone 'Asia/Kolkata'),
+('dededede-000c-4000-8000-000000000005', 'hiring', 'Fatima Sheikh', 'fatima.s@example.com', '+91 98765 00005', 'I would love to teach kids art on weekends.', '{"role": "Teacher", "portfolio": "https://example.com/portfolio"}'::jsonb, false, null, ((current_date + -8) + time '11:00') at time zone 'Asia/Kolkata'),
+('dededede-000c-4000-8000-000000000006', 'contact', 'Arjun Nair', 'arjun.nair@example.com', '+91 98765 00006', 'Is the nib set compatible with my holder?', '{"topic": "Store"}'::jsonb, false, ((current_date + -10) + time '12:00') at time zone 'Asia/Kolkata', ((current_date + -10) + time '11:00') at time zone 'Asia/Kolkata'),
+('dededede-000c-4000-8000-000000000007', 'invitation', 'Priya Sundaram', 'priya.s@example.com', '+91 98765 00007', 'Baby shower invitations, pastel colours.', '{"event": "Baby shower", "quantity": 60}'::jsonb, true, ((current_date + -12) + time '12:00') at time zone 'Asia/Kolkata', ((current_date + -12) + time '11:00') at time zone 'Asia/Kolkata'),
+('dededede-000c-4000-8000-000000000008', 'service', 'Karthik Raman', 'karthik.r@example.com', '+91 98765 00008', 'Corporate workshop for 30 people.', '{"service": "Corporate workshop", "people": 30}'::jsonb, false, null, ((current_date + -14) + time '11:00') at time zone 'Asia/Kolkata'),
+('dededede-000c-4000-8000-000000000009', 'contact', 'Divya Menon', 'divya.menon@example.com', '+91 98765 00009', 'Can I pay by bank transfer?', '{"topic": "Payments"}'::jsonb, false, null, ((current_date + -16) + time '11:00') at time zone 'Asia/Kolkata'),
+('dededede-000c-4000-8000-000000000010', 'collaboration', 'Sanjay Gupta', 'sanjay.g@example.com', '+91 98765 00010', 'School art week partnership.', '{"organisation": "Demo Public School"}'::jsonb, true, ((current_date + -18) + time '12:00') at time zone 'Asia/Kolkata', ((current_date + -18) + time '11:00') at time zone 'Asia/Kolkata'),
+('dededede-000c-4000-8000-000000000011', 'hiring', 'Lakshmi Venkat', 'lakshmi.v@example.com', '+91 98765 00011', 'Internship for the summer?', '{"role": "Intern"}'::jsonb, false, null, ((current_date + -20) + time '11:00') at time zone 'Asia/Kolkata'),
+('dededede-000c-4000-8000-000000000012', 'contact', 'Neha Joshi', 'neha.joshi@example.com', '+91 98765 00012', 'Please call me back about the kids camp.', '{"topic": "Workshops"}'::jsonb, false, null, ((current_date + -22) + time '11:00') at time zone 'Asia/Kolkata');
 
 -- calendar events: today, past, upcoming, several days long, with and without a time
 

@@ -29,7 +29,7 @@ def ins(table, cols, rows):
 
 sql = ["""-- ============ DUMMY TEST DATA (made by tools/make_dummy_sql.py, do not edit by hand) ============
 -- Fills every table with at least 10 varied rows so every screen of the website and the Manager app can be tried.
--- Run AFTER schema.sql, seed.sql and v2.sql to v8.sql. Run it once; to take everything out again run supabase/dummy-remove.sql.
+-- Run AFTER schema.sql, seed.sql and v2.sql to v9.sql. Run it once; to take everything out again run supabase/dummy-remove.sql.
 -- Every dummy row has an id starting with dededede- and every dummy person uses an @example.com email.
 -- Dummy workshops, products and classes are named "Demo ..." and DO show on the public website while they are in the database.
 -- Website receipt numbers are not used up: dummy orders, bookings and enrolments use numbers 9001 and up.
@@ -198,7 +198,7 @@ for i, (st, ch, items, ship, pi, gift, track, note) in enumerate(O):
         t, price, g = PRICE[did(2, pn)]; base = price * qty
         gst = round(base * 0.18) if g == 'add' else round(base - base / 1.18) if g == 'included' else 0
         line = base + (gst if g == 'add' else 0); sub += line; n_item += 1
-        irows.append({'id': did(0xa, n_item), 'order_id': oid, 'product_id': did(2, pn), 'title': t, 'unit_paise': price, 'qty': qty, 'gst_paise': gst})
+        irows.append({'id': did(0xa, n_item), 'order_id': oid, 'product_id': did(2, pn), 'title': t, 'unit_paise': price, 'qty': qty, 'gst_paise': gst, 'stock_taken': qty if st in ('paid', 'packed', 'shipped', 'delivered') else None})
     paid = st not in ('pending', 'cancelled'); n, e, p, city, state, pin = PEOPLE[pi]
     orows.append({'id': oid, 'name': n, 'email': em(pi), 'phone': ph(pi), 'shipping_address': {'recipient': n, 'phone': ph(pi), 'line1': f'{10 + pi}, Test Street', 'line2': '', 'city': city, 'state': state, 'pincode': pin},
                   'subtotal_paise': sub, 'shipping_paise': ship, 'total_paise': sub + ship, 'gift_message': gift, 'status': st, 'tracking_carrier': track[0] if track else None, 'tracking_number': track[1] if track else None,
@@ -215,8 +215,8 @@ E = [('contact', 'Do you have weekend batches?', {'topic': 'Classes'}), ('invita
      ('invitation', 'Baby shower invitations, pastel colours.', {'event': 'Baby shower', 'quantity': 60}), ('service', 'Corporate workshop for 30 people.', {'service': 'Corporate workshop', 'people': 30}),
      ('contact', 'Can I pay by bank transfer?', {'topic': 'Payments'}), ('collaboration', 'School art week partnership.', {'organisation': 'Demo Public School'}),
      ('hiring', 'Internship for the summer?', {'role': 'Intern'}), ('contact', 'Please call me back about the kids camp.', {'topic': 'Workshops'})]
-rows = [{'id': did(0xc, i + 1), 'kind': k, 'name': nm(i), 'email': em(i), 'phone': ph(i), 'message': m, 'details': d, 'handled': i % 3 == 0, 'created_at': TS(-i * 2, '11:00')} for i, (k, m, d) in enumerate(E)]
-sql.append('-- inbox: every kind of enquiry, handled and not')
+rows = [{'id': did(0xc, i + 1), 'kind': k, 'name': nm(i), 'email': em(i), 'phone': ph(i), 'message': m, 'details': d, 'handled': i % 3 == 0, 'read_at': TS(-i * 2, '12:00') if i % 3 == 0 or i % 4 == 1 else None, 'created_at': TS(-i * 2, '11:00')} for i, (k, m, d) in enumerate(E)]
+sql.append('-- inbox: every kind of enquiry: unread, read but not dealt with, and dealt with')
 sql.append(ins('enquiries', list(rows[0].keys()), rows))
 
 # ---------- events (10) and to-dos (12) ----------

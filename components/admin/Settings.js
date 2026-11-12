@@ -1,15 +1,15 @@
 'use client';
 import { useEffect } from 'react';
-import { useLoad, sb, must, Page, Card, Spin, Err, Btn, F, useForm, useAction } from './kit';
+import { useLoad, sb, must, Page, Card, Spin, Err, Btn, F, useForm, useAction, download } from './kit';
 import { rupeesToPaise } from '@/lib/accounting';
 import { ADDRESS_TEXT } from '@/lib/address';
-import { pinApi, setToken } from '@/lib/adminApi';
+import { pinApi, setToken, applySession } from '@/lib/adminApi';
 import { useState } from 'react';
 const get = (rows, k, d) => ({ ...d, ...(rows.find((r) => r.key === k)?.value || {}) });
 export default function Settings() {
   const { data, error } = useLoad(async () => must(await sb().from('settings').select('key,value')));
   if (error) return <Page title="Settings"><Err e={error} /></Page>; if (!data) return <Page title="Settings"><Spin /></Page>;
-  return (<Page title="Settings"><Main rows={data} /><PinCard /><InstallRow /></Page>);
+  return (<Page title="Settings"><Main rows={data} /><PinCard /><BackupCard /><InstallRow /></Page>);
 }
 async function save(key, value, pub) { must(await sb().from('settings').upsert({ key, value, is_public: pub })); }
 function Main({ rows }) {
@@ -54,8 +54,9 @@ function PinCard() {
     if (!/^\d{4}$/.test(f.v.next)) throw new Error('The new PIN must be exactly 4 digits.'); if (f.v.next !== f.v.again) throw new Error('The two new PINs do not match.');
     const r = await pinApi({ action: 'change', current: f.v.current, next: f.v.next });
     if (!r.ok) throw new Error(r.status === 401 ? 'The current PIN is not right.' : r.status === 429 ? 'Too many wrong tries. Please wait 15 minutes.' : 'Could not change the PIN. Please try again.');
-    setToken(r.token); try { sessionStorage.setItem('tbb-defpin', ''); } catch {} setDef(false); f.reset({ current: '', next: '', again: '' });
-  }, 'PIN changed. Other devices will ask for the new PIN.'); };
+    setToken(r.token); if (r.session) await applySession(r.session);       // this device gets a fresh sign-in; all others were signed out
+    try { sessionStorage.setItem('tbb-defpin', ''); } catch {} setDef(false); f.reset({ current: '', next: '', again: '' });
+  }, 'PIN changed. Every other device is signed out and will ask for the new PIN.'); };
   const dg = { type: 'password', rule: 'digits', required: true, inputMode: 'numeric', maxLength: 4, autoComplete: 'off' };
   return (<Card title="Device PIN"><p className="ad-help" style={{ marginTop: 0 }}>{def ? 'You are still using the starting PIN (0000). Please change it.' : 'A new device asks for this PIN the first time it signs in.'}</p>
     <form className="ad-form" onSubmit={submit}><F form={f} k="current" label="Current PIN" {...dg} /><div /><F form={f} k="next" label="New PIN" {...dg} /><F form={f} k="again" label="New PIN again" {...dg} />
@@ -65,4 +66,24 @@ function InstallRow() {
   const [can, setCan] = useState(false); useEffect(() => { setCan(!!window.__bip); }, []);
   const install = async () => { const e = window.__bip; if (!e) return; e.prompt(); await e.userChoice; window.__bip = null; setCan(false); };
   return (<p className="ad-help install-row">Add this app to your phone: on iPhone use Safari, Share, then "Add to Home Screen"; on Android use the menu, then "Install app".{can && <button type="button" className="ad-linkbtn" onClick={install}>Install now</button>}</p>);
+}
+
+// Everything in the database, in one file. Supabase's free plan keeps no backups, so download one regularly and keep it somewhere safe.
+// Photos are not inside (they stay in Supabase storage). The PIN record is never included.
+const BACKUP_TABLES = ['settings', 'site_images', 'workshops', 'bookings', 'workshop_waitlist', 'class_types', 'class_levels', 'class_batches', 'class_sessions', 'class_attendance', 'class_enrolments',
+  'products', 'orders', 'order_items', 'customers', 'enquiries', 'invoices', 'invoice_payments', 'ledger_entries', 'events', 'todos', 'profiles'];
+async function readAll(table) {              // Supabase hands back at most 1000 rows at a time, so read page by page
+  const out = []; for (let from = 0; ; from += 1000) { const { data, error } = await sb().from(table).select('*').range(from, from + 999); if (error) throw error; out.push(...data); if (data.length < 1000) return out; }
+}
+function BackupCard() {
+  const [run, busy] = useAction(); const [note, setNote] = useState('');
+  const go = () => run(async () => {
+    const tables = {}; const skipped = [];
+    for (const t of BACKUP_TABLES) { setNote(`Reading ${t.replace(/_/g, ' ')}…`); try { tables[t] = await readAll(t); } catch { skipped.push(t); } }
+    const day = new Date().toISOString().slice(0, 10); const rows = Object.values(tables).reduce((n, r) => n + r.length, 0);
+    download(`thin-black-brush-backup-${day}.json`, JSON.stringify({ made: new Date().toISOString(), note: 'Thin Black Brush Manager backup. Keep it private: it has customer details.', skipped, tables }, null, 1), 'application/json');
+    setNote(`Downloaded ${rows} rows from ${Object.keys(tables).length} tables${skipped.length ? `. Could not read: ${skipped.join(', ')}` : ''}.`);
+  }, 'Backup downloaded');
+  return (<Card title="Backup"><p className="ad-help" style={{ marginTop: 0 }}>Downloads everything (orders, customers, accounts, workshops, classes, invoices and settings) as one file. The free database plan keeps no backups, so do this every week or two and keep the file somewhere safe and private. Photos are not included.</p>
+    <div className="ad-actions"><Btn busy={busy} icon="download" onClick={go}>Download everything</Btn></div>{note && <p className="ad-help">{note}</p>}</Card>);
 }

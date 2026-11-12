@@ -1,7 +1,7 @@
 import { dbReady } from '@/lib/server/db';
 import { rateLimit, sameOrigin, readJson, str, json } from '@/lib/server/guard';
 import { isPin, verifyPin, makeRecord, pinVersion, makeToken, checkToken, getRec, setRec, isLocked, nextFailState } from '@/lib/server/pin';
-import { mintOwnerSession } from '@/lib/server/owner';
+import { mintOwnerSession, signOutOwnerEverywhere } from '@/lib/server/owner';
 export const runtime = 'nodejs';
 const OWNER = 'owner';
 // The only way into the Manager app: a 4-digit PIN. Right PIN: this device is remembered and the owner session is issued.
@@ -24,7 +24,9 @@ export async function POST(req) {
       if (b.action === 'verify') return json({ ok: true, token: makeToken(OWNER, device, version), session: await mintOwnerSession(), defaultPin: !rec?.hash });
       if (!isPin(b.next)) return json({ error: 'invalid_pin' }, 400);
       const next = makeRecord(b.next, version + 1); await setRec('pin', next);
-      return json({ ok: true, token: makeToken(OWNER, device, next.version) });            // every other device must enter the new PIN
+      // every other device must enter the new PIN: their remembered device no longer matches, and their sign-ins are ended
+      let session = null; try { await signOutOwnerEverywhere(); session = await mintOwnerSession(); } catch (e) { console.error('pin signout', e.message); }
+      return json({ ok: true, token: makeToken(OWNER, device, next.version), session });
     }
     return json({ error: 'bad_request' }, 400);
   } catch (e) { console.error('pin', e.message); return json({ error: 'server' }, 500); }

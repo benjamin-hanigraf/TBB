@@ -55,8 +55,19 @@ function Reports({ sum, fy, gstOn, kind, exportAll }) {
   </>);
 }
 
+/** Where an automatic entry came from, as a link into the app (or null). */
+async function sourceLink(e) {
+  const id = e.source_id; if (!id) return null; const c = sb(); const one = async (t, cols) => (await c.from(t).select(cols).eq('id', id).maybeSingle()).data;
+  if (await one('orders', 'id')) return `/manager/orders?open=${id}`;
+  const b = await one('bookings', 'workshop_id'); if (b) return `/manager/programs?tab=workshops&people=${b.workshop_id}`;
+  const en = await one('class_enrolments', 'class_id'); if (en) return `/manager/programs?tab=classes&people=${en.class_id}`;
+  if (await one('invoices', 'id')) return `/manager/money?tab=invoices&open=${id}`;
+  const p = await one('invoice_payments', 'invoice_id'); if (p) return `/manager/money?tab=invoices&open=${p.invoice_id}`;
+  return null;
+}
 function Entry({ e, gst, onClose, onSaved }) {
-  const isNew = !e.id; const auto = e.source && e.source !== 'manual'; const [run, busy] = useAction();
+  const isNew = !e.id; const auto = e.source && e.source !== 'manual'; const [run, busy] = useAction(); const [link, setLink] = useState(null);
+  useEffect(() => { if (auto) sourceLink(e).then(setLink).catch(() => {}); /* eslint-disable-next-line */ }, [e.id]);
   const f = useForm({ kind: e.kind || 'in', date: isoToDMY(e.entry_date || todayISO()), amount: e.amount_paise ? String(e.amount_paise / 100) : '', hasGst: e.gst_paise > 0, gstAmt: e.gst_paise ? String(e.gst_paise / 100) : '', category: e.category || '', party: e.party || '', method: e.method || 'upi', description: e.description || '' });
   const cats = f.v.kind === 'in' ? IN_CATEGORIES : OUT_CATEGORIES;
   const suggest = () => f.v.amount && gst.enabled ? String(gstInside(rupeesToPaise(f.v.amount), gst.rate_percent || 18) / 100) : '';
@@ -68,7 +79,7 @@ function Entry({ e, gst, onClose, onSaved }) {
   }, 'Saved'); };
   const del = () => run(async () => { must(await sb().from('ledger_entries').delete().eq('id', e.id)); onSaved(); }, 'Deleted');
   return (<Modal title={isNew ? (f.v.kind === 'in' ? 'Income' : 'Expense') : 'Entry'} onClose={onClose}>
-    {auto && <p className="ad-help" style={{ marginTop: 0 }}>This entry was added automatically from an online payment. Edit it only to correct a mistake.</p>}
+    {auto && <p className="ad-help" style={{ marginTop: 0 }}>This entry was added automatically. Edit it only to correct a mistake.{link && <> <a className="ad-linkbtn" href={link}>See where it came from</a></>}</p>}
     <form onSubmit={save} className="ad-form">
       <F form={f} k="kind" label="Type" type="select" required options={[['in', 'Income (received)'], ['out', 'Expense (spent)']]} />
       <F form={f} k="date" label="Date" type="date" required />

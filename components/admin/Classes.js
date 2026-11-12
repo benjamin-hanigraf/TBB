@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Icon from '@/components/Icons';
 import { useLoad, sb, must, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, Sortable, slugify, download, useToast, fmtD } from './kit';
 import { BatchesModal } from './BatchTools';
@@ -15,6 +15,7 @@ export default function Classes() {
     const c = sb(); const [l, e, t] = await Promise.all([c.from('class_levels').select('*').order('sort_order'), c.from('class_enrolments').select('class_id,batch_id').eq('status', 'paid'), c.from('class_types').select('*').order('sort_order')]);
     const n = {}, loose = {}; must(e).forEach((x) => { n[x.class_id] = (n[x.class_id] || 0) + 1; if (!x.batch_id) loose[x.class_id] = (loose[x.class_id] || 0) + 1; }); return { levels: must(l), n, loose, types: must(t) };
   });
+  useEffect(() => { let id = null; try { id = new URLSearchParams(window.location.search).get('people'); } catch {} const l = id && data?.levels.find((x) => x.id === id); if (l) setPeople(l); }, [data]);   // a link from Accounts opens that level's students
   if (error) return <Page title="Classes"><Err e={error} /></Page>; if (!data) return <Page title="Classes"><Spin /></Page>;
   const tone = (name) => Math.max(0, data.types.findIndex((t) => t.name === name)) % 4;
   const reorder = async (arr) => { try { for (let i = 0; i < arr.length; i++) if (arr[i].sort_order !== i + 1) must(await sb().from('class_levels').update({ sort_order: i + 1 }).eq('id', arr[i].id)); toast('Order saved'); reload(); } catch (e) { toast(e.message || 'Could not save the order.', 'err'); } };

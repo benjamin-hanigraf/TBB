@@ -20,7 +20,7 @@ export default function Todo({ embedded = false, onChanged }) {
   return (<Wrap embedded={embedded} title="To-do">
     <Card><form className="ad-form todo-add" onSubmit={create}>
       <F form={add} k="title" label="New task" rule="sentence" placeholder="e.g. Order paper for the next workshop" required />
-      <F form={add} k="due" label="Remind me on" type="date" />
+      <F form={add} k="due" label="Due on" type="date" />
       <div className="ad-actions"><Btn busy={busy} icon="plus">Add</Btn></div></form></Card>
     {groups.map(([t, rows]) => rows.length ? <Card key={t} title={t} tight><div className="ad-list">{rows.map(row)}</div></Card> : null)}
     {!open.length && <Card><Empty>Nothing to do. Add a task above.</Empty></Card>}
@@ -34,7 +34,7 @@ function EditTask({ t, onClose, onSaved }) {
     must(await sb().from('todos').update({ title: f.v.title.trim(), note: f.v.note || null, due_on: due }).eq('id', t.id)); onSaved(); }, 'Saved'); };
   const del = () => run(async () => { must(await sb().from('todos').delete().eq('id', t.id)); onSaved(); }, 'Deleted');
   return (<Modal title="Edit task" onClose={onClose}><form className="ad-form" onSubmit={save}>
-    <div className="full"><F form={f} k="title" label="Task" rule="sentence" required /></div><F form={f} k="due" label="Remind me on" type="date" />
+    <div className="full"><F form={f} k="title" label="Task" rule="sentence" required /></div><F form={f} k="due" label="Due on" type="date" />
     <div className="full"><F form={f} k="note" label="Note" type="textarea" rule="sentence" rows={3} /></div>
     <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn><Confirm onYes={del}>Delete</Confirm></div></form></Modal>);
 }

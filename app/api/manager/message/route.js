@@ -19,6 +19,7 @@ export async function POST(req) {
   else if (b.audience === 'waitlist') rows = await q(`workshop_waitlist?workshop_id=eq.${b.id}&select=name,email`);
   else return json({ error: 'bad_request' }, 400);
   const seen = new Set(); const list = (rows || []).filter((r) => isEmail(String(r.email || '').toLowerCase()) && !seen.has(r.email.toLowerCase()) && seen.add(r.email.toLowerCase())).slice(0, 200);
-  let sent = 0, failed = 0; for (const r of list) { try { await sendEmail(messageEmail({ to: r.email, subject, body, name: r.name })); sent++; } catch { failed++; } }
+  let sent = 0, failed = 0; const ok = []; for (const r of list) { try { await sendEmail(messageEmail({ to: r.email, subject, body, name: r.name })); sent++; ok.push(r.email); } catch { failed++; } }
+  if (b.audience === 'waitlist' && ok.length) { try { await q(`workshop_waitlist?workshop_id=eq.${b.id}&email=in.(${ok.map((e) => `"${e.replace(/["(),]/g, '')}"`).map(encodeURIComponent).join(',')})`, { method: 'PATCH', body: { notified_at: new Date().toISOString() } }); } catch (e) { console.error('waitlist contacted', e.message); } }   // shown as "contacted" in the waitlist
   return json({ ok: true, sent, failed, skipped: (rows || []).length - list.length });
 }

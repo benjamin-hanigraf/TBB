@@ -14,7 +14,6 @@ insert into bookings (id,workshop_id,user_id,name,email,phone,seats,amount_paise
 insert into orders (id,user_id,name,email,phone,shipping_address,subtotal_paise,total_paise) values
  ('eeeeeeee-0000-0000-0000-000000000001','aaaaaaaa-0000-0000-0000-000000000001','Alice','alice@x.com','9','{}',100,100),
  ('eeeeeeee-0000-0000-0000-000000000002','bbbbbbbb-0000-0000-0000-000000000002','Bob','bob@x.com','8','{}',200,200);
-insert into addresses (user_id,line1,city,state,pincode) values ('bbbbbbbb-0000-0000-0000-000000000002','Bob Street','Chennai','TN','600001');
 insert into ledger_entries (kind,category,amount_paise) values ('in','Workshops',1000);
 insert into invoices (invoice_no,customer_name,subtotal_paise,total_paise) values ('T/1','C',100,100);
 insert into enquiries (kind,name,email,message) values ('contact','Z','z@x.com','hello there friend');
@@ -45,7 +44,7 @@ do $$ begin
   assert (select count(*) from settings) = 2, 'anon sees only public settings (not GST/invoice)';
   assert (select count(*) from settings where key='gst') = 0, 'GST settings must stay private';
   assert (select count(*) from site_images) = 4, 'photos are public';
-  assert pg_temp.count_of('bookings') = 0 and pg_temp.count_of('orders') = 0 and pg_temp.count_of('profiles') = 0 and pg_temp.count_of('addresses') = 0
+  assert pg_temp.count_of('bookings') = 0 and pg_temp.count_of('orders') = 0 and pg_temp.count_of('profiles') = 0
      and pg_temp.count_of('enquiries') = 0 and pg_temp.count_of('ledger_entries') = 0 and pg_temp.count_of('invoices') = 0 and pg_temp.count_of('order_items') = 0, 'anon must see no private data';
   assert pg_temp.denied($q$insert into enquiries (kind,name,email,message) values ('contact','a','a@x.com','spam spam spam')$q$), 'anon cannot write enquiries directly';
   assert pg_temp.denied($q$insert into bookings (workshop_id,name,email,phone,seats,amount_paise) select id,'a','a@x.com','1',1,1 from workshops limit 1$q$), 'anon cannot create bookings directly';
@@ -72,14 +71,11 @@ do $$ begin
   assert (select count(*) from bookings) = 1 and (select name from bookings) = 'Alice', 'alice sees only her booking';
   assert (select count(*) from orders) = 1, 'alice sees only her order';
   assert (select count(*) from profiles) = 1, 'alice sees only her profile';
-  assert pg_temp.count_of('addresses') = 0, 'alice must not see bob''s address';
   assert pg_temp.count_of('ledger_entries') = 0 and pg_temp.count_of('invoices') = 0 and pg_temp.count_of('enquiries') = 0, 'alice cannot see business records';
   assert pg_temp.denied($q$update profiles set role='admin' where id='aaaaaaaa-0000-0000-0000-000000000001'$q$), 'alice cannot make herself admin';
   assert (select role from profiles) = 'customer', 'alice is still a customer';
   assert not pg_temp.denied($q$update profiles set full_name='Alice R', phone='9999999999' where id='aaaaaaaa-0000-0000-0000-000000000001'$q$), 'alice can edit her own details';
   assert pg_temp.denied($q$update profiles set full_name='Hacked' where id='bbbbbbbb-0000-0000-0000-000000000002'$q$), 'alice cannot edit bob';
-  assert not pg_temp.denied($q$insert into addresses (user_id,line1,city,state,pincode) values ('aaaaaaaa-0000-0000-0000-000000000001','A St','Chennai','TN','600001')$q$), 'alice can save her own address';
-  assert pg_temp.denied($q$insert into addresses (user_id,line1,city,state,pincode) values ('bbbbbbbb-0000-0000-0000-000000000002','Spoof','Chennai','TN','600001')$q$), 'alice cannot add an address to bob';
   assert pg_temp.denied($q$update orders set status='paid', total_paise=1 where id='eeeeeeee-0000-0000-0000-000000000001'$q$), 'alice cannot change her order';
   assert pg_temp.denied($q$update bookings set status='paid' where id='dddddddd-0000-0000-0000-000000000001'$q$), 'alice cannot change her booking';
   assert pg_temp.denied($q$delete from bookings$q$), 'alice cannot delete bookings';
@@ -94,6 +90,10 @@ do $$ begin
   assert pg_temp.denied($q$update admin_security set value='{}'$q$), 'a customer cannot change the PIN';
   assert pg_temp.denied($q$update class_enrolments set status='refunded' where id='ffffffff-0000-0000-0000-000000000001'$q$), 'alice cannot change her enrolment';
   assert pg_temp.denied($q$update class_levels set price_paise = 1$q$), 'alice cannot change class prices';
+  assert pg_temp.count_of('class_batches') = 0 and pg_temp.count_of('class_sessions') = 0 and pg_temp.count_of('class_attendance') = 0 and pg_temp.count_of('events') = 0 and pg_temp.count_of('workshop_waitlist') = 0 and pg_temp.count_of('invoice_payments') = 0 and pg_temp.count_of('todos') = 0, 'alice sees none of the owner-only tables';
+  assert pg_temp.denied($q$select next_invoice_number()$q$), 'alice cannot take an invoice number';
+  assert pg_temp.denied($q$select admin_add_order('{}'::jsonb)$q$), 'alice cannot add orders by hand';
+  assert pg_temp.denied($q$select * from customer_summary()$q$) or (select count(*) from customer_summary()) = 0, 'alice gets no customer totals';
   assert pg_temp.denied($q$insert into class_enrolments (class_id,user_id,student_name,student_group,name,email,phone,amount_paise,status) select id,'aaaaaaaa-0000-0000-0000-000000000001','x','adult','x','x@x.com','1',1,'paid' from class_levels limit 1$q$), 'alice cannot create a paid enrolment';
 end $$; rollback;
 
@@ -101,9 +101,9 @@ end $$; rollback;
 begin; select pg_temp.as_user('cccccccc-0000-0000-0000-000000000003','authenticated');
 do $$ begin
   assert (select count(*) from bookings) = 2 and (select count(*) from orders) = 2 and (select count(*) from profiles) = 3, 'owner sees everything';
-  assert pg_temp.count_of('addresses') = 1 and pg_temp.count_of('enquiries') = 1 and pg_temp.count_of('ledger_entries') = 1 and pg_temp.count_of('invoices') = 1, 'owner sees business records';
+  assert pg_temp.count_of('enquiries') = 1 and pg_temp.count_of('ledger_entries') = 1 and pg_temp.count_of('invoices') = 1, 'owner sees business records';
   assert (select count(*) from workshops) = 2, 'owner sees drafts';
-  assert (select count(*) from settings) = 3, 'owner sees private settings';
+  assert (select count(*) from settings) = 4, 'owner sees private settings';
   assert not pg_temp.denied($q$update products set stock = 5 where slug='2024-maroon-planner'$q$), 'owner can edit products';
   assert not pg_temp.denied($q$insert into workshops (slug,title,starts_at,price_paise) values ('x','X', now() + interval '1 day', 100)$q$), 'owner can add workshops';
   assert not pg_temp.denied($q$update orders set status='shipped' where id='eeeeeeee-0000-0000-0000-000000000001'$q$), 'owner can update orders';
@@ -112,6 +112,9 @@ do $$ begin
   assert not pg_temp.denied($q$insert into storage.objects (bucket_id,name) values ('media','products/x.webp')$q$), 'owner can upload photos';
   assert pg_temp.denied($q$insert into storage.objects (bucket_id,name) values ('private','x.webp')$q$), 'owner upload limited to the media folder';
   assert pg_temp.denied($q$select decrement_stock((select id from products limit 1), 1)$q$), 'even the owner browser cannot call server-only functions';
+  assert not pg_temp.denied($q$select next_invoice_number()$q$), 'owner can take an invoice number';
+  assert not pg_temp.denied($q$insert into events (title,on_date) values ('Studio visit', current_date)$q$), 'owner can add events';
+  assert not pg_temp.denied($q$select admin_add_order('{"name":"Walk In","pay":"paid","method":"cash","subtotal_paise":1000,"shipping_paise":0,"total_paise":1000,"items":[{"title":"X","unit_paise":1000,"qty":1,"gst_paise":0}]}'::jsonb)$q$), 'owner can add an order by hand in one step';
   assert pg_temp.count_of('class_enrolments') = 2 and (select count(*) from class_levels) = 4, 'owner sees all enrolments and inactive levels';
   assert pg_temp.count_of('admin_security') = 0, 'even the owner browser session cannot read the PIN record (only the server can)';
   assert (select count(*) from customers) = 4, 'owner sees the whole customer list (3 sign-ups + 1 imported)';

@@ -22,7 +22,7 @@ export default function Dashboard() {
       c.from('class_enrolments').select('id,name,amount_paise,paid_at,class_levels(title,level)').not('paid_at', 'is', null).order('paid_at', { ascending: false }).limit(5),
       c.from('todos').select('id,title,due_on').eq('done', false).lte('due_on', today).order('due_on'),
       c.from('workshops').select('id,title,kind,starts_at,ends_at,status').neq('status', 'cancelled').gte('starts_at', new Date(Date.now() - 60 * 864e5).toISOString()).lte('starts_at', new Date(Date.now() + 2 * 864e5).toISOString()),
-      c.from('class_sessions').select('*,class_batches(*,class_levels(title,level))').eq('on_date', today).neq('status', 'cancelled'),
+      c.from('class_sessions').select('*,class_enrolments(student_name,class_levels(title,level))').eq('on_date', today).neq('status', 'cancelled'),
       c.from('class_sessions').select('id', { count: 'exact', head: true }).lt('on_date', today).eq('status', 'scheduled'),
       c.from('invoices').select('id,total_paise,due_date,status,doc_type,invoice_payments(amount_paise)').eq('doc_type', 'invoice').in('status', ['draft', 'sent']).lt('due_date', today)]);
     const unread = inbox.error ? await c.from('enquiries').select('id', { count: 'exact', head: true }).eq('handled', false) : inbox;   // before database update v9
@@ -33,14 +33,14 @@ export default function Dashboard() {
     // Today: workshops on today (a course counts on every day it runs), classes on today, to-dos due today
     const day = [
       ...soft(near).filter((x) => { const s = istDay(x.starts_at), e = x.kind === 'course' && x.ends_at ? istDay(x.ends_at) : s; return s <= today && today <= e; }).map((x) => ({ key: `w${x.id}`, t: x.title, s: `${istDay(x.starts_at) === today ? istTime(x.starts_at) : 'Course day'}${x.status === 'draft' ? ' · draft' : ''}`, kind: 'Workshop', href: '/manager/workshops' })),
-      ...soft(sess).map((x) => { const b = x.class_batches || {}; const l = b.class_levels || {}; const lv = `${l.title || 'Class'}${l.level ? `, ${l.level}` : ''}`; return { key: `c${x.id}`, t: b.solo ? `${b.name} · ${lv}` : lv, s: [x.time_text || b.time_text, b.solo ? '' : b.name].filter(Boolean).join(' · '), kind: 'Class', href: '/manager/classes' }; }),
+      ...soft(sess).map((x) => { const en = x.class_enrolments || {}; const l = en.class_levels || {}; return { key: `c${x.id}`, t: en.student_name || 'Class', s: [x.time_text, `${l.title || 'Class'}${l.level ? ` (${l.level})` : ''}`].filter(Boolean).join(' · '), kind: 'Class', href: '/manager/classes' }; }),
       ...td.filter((x) => x.due_on === today).map((x) => ({ key: `t${x.id}`, t: x.title, s: '', kind: 'To-do', href: '/manager/planner' }))];
     // Needs attention: only things that are late or running out
     const owed = soft(inv).map((i) => i.total_paise - (i.invoice_payments || []).reduce((s, p) => s + p.amount_paise, 0)).filter((x) => x > 0);
     const lateTodos = td.filter((x) => x.due_on < today).length; const noAttendance = late.error ? 0 : late.count || 0;
     const attention = [
       ...(lateTodos ? [{ key: 'todo', t: `${lateTodos} ${lateTodos === 1 ? 'to-do is' : 'to-dos are'} overdue`, href: '/manager/planner' }] : []),
-      ...(noAttendance ? [{ key: 'att', t: `Attendance not taken for ${noAttendance} ${noAttendance === 1 ? 'class' : 'classes'}`, href: '/manager/classes' }] : []),
+      ...(noAttendance ? [{ key: 'att', t: `Not marked as attended: ${noAttendance} ${noAttendance === 1 ? 'class' : 'classes'}`, href: '/manager/classes' }] : []),
       ...(owed.length ? [{ key: 'inv', t: `${owed.length} ${owed.length === 1 ? 'invoice is' : 'invoices are'} overdue · ${money(owed.reduce((s, x) => s + x, 0))} to collect`, href: '/manager/money?tab=invoices' }] : []),
       ...must(low).map((p) => ({ key: `p${p.id}`, t: p.stock === 0 ? `${p.title} is out of stock` : `${p.title}: only ${p.stock} left`, href: '/manager/products' }))];
     return { fy, sum: summarise(all.map((e) => ({ ...e })), fy), thisMonth: summarise(all.filter((e) => e.entry_date.startsWith(month)), fy), toPack: toPack.count || 0, inbox: unread.count || 0, ws: w, taken, recent, day, attention };

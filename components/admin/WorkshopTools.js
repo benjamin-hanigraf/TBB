@@ -6,7 +6,7 @@ import { RefundDialog } from './Refund';
 import { money } from '@/lib/accounting';
 const wa = (phone, text) => { const d = String(phone || '').replace(/\D/g, '').slice(-10); return d.length === 10 ? `https://wa.me/91${d}?text=${encodeURIComponent(text)}` : null; };
 
-/** Email everyone in a workshop, a class batch or a waitlist. If email is not set up yet, WhatsApp links for each person are shown instead. */
+/** Email everyone in a workshop or on a waitlist. If email is not set up yet, WhatsApp links for each person are shown instead. */
 export function MessageModal({ audience, id, title, people, onClose }) {
   const [run, busy] = useAction(); const toast = useToast(); const f = useForm({ subject: '', message: '' }); const [res, setRes] = useState(null);
   const send = (e) => { e.preventDefault(); return run(async () => {

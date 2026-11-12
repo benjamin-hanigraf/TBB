@@ -73,12 +73,12 @@ export function AddSignup({ w, taken, onClose, onSaved }) {
 }
 
 export function AddEnrol({ level, onClose, onSaved }) {
-  const { data: customers } = useCustomers(); const [run, busy] = useAction(); const { data: batches } = useLoad(async () => must(await sb().from('class_batches').select('id,name,starts_on').eq('class_id', level.id).eq('active', true).order('starts_on', { ascending: false })), [level.id]);
-  const f = useForm({ batch: '', group: 'child', student: '', age: '', name: '', phone: '', email: '', amount: String(level.price_paise / 100), pay: 'paid', method: 'upi' });
+  const { data: customers } = useCustomers(); const [run, busy] = useAction();
+  const f = useForm({ group: 'child', student: '', age: '', name: '', phone: '', email: '', amount: String(level.price_paise / 100), pay: 'paid', method: 'upi' });
   const save = (e) => { e.preventDefault(); return run(async () => {
     const child = f.v.group === 'child'; const age = child ? parseInt(f.v.age, 10) : null; if (child && !(age >= 5 && age <= 15)) throw new Error('A child must be between 5 and 15 years old.');
     if (!f.v.name.trim() || (child && !f.v.student.trim())) throw new Error('Please add the names.'); const paid = f.v.pay === 'paid';
-    must(await sb().from('class_enrolments').insert({ class_id: level.id, student_name: child ? RULES.name.done(f.v.student) : f.v.name, student_group: f.v.group, student_age: age, name: f.v.name, email: f.v.email || '', phone: f.v.phone || '', amount_paise: rupeesToPaise(f.v.amount), batch_id: f.v.batch || null, status: paid ? 'paid' : 'pending', channel: 'manual', payment_method: paid ? f.v.method : null, paid_at: paid ? nowISO() : null }));
+    must(await sb().from('class_enrolments').insert({ class_id: level.id, student_name: child ? RULES.name.done(f.v.student) : f.v.name, student_group: f.v.group, student_age: age, name: f.v.name, email: f.v.email || '', phone: f.v.phone || '', amount_paise: rupeesToPaise(f.v.amount), status: paid ? 'paid' : 'pending', channel: 'manual', payment_method: paid ? f.v.method : null, paid_at: paid ? nowISO() : null }));
     await ensureCustomer({ name: f.v.name, email: f.v.email, phone: f.v.phone }); if (paid) await syncPaymentsToLedger(sb()); onSaved(); }, 'Enrolment added'); };
   return (<Modal title={`Add enrolment · ${level.title}, ${level.level}`} onClose={onClose}><form className="ad-form" onSubmit={save}>
     <F form={f} k="group" label="Who is attending?" type="select" required options={[['child', 'A child (5 to 15)'], ['adult', 'An adult']]} />
@@ -86,7 +86,6 @@ export function AddEnrol({ level, onClose, onSaved }) {
     <CustomerSuggest value={f.v.name} onType={(v) => f.set('name', v)} onPick={(c) => f.setAll((v) => ({ ...v, name: c.name, email: c.email || '', phone: c.phone || '' }))} customers={customers} required label={f.v.group === 'child' ? "Parent or guardian's name" : 'Name'} />
     <F form={f} k="phone" label="Phone" type="tel" rule="phone" /><F form={f} k="email" label="Email" type="email" rule="email" />
     <F form={f} k="amount" label="Amount (₹)" type="money" rule="money" required /><PaymentFields f={f} />
-    {batches?.length > 0 && <F form={f} k="batch" label="Batch" type="select" options={[['', 'Place later'], ...batches.map((b) => [b.id, b.name || `Batch from ${fmtD(b.starts_on)}`])]} />}
     <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn><Btn type="button" variant="ghost" onClick={onClose}>Cancel</Btn></div></form></Modal>);
 }
 
@@ -111,7 +110,7 @@ export function BookingModal({ b, onClose, onSaved }) {
   const [save, busy] = useStatusSave({ table: 'bookings', row: b, f, label: 'Sign-up updated', onSaved }); const wa = waLink(b.phone);
   return (<Modal title={b.name} onClose={onClose}>
     <p style={{ marginTop: 0 }}><b>{b.workshops?.title}</b><br />{b.seats} {b.seats > 1 ? 'seats' : 'seat'} · {money(b.amount_paise)}<br /><span className="ad-help">{b.email} · {b.phone}</span></p>
-    <p className="ad-help">Booked {fmtDT(b.created_at)}{b.channel === 'manual' ? ' · added by hand' : ''}{b.razorpay_payment_id ? ` · Payment ID ${b.razorpay_payment_id}` : ''}</p>
+    <p className="ad-help">Booked {fmtDT(b.created_at)}{b.channel === 'manual' ? ' · added manually' : ''}{b.razorpay_payment_id ? ` · Payment ID ${b.razorpay_payment_id}` : ''}</p>
     <div className="ad-form"><F form={f} k="status" label="Status" type="select" required options={statusOptions(b.status, 'Transferred to another date or person')} />
       {b.status === 'pending' && ['paid', 'transferred'].includes(f.v.status) && <F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} />}</div>
     <p className="ad-help">Tickets are non-refundable but can be transferred. To give money back, use Refund.</p>
@@ -119,15 +118,14 @@ export function BookingModal({ b, onClose, onSaved }) {
     {refund && <RefundDialog kind="booking" rows={[b]} title={`Refund · ${b.name}`} onClose={() => setRefund(false)} onDone={onSaved} />}</Modal>);
 }
 export function EnrolModal({ e, onClose, onSaved }) {
-  const { data: batches } = useLoad(async () => must(await sb().from('class_batches').select('id,name,starts_on').eq('class_id', e.class_id).order('starts_on', { ascending: false })), [e.class_id]);
-  const f = useForm({ status: e.status, method: e.payment_method || 'upi', batch: e.batch_id || '' }); const [refund, setRefund] = useState(false);
-  const [save, busy] = useStatusSave({ table: 'class_enrolments', row: e, f, label: 'Enrolment updated', extra: { batch_id: f.v.batch || null }, onSaved }); const wa = waLink(e.phone);
+  const f = useForm({ status: e.status, method: e.payment_method || 'upi' }); const [refund, setRefund] = useState(false);
+  const [save, busy] = useStatusSave({ table: 'class_enrolments', row: e, f, label: 'Enrolment updated', onSaved }); const wa = waLink(e.phone);
   return (<Modal title={e.student_name} onClose={onClose}>
     <p style={{ marginTop: 0 }}><b>{e.class_levels?.title}, {e.class_levels?.level}</b><br />{e.student_group === 'child' ? `Child, age ${e.student_age}` : 'Adult'} · {money(e.amount_paise)}</p>
-    <p className="ad-help">{e.student_group === 'child' ? `Parent or guardian: ${e.name} · ` : ''}{e.email} · {e.phone}<br />{fmtDT(e.created_at)}{e.channel === 'manual' ? ' · added by hand' : ''}{e.razorpay_payment_id ? ` · Payment ID ${e.razorpay_payment_id}` : ''}</p>
-    <div className="ad-form"><F form={f} k="status" label="Status" type="select" required options={statusOptions(e.status, 'Moved to another batch')} />
+    <p className="ad-help">{e.student_group === 'child' ? `Parent or guardian: ${e.name} · ` : ''}{e.email} · {e.phone}<br />{fmtDT(e.created_at)}{e.channel === 'manual' ? ' · added manually' : ''}{e.razorpay_payment_id ? ` · Payment ID ${e.razorpay_payment_id}` : ''}</p>
+    <div className="ad-form"><F form={f} k="status" label="Status" type="select" required options={statusOptions(e.status, 'Transferred')} />
       {e.status === 'pending' && ['paid', 'transferred'].includes(f.v.status) && <F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} />}
-      {batches?.length > 0 && <F form={f} k="batch" label="Batch" type="select" options={[['', 'Not placed yet'], ...batches.map((b) => [b.id, b.name || `Batch from ${fmtD(b.starts_on)}`])]} />}</div>
+    </div>
     <div className="ad-actions full"><Btn busy={busy} onClick={save} icon="check">Save</Btn><Link className="ad-btn ghost" href={`/invoice/${e.id}`} target="_blank">Receipt</Link>{wa && <a className="ad-btn ghost" href={wa} target="_blank" rel="noopener">WhatsApp</a>}{refundable(e) && <Btn variant="ghost" onClick={() => setRefund(true)}>Refund</Btn>}</div>
     {refund && <RefundDialog kind="enrolment" rows={[e]} title={`Refund · ${e.student_name}`} onClose={() => setRefund(false)} onDone={onSaved} />}</Modal>);
 }

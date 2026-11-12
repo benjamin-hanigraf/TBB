@@ -20,8 +20,8 @@ export function buildEvents({ workshops = [], sessions = [], todos = [], events 
     if (w.status === 'cancelled') continue; const s = istDate(w.starts_at); const e = w.kind === 'course' && w.ends_at ? istDate(w.ends_at) : s;
     for (let d = s, n = 0; d <= e && n < 120; d = addDays(d, 1), n++) ev.push({ date: d, title: w.title, kind: 'workshop', time: d === s ? istTime(w.starts_at) : '', note: w.venue_name || '', draft: w.status === 'draft', href: '/manager/workshops' });
   }
-  for (const s of sessions) { if (s.status === 'cancelled') continue; const b = s.class_batches; const lv = b?.class_levels; const level = `${lv?.title || 'Class'}${lv?.level ? `, ${lv.level}` : ''}`;   // one-on-one classes show the student's name
-    ev.push({ date: s.on_date, title: b?.solo ? `${b.name} · ${level}` : level, kind: 'class', time: s.time_text || b?.time_text || '', note: `Class ${s.no}${b?.solo ? '' : ` of ${b?.sessions || '?'}`}${s.status === 'done' ? ' · done' : ''}${s.moved_from ? ' · moved' : ''}`, href: '/manager/classes' }); }
+  for (const s of sessions) { if (s.status === 'cancelled') continue; const en = s.class_enrolments; const lv = en?.class_levels;   // a class shows the student's name; the class details are in the list below
+    ev.push({ date: s.on_date, title: en?.student_name || 'Class', kind: 'class', time: s.time_text || '', note: `${lv?.title || 'Class'}${lv?.level ? ` (${lv.level})` : ''} · Class ${s.no}${s.status === 'done' ? ' · attended' : ''}${s.moved_from ? ' · moved' : ''}`, href: '/manager/classes' }); }
   for (const t of todos) if (t.due_on && !t.done) ev.push({ date: t.due_on, title: t.title, kind: 'todo', time: '', note: t.note || '', href: '#todo' });
   for (const e of events) { const end = e.end_date && e.end_date > e.on_date ? e.end_date : e.on_date; for (let d = e.on_date, n = 0; d <= end && n < 60; d = addDays(d, 1), n++) ev.push({ date: d, title: e.title, kind: 'event', time: d === e.on_date ? e.time_text || '' : '', note: e.note || '', event: e }); }
   return ev.sort((a, b) => a.date.localeCompare(b.date) || a.kind.localeCompare(b.kind) || a.title.localeCompare(b.title));
@@ -32,7 +32,7 @@ export default function CalendarPanel({ version = 0 }) {
   const { data, error, reload } = useLoad(async () => {
     const c = sb(); const [w, s, t, e] = await Promise.all([
       every(() => c.from('workshops').select('id,title,kind,starts_at,ends_at,venue_name,status').order('starts_at').order('id')),
-      every(() => c.from('class_sessions').select('*,class_batches(*,class_levels(title,level))').order('on_date').order('id')),
+      every(() => c.from('class_sessions').select('*,class_enrolments(student_name,class_levels(title,level))').order('on_date').order('id')),
       every(() => c.from('todos').select('id,title,note,due_on,done').eq('done', false).not('due_on', 'is', null).order('id')),
       every(() => c.from('events').select('*').order('on_date').order('id'))]);
     // Show whatever loaded. A missing table (database update not run yet) should not blank the whole calendar.
@@ -64,7 +64,7 @@ export default function CalendarPanel({ version = 0 }) {
     </Card>
     <Card title={new Date(`${sel}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })} action={<button className="ad-btn ghost sm" onClick={() => setEdit({ on_date: sel })}>Add event</button>}>
       {dayList.length ? <div className="ad-list">{dayList.map((e, i) => row(e, i, false))}</div> : <Empty>Nothing scheduled.</Empty>}</Card>
-    <Card title="Coming up">{upcoming.length ? <div className="ad-list">{upcoming.map((e, i) => row(e, i, true))}</div> : <Empty>Nothing coming up. Add an event, a class batch or a workshop.</Empty>}</Card>
+    <Card title="Coming up">{upcoming.length ? <div className="ad-list">{upcoming.map((e, i) => row(e, i, true))}</div> : <Empty>Nothing coming up. Add an event, a rent-out or a workshop.</Empty>}</Card>
     {edit && <EventForm e={edit} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); reload(); }} />}
   </>);
 }

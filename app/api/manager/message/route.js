@@ -3,7 +3,7 @@ import { sendEmail, emailReady, messageEmail } from '@/lib/server/email';
 import { rateLimit, sameOrigin, readJson, str, isEmail, json } from '@/lib/server/guard';
 export const runtime = 'nodejs';
 const UUID = /^[0-9a-f-]{36}$/i;
-// Owner-only: emails everyone in a workshop, a class batch or a workshop waitlist.
+// Owner-only: emails everyone in a workshop or on a workshop waitlist.
 export async function POST(req) {
   if (!sameOrigin(req)) return json({ error: 'forbidden' }, 403);
   if (!rateLimit(req, 'admin-message', 10)) return json({ error: 'slow_down' }, 429);
@@ -15,7 +15,6 @@ export async function POST(req) {
   if (!UUID.test(b.id) || subject.length < 3 || body.length < 5) return json({ error: 'bad_request' }, 400);
   let rows = [];
   if (b.audience === 'workshop') rows = await q(`bookings?workshop_id=eq.${b.id}&status=eq.paid&select=name,email`);
-  else if (b.audience === 'batch') rows = await q(`class_enrolments?batch_id=eq.${b.id}&status=eq.paid&select=name,email`);
   else if (b.audience === 'waitlist') rows = await q(`workshop_waitlist?workshop_id=eq.${b.id}&select=name,email`);
   else return json({ error: 'bad_request' }, 400);
   const seen = new Set(); const list = (rows || []).filter((r) => isEmail(String(r.email || '').toLowerCase()) && !seen.has(r.email.toLowerCase()) && seen.add(r.email.toLowerCase())).slice(0, 200);

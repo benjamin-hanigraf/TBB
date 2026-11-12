@@ -70,8 +70,8 @@ function InstallRow() {
 
 // Everything in the database, in one file. Supabase's free plan keeps no backups, so download one regularly and keep it somewhere safe.
 // Photos are not inside (they stay in Supabase storage). The PIN record is never included.
-const BACKUP_TABLES = ['settings', 'site_images', 'workshops', 'bookings', 'workshop_waitlist', 'class_types', 'class_levels', 'class_batches', 'class_sessions', 'class_attendance', 'class_enrolments',
-  'products', 'orders', 'order_items', 'customers', 'enquiries', 'invoices', 'invoice_payments', 'ledger_entries', 'events', 'todos', 'profiles'];
+const BACKUP_TABLES = ['settings', 'site_images', 'workshops', 'bookings', 'workshop_waitlist', 'class_types', 'class_levels', 'class_sessions', 'class_enrolments',
+  'products', 'orders', 'order_items', 'customers', 'enquiries', 'invoices', 'invoice_payments', 'ledger_entries', 'events', 'rentouts', 'todos', 'profiles'];
 async function readAll(table) {              // Supabase hands back at most 1000 rows at a time, so read page by page
   const out = []; for (let from = 0; ; from += 1000) { const { data, error } = await sb().from(table).select('*').range(from, from + 999); if (error) throw error; out.push(...data); if (data.length < 1000) return out; }
 }

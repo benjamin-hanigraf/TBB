@@ -54,26 +54,9 @@ test('discount is shared across lines and GST follows it; GST off means none', (
 });
 test('next invoice number respects the starting number', () => { assert.equal(A.nextInvoiceNo([], 'TBB/YYYY-YY', '2026-05-01', 101), 'TBB/2026-27/101'); assert.equal(A.nextInvoiceNo(['TBB/2026-27/150'], 'TBB/YYYY-YY', '2026-05-01', 101), 'TBB/2026-27/151'); });
 
-import * as B from '../lib/batches.js';
-test('class dates fall on the chosen weekdays', () => {
-  assert.deepEqual(B.classDates('2026-11-03', [2, 4], 4), ['2026-11-03', '2026-11-05', '2026-11-10', '2026-11-12']);
-  assert.deepEqual(B.classDates('2026-11-04', [], 3), ['2026-11-04', '2026-11-11', '2026-11-18'], 'no weekday chosen: weekly on the first class day');
-  assert.deepEqual(B.classDates('2026-11-03', [2], 1), ['2026-11-03']); assert.equal(B.classDates('2026-11-03', [2, 4], 8).length, 8);
-});
-test('postponing and preponing a class', () => {
-  const s = [{ id: 'a', no: 1, on_date: '2026-11-03', status: 'done' }, { id: 'b', no: 2, on_date: '2026-11-05', status: 'scheduled' }, { id: 'c', no: 3, on_date: '2026-11-10', status: 'scheduled' }];
-  const one = B.moveClass(s, 2, '2026-11-06', false); assert.deepEqual(one, [{ id: 'b', on_date: '2026-11-06', moved_from: '2026-11-05' }]);
-  const all = B.moveClass(s, 2, '2026-11-08', true); assert.equal(all.length, 2); assert.equal(all[1].on_date, '2026-11-13');
-  const early = B.moveClass(s, 3, '2026-11-09', true); assert.deepEqual(early, [{ id: 'c', on_date: '2026-11-09', moved_from: '2026-11-10' }]);
-  assert.deepEqual(B.moveClass(s, 2, '2026-11-05', true), [], 'same date means no change');
-});
-test('student progress counts only classes that were held', () => {
-  const s = [{ id: 'a', status: 'done' }, { id: 'b', status: 'done' }, { id: 'c', status: 'scheduled' }]; const att = [{ session_id: 'a', enrolment_id: 'e1', present: true }, { session_id: 'b', enrolment_id: 'e1', present: false }, { session_id: 'a', enrolment_id: 'e2', present: true }];
-  assert.deepEqual(B.progress(s, att, 'e1'), { attended: 1, held: 2, total: 3, missed: 1 }); assert.deepEqual(B.progress(s, att, 'e3'), { attended: 0, held: 2, total: 3, missed: 2 });
-});
-test('student progress does not count cancelled classes', () => {
-  const s = [{ id: 'a', status: 'done' }, { id: 'b', status: 'cancelled' }, { id: 'c', status: 'scheduled' }];
-  assert.deepEqual(B.progress(s, [{ session_id: 'a', enrolment_id: 'e1', present: true }], 'e1'), { attended: 1, held: 1, total: 2, missed: 0 });
+import * as B from '../lib/dates.js';
+test('date helpers', () => {
+  assert.equal(B.addDays('2026-11-30', 1), '2026-12-01'); assert.equal(B.addDays('2026-03-01', -1), '2026-02-28'); assert.equal(B.daysBetween('2026-11-01', '2026-11-08'), 7); assert.equal(B.daysBetween('2026-11-08', '2026-11-01'), -7);
 });
 test('accounts sync reads past the 1000-row limit', async () => {
   const L = await import('../lib/ledgerSync.js');

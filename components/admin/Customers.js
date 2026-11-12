@@ -5,7 +5,7 @@ import ImportCsv from './ImportCsv';
 import { digits10, findDuplicates, mergeCustomers, MergeModal } from './pickers';
 import { money, toCSV } from '@/lib/accounting';
 const PAID = ['paid', 'packed', 'shipped', 'delivered'];
-const SRC = { website: 'Website', wix: 'Wix', manual: 'Added by hand', import: 'Imported' };
+const SRC = { website: 'Website', wix: 'Wix', manual: 'Added manually', import: 'Imported' };
 
 export default function Customers() {
   const [q, setQ] = useState(''); const [open, setOpen] = useState(null); const [imp, setImp] = useState(false); const [merge, setMerge] = useState(false);

@@ -50,7 +50,7 @@ export default async function Home() {
       <p className="eyebrow">Custom invitations</p><h2>Design with us.</h2>
       <p className="lead">For corporate events, weddings and birthdays. We take care of the design and the printing.</p>
       <div className="invband">{images.invites.map((s, i) => <Pic key={i} src={s} alt="Custom invitation by Thin Black Brush" w={600} h={750} sizes="(max-width: 700px) 30vw, 260px" />)}</div>
-      <div className="row c"><Btn href="/custom-invitations" variant="light" icon="mail">Enquire</Btn></div></div></section>
+      <div className="row c"><Btn href="/custom-invitations" variant="light" icon="arrow">Enquire</Btn></div></div></section>
 
     <CustomWork soft />
 

@@ -7,6 +7,9 @@ import Icon from './Icons';
 import { supabase } from '@/lib/supabase-browser';
 import { useCart } from './Cart';
 const links = [['/', 'Home'], ['/workshops', 'Workshops'], ['/writing-classes', 'Classes'], ['/store', 'Store'], ['/custom-invitations', 'Invitations'], ['/collaborations', 'Collaborations'], ['/contact', 'Contact']];
+// The name of the page you are on, shown in the middle of the top bar when the menu collapses.
+const TITLES = [[/^\/$/, 'Home'], [/^\/workshops/, 'Workshops'], [/^\/writing-classes/, 'Classes'], [/^\/store/, 'Store'], [/^\/bag/, 'Bag'], [/^\/checkout/, 'Checkout'], [/^\/custom-invitations/, 'Invitations'], [/^\/collaborations/, 'Collaborations'], [/^\/contact/, 'Contact'], [/^\/account/, 'Account'], [/^\/policies/, 'Policies'], [/^\/invoice/, 'Receipt']];
+const titleFor = (path) => (TITLES.find(([re]) => re.test(path)) || [0, 'Menu'])[1];
 export default function Nav() {
   const p = usePathname(); const [open, setOpen] = useState(false); const [signedIn, setSignedIn] = useState(false); const { count } = useCart();
   useEffect(() => { const sb = supabase(); if (!sb) return; sb.auth.getSession().then(({ data }) => setSignedIn(!!data.session)); const { data } = sb.auth.onAuthStateChange((_e, s) => setSignedIn(!!s)); return () => data.subscription.unsubscribe(); }, []);
@@ -15,6 +18,7 @@ export default function Nav() {
   return (
     <nav className="nav"><div className="wrap">
       <Link href="/" className="logo" aria-label="Thin Black Brush home"><img src={images.logo} alt="Thin Black Brush" width="122" height="46" /></Link>
+      <button type="button" className="pagetitle" aria-label={`${titleFor(p)}. ${open ? 'Close' : 'Open'} menu`} aria-expanded={open} aria-controls="site-menu" onClick={() => setOpen(!open)}>{titleFor(p)}</button>
       <ul id="site-menu" className={open ? 'open' : ''} onClick={() => setOpen(false)}>
         {links.map(([h, t]) => <li key={h}><Link href={h} className={(h === '/' ? p === '/' : p.startsWith(h)) ? 'on' : ''}>{t}</Link></li>)}
       </ul>

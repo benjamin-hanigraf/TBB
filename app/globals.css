@@ -240,14 +240,14 @@ footer .ficons{display:flex;gap:6px;justify-content:flex-end;margin-top:12px;mar
 .invband{display:grid;grid-template-columns:repeat(3,minmax(0,260px));gap:16px;justify-content:center;margin:40px auto 0}.invband img{width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;border-radius:16px}@media(max-width:700px){.invband{gap:10px;margin-top:32px}.invband img{border-radius:12px}}
 footer .fr .fh{justify-content:flex-end}@media(max-width:700px){footer .fr .fh{justify-content:flex-start}}
 .wall{margin-top:48px}
-footer .flogo{height:54px!important;width:auto}footer .fr .fh{height:54px}
+footer .flogo{height:34px!important;width:auto}footer .fr .fh{height:34px}
 /* page title in the middle of the top bar, only while the menu is collapsed */
 .pagetitle{display:none}
 @media(max-width:899px){.pagetitle{display:block;flex:1;min-width:0;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:none;border:0;padding:0 8px;height:64px;font:inherit;font-size:15px;font-weight:600;letter-spacing:-.01em;color:var(--ink);cursor:pointer;-webkit-tap-highlight-color:transparent}}
 @media(max-width:480px){.nav .logo img{height:38px}.pagetitle{font-size:14px;padding:0 4px}.nav .tools a,.nav .tools .burger{width:38px!important;height:38px!important}.nav .wrap{padding:0 14px}}
 @media(max-width:360px){.pagetitle{font-size:13px}}
 /* footer: heading sits just above the address, level with the bottom of the logo */
-footer .fr .fh{align-items:flex-end;height:54px;margin-bottom:10px}
+footer .fr .fh{align-items:flex-end;height:34px;margin-bottom:10px}
 @media(max-width:700px){footer .fr .fh{height:auto;margin-bottom:8px}}
 @media(max-width:340px){.pagetitle{font-size:12px;padding:0;letter-spacing:-.02em}.nav .logo img{height:34px}}
 /* form errors: a small red line under the field */

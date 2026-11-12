@@ -1,0 +1,14 @@
+/* The invoice and receipt page: A4 portrait. Shared by the Manager (invoices) and the website (receipts), so they always look the same. */
+.inv-fit{width:100%;overflow:hidden}.inv-scale{width:794px;transform-origin:top left}
+.inv-sheet{width:794px;min-height:1123px;box-sizing:border-box;padding:56px 56px 44px;background:#fff;color:#141414;font-family:var(--sans);font-size:14px;line-height:1.5;display:flex;flex-direction:column;box-shadow:0 0 0 1px #e5e5ea}
+.inv-head{height:112px;display:flex;justify-content:space-between;align-items:flex-start;gap:24px;flex:none}.inv-logo{height:72px;width:auto;display:block}
+.inv-biz{text-align:right;display:grid;gap:1px;font-size:12.5px;color:#555}.inv-biz b{color:#141414;font-size:14px}
+.inv-meta{display:flex;justify-content:space-between;gap:24px;margin:20px 0 28px}.inv-label{font-size:11.5px;color:#8e8e93;text-transform:uppercase;letter-spacing:.06em;margin:0 0 6px}.inv-cust{font-size:18px;font-weight:600;margin:0}.inv-sub{margin:2px 0 0;font-size:13px;color:#555}
+.inv-right{text-align:right}.inv-title{font-size:28px;font-weight:700;letter-spacing:.04em;margin:0;text-transform:uppercase}
+.inv-table{width:100%;border-collapse:collapse;font-size:13.5px}.inv-table th{font-size:11.5px;color:#8e8e93;text-transform:uppercase;letter-spacing:.05em;font-weight:600;padding:9px 6px;border-bottom:1px solid #d2d2d7;text-align:center}
+.inv-table td{padding:11px 6px;border-bottom:1px solid #ececef;text-align:center}.inv-table .l{text-align:left;padding-left:0}.inv-table .r{text-align:right}.inv-table th.r:last-child,.inv-table td.r:last-child{padding-right:0}
+.inv-totals{margin:18px 0 0 auto;width:300px;display:grid;gap:6px;font-size:13.5px;color:#555}.inv-totals div{display:flex;justify-content:space-between}.inv-totals .grand{border-top:2px solid #141414;padding-top:10px;margin-top:4px;font-size:18px;font-weight:700;color:#141414}.inv-totals .paid{font-weight:600;color:#141414}
+.inv-foot{margin-top:auto;padding-top:20px;border-top:1px solid #ececef;display:flex;justify-content:space-between;gap:24px;align-items:flex-end}.inv-foot .inv-sub{margin-top:3px}
+@media print{@page{size:A4;margin:0}.inv-fit{height:auto!important;overflow:visible}.inv-scale{transform:none!important;width:210mm}.inv-sheet{width:210mm;min-height:297mm;box-shadow:none}body{background:#fff!important}}
+/* a receipt printed from the website: only the page itself, none of the site's menu or footer */
+@media print{body:has(.receipt-page) .nav,body:has(.receipt-page) footer,body:has(.receipt-page) .skip,body:has(.receipt-page) .receipt-extra{display:none!important}body:has(.receipt-page) main{padding:0!important}}

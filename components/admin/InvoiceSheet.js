@@ -1,11 +1,12 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { money } from '@/lib/accounting';
-import { isoToDMY } from './kit';
+import '@/app/invoice.css';
+const isoToDMY = (iso) => { if (!iso) return ''; const [y, m, d] = String(iso).slice(0, 10).split('-'); return `${d}/${m}/${y}`; };      // kept local so the website's receipt page does not load the Manager code
 
 // The invoice page: A4 portrait, a header block of fixed size with the TBB stacked logo, then bill-to, items, totals and payment details.
 export function InvoiceSheet({ d }) {
-  const gst = d.gstOn; const c = d.calc;
+  const gst = d.gstOn; const c = d.calc; const cols = d.gstColumns ?? gst;       // a receipt shows GST in the totals but has no HSN or per-line GST columns
   return (<div className="inv-sheet">
     <div className="inv-head">
       <img src="/brand/logo-stacked-light.svg" alt="Thin Black Brush" className="inv-logo" />
@@ -14,14 +15,15 @@ export function InvoiceSheet({ d }) {
     <div className="inv-meta">
       <div><p className="inv-label">Bill to</p><p className="inv-cust">{d.customer.name || '—'}</p>
         {d.customer.address && <p className="inv-sub" style={{ whiteSpace: 'pre-line' }}>{d.customer.address}</p>}{d.customer.phone && <p className="inv-sub">{d.customer.phone}</p>}{d.customer.email && <p className="inv-sub">{d.customer.email}</p>}{gst && d.customer.gstin && <p className="inv-sub">GSTIN {d.customer.gstin}</p>}</div>
-      <div className="inv-right"><p className="inv-title">{d.title}</p><p className="inv-sub">{d.no}</p><p className="inv-sub">Date {isoToDMY(d.date)}</p>{d.due && <p className="inv-sub">Due {isoToDMY(d.due)}</p>}</div>
+      <div className="inv-right"><p className="inv-title">{d.title}</p><p className="inv-sub">{d.no}</p>{d.ref && <p className="inv-sub">{d.ref}</p>}<p className="inv-sub">Date {isoToDMY(d.date)}</p>{d.due && <p className="inv-sub">Due {isoToDMY(d.due)}</p>}</div>
     </div>
-    <table className="inv-table"><thead><tr><th className="l">Description</th>{gst && <th>HSN/SAC</th>}<th className="r">Qty</th><th className="r">Rate</th>{gst && <th className="r">GST</th>}<th className="r">Amount</th></tr></thead>
-      <tbody>{c.lines.length ? c.lines.map((l, i) => <tr key={i}><td className="l">{l.desc || '—'}</td>{gst && <td>{l.hsn || '—'}</td>}<td className="r">{l.qty}</td><td className="r">{money(l.unit_paise || 0)}</td>{gst && <td className="r">{l.rate ? `${l.rate}%` : '—'}</td>}<td className="r">{money(l.net)}</td></tr>) : <tr><td className="l" colSpan={gst ? 6 : 4}>—</td></tr>}</tbody></table>
+    <table className="inv-table"><thead><tr><th className="l">Description</th>{cols && <th>HSN/SAC</th>}<th className="r">Qty</th><th className="r">Rate</th>{cols && <th className="r">GST</th>}<th className="r">Amount</th></tr></thead>
+      <tbody>{c.lines.length ? c.lines.map((l, i) => <tr key={i}><td className="l">{l.desc || '—'}</td>{cols && <td>{l.hsn || '—'}</td>}<td className="r">{l.qty}</td><td className="r">{money(l.unit_paise || 0)}</td>{cols && <td className="r">{l.rate ? `${l.rate}%` : '—'}</td>}<td className="r">{money(l.net)}</td></tr>) : <tr><td className="l" colSpan={cols ? 6 : 4}>—</td></tr>}</tbody></table>
     <div className="inv-totals">
-      <div><span>Subtotal</span><span>{money(c.subtotal)}</span></div>
+      {!c.included && <div><span>Subtotal</span><span>{money(c.subtotal)}</span></div>}
       {c.discount > 0 && <div><span>Discount</span><span>− {money(c.discount)}</span></div>}
-      {gst && <><div><span>Taxable value</span><span>{money(c.taxable)}</span></div><div><span>CGST</span><span>{money(c.cgst)}</span></div><div><span>SGST</span><span>{money(c.sgst)}</span></div></>}
+      {gst && c.included && <><div><span>Includes CGST</span><span>{money(c.cgst)}</span></div><div><span>Includes SGST</span><span>{money(c.sgst)}</span></div></>}
+      {gst && !c.included && <><div><span>Taxable value</span><span>{money(c.taxable)}</span></div><div><span>CGST</span><span>{money(c.cgst)}</span></div><div><span>SGST</span><span>{money(c.sgst)}</span></div></>}
       <div className="grand"><span>Total</span><span>{money(c.total)}</span></div>
       {d.paid && <div className="paid"><span>Paid{d.method ? ` by ${d.method}` : ''}{d.paidOn ? ` on ${isoToDMY(d.paidOn)}` : ''}</span><span>{money(c.total)}</span></div>}
       {!d.paid && d.paidPaise > 0 && <><div><span>Paid so far</span><span>{money(d.paidPaise)}</span></div><div className="paid"><span>Balance due</span><span>{money(d.balance)}</span></div></>}

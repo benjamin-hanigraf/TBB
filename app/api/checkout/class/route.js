@@ -1,5 +1,6 @@
 import { q, dbReady, userFromRequest } from '@/lib/server/db';
 import { createRzpOrder, razorpayReady } from '@/lib/server/razorpay';
+import { gstLine } from '@/lib/gst';
 import { rateLimit, sameOrigin, readJson, str, isEmail, isPhone, intIn, json } from '@/lib/server/guard';
 import { titleCase, cleanEmail, cleanPhone } from '@/lib/format';
 export const runtime = 'nodejs';
@@ -15,19 +16,20 @@ export async function POST(req) {
   const student2 = group === 'adult' ? name : student;
   if (!name || !student2 || !group || !isEmail(email) || !isPhone(phone) || !slug || (group === 'child' && !age)) return json({ error: 'invalid_details' }, 400);
   try {
-    const [lv] = await q(`class_levels?slug=eq.${encodeURIComponent(slug)}&active=eq.true&select=id,title,level,price_paise`); if (!lv) return json({ error: 'unavailable' }, 409);
+    const [lv] = await q(`class_levels?slug=eq.${encodeURIComponent(slug)}&active=eq.true&select=id,title,level,price_paise,gst_mode`); if (!lv) return json({ error: 'unavailable' }, 409);
     if (group === 'child' && age < 5) return json({ error: 'too_young' }, 400);
     if (group === 'child' && age > 15) return json({ error: 'too_old' }, 400);
+    const g = gstLine(lv.price_paise, 1, lv.gst_mode); const amount = g.total; const gstPaise = lv.gst_mode === 'none' ? 0 : g.gst;
     if (lv.price_paise <= 0) return json({ error: 'free_not_supported' }, 400);
     // at most 2 unpaid attempts per email or phone in 30 minutes
     const since = new Date(Date.now() - 30 * 60_000).toISOString();
     const open = await q(`class_enrolments?status=eq.pending&created_at=gte.${encodeURIComponent(since)}&or=(email.eq.${encodeURIComponent(email)},phone.eq.${encodeURIComponent(phone)})&select=id`);
     if ((open || []).length >= 3) return json({ error: 'slow_down' }, 429);
     const user = await userFromRequest(req).catch(() => null);
-    const [row] = await q('class_enrolments', { method: 'POST', prefer: 'return=representation', body: { class_id: lv.id, user_id: user?.id || null, student_name: student2, student_group: group, student_age: age, name, email, phone, amount_paise: lv.price_paise } });
-    let rzp; try { rzp = await createRzpOrder({ amountPaise: lv.price_paise, receipt: row.id.slice(0, 8), notes: { enrolment_id: row.id } }); }
+    const [row] = await q('class_enrolments', { method: 'POST', prefer: 'return=representation', body: { class_id: lv.id, user_id: user?.id || null, student_name: student2, student_group: group, student_age: age, name, email, phone, amount_paise: amount, gst_paise: gstPaise } });
+    let rzp; try { rzp = await createRzpOrder({ amountPaise: amount, receipt: row.id.slice(0, 8), notes: { enrolment_id: row.id } }); }
     catch (e) { await q(`class_enrolments?id=eq.${row.id}`, { method: 'PATCH', body: { status: 'cancelled' } }); console.error('rzp', e.detail); return json({ error: 'payment_provider' }, 502); }
     await q(`class_enrolments?id=eq.${row.id}`, { method: 'PATCH', body: { razorpay_order_id: rzp.id } });
-    return json({ enrolment_id: row.id, razorpay_order_id: rzp.id, amount: lv.price_paise, currency: 'INR', key_id: process.env.RAZORPAY_KEY_ID, name, email, phone, title: `${lv.title}, ${lv.level}` });
+    return json({ enrolment_id: row.id, razorpay_order_id: rzp.id, amount, currency: 'INR', key_id: process.env.RAZORPAY_KEY_ID, name, email, phone, title: `${lv.title}, ${lv.level}` });
   } catch (e) { console.error('class', e.status, e.detail || e.message); return json({ error: 'server' }, 500); }
 }

@@ -44,7 +44,7 @@ test('finalize: first call pays, repeat calls do nothing; wrong amount refused',
 });
 test('invoice html escapes customer text', () => {
   const inv = I.buildInvoice({ kind: 'order', row: { name: '<script>alert(1)</script>', email: 'a@b.co', phone: '1', total_paise: 11800, shipping_paise: 0, status: 'paid', invoice_no: 1, created_at: '2026-11-11T00:00:00Z' }, items: [{ title: 'X"><img>', qty: 1, unit_paise: 11800 }], settings: { gst: { enabled: true, rate_percent: 18 }, business: {} } });
-  const h = I.renderInvoiceHTML(inv); assert.ok(!h.includes('<script>')); assert.ok(!h.includes('<img>')); assert.equal(inv.gstAmount, 1800); assert.equal(inv.no, 'TBB/2026-27/0001');
+  const h = I.renderInvoiceHTML(inv); assert.ok(!h.includes('<script>')); assert.ok(!h.includes('<img>')); assert.equal(inv.gstAmount, 1800); assert.equal(inv.no, 'TBB/2026-27/001');
 });
 
 test('device PIN: default 0000, hashing, tokens, lockout', async () => {
@@ -76,7 +76,7 @@ test('finalize: a class enrolment is confirmed once, with ledger entry', async (
   };
   assert.equal((await P.finalizePayment('rzp_e1', 'pay_9', 1)).error, 'amount_mismatch');
   const a = await P.finalizePayment('rzp_e1', 'pay_9', 600000); assert.equal(a.kind, 'enrolment'); assert.equal(a.already, undefined); assert.ok(calls.includes('POST ledger_entries'));
-  const b = await P.finalizePayment('rzp_e1', 'pay_9', 600000); assert.equal(b.already, true); assert.equal(calls.filter((c) => c === 'POST ledger_entries').length, 1, 'accounts entry only once');
+  const b = await P.finalizePayment('rzp_e1', 'pay_9', 600000); assert.equal(b.already, true); assert.equal(calls.filter((c) => c === 'POST ledger_entries').length, 2, 'accounts entries (income and gateway fee) only once');
 });
 
 test('receipts link the studio address to Google Maps', () => {

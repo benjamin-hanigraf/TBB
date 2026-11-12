@@ -23,10 +23,10 @@ export default async function Workshop({ params }) {
         <ul className="facts">
           <li><Icon n="calendar" /><span><b>{fmtDate(w.starts_at)}{w.kind === 'course' && w.ends_at && fmtDate(w.ends_at) !== fmtDate(w.starts_at) ? ` to ${fmtDate(w.ends_at)}` : ''}</b></span></li>
           <li><Icon n="pin" /><span><b>{w.venue}</b><br /><span className="muted">{w.address}</span></span></li>
-          <li><Icon n="note" /><span>{rupees(w.price)} per person, kit included{w.regularPrice ? <><br /><span className="muted">Early-bird price until {fmtDate(w.earlyUntil)}. Then {rupees(w.regularPrice)}.</span></> : null}{w.friendPrice ? <><br /><span className="muted">{rupees(w.friendPrice)} each when you bring a friend</span></> : null}</span></li>
+          <li><Icon n="note" /><span>{rupees(w.price)}{w.gstMode === 'add' ? ' + 18% GST' : w.gstMode === 'included' ? ' incl. GST' : ''} per person, kit included{w.regularPrice ? <><br /><span className="muted">Early-bird price until {fmtDate(w.earlyUntil)}. Then {rupees(w.regularPrice)}.</span></> : null}{w.friendPrice ? <><br /><span className="muted">{rupees(w.friendPrice)} each when you bring a friend</span></> : null}</span></li>
         </ul>
         {closed || w.seatsLeft === 0 ? <div className="row"><Btn icon="calendar" disabled>{w.cancelled ? 'Cancelled' : isPast(w) ? 'Booking closed' : 'Sold out'}</Btn><Btn href={business.whatsapp} variant="ghost" icon="chat">WhatsApp</Btn></div>
-          : <><div className="row"><BookWorkshop slug={w.slug} title={w.title} price={w.price} friendPrice={w.friendPrice} seatsLeft={w.seatsLeft} whatsapp={business.whatsapp} /></div></>}
+          : <><div className="row"><BookWorkshop slug={w.slug} title={w.title} price={w.price} friendPrice={w.friendPrice} gstMode={w.gstMode} seatsLeft={w.seatsLeft} whatsapp={business.whatsapp} /></div></>}
         {closed && <p className="fine">This workshop is over. <Link href="/workshops" style={{textDecoration:'underline'}}>See upcoming workshops</Link>.</p>}
       </div></div></section>
     <section className="section soft"><div className="wrap"><div className="head"><h2>About this workshop</h2>{w.description.map((t, i) => <p key={i} className="lead">{t}</p>)}</div>

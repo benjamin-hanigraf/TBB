@@ -1,5 +1,5 @@
 import { q, requireAdmin, getSettings, dbReady } from '@/lib/server/db';
-import { sendEmail, shippedEmail, invoiceEmail } from '@/lib/server/email';
+import { sendEmail, shippedEmail, invoiceEmail, reminderEmail } from '@/lib/server/email';
 import { rateLimit, sameOrigin, readJson, str, isEmail, json } from '@/lib/server/guard';
 import { cleanEmail } from '@/lib/format';
 import { buildManualInvoice } from '@/lib/server/invoice';
@@ -20,8 +20,16 @@ export async function POST(req) {
     if (b.type === 'invoice' && UUID.test(b.invoice_id)) {
       const [i] = await q(`invoices?id=eq.${b.invoice_id}&select=*`); if (!i) return json({ error: 'not_found' }, 404);
       const to = cleanEmail(str(b.to || i.customer_email)); if (!isEmail(to)) return json({ error: 'invalid_email' }, 400);
-      const st = await getSettings(); const inv = buildManualInvoice(i, st, to);
+      const st = await getSettings(); const pays = await q(`invoice_payments?invoice_id=eq.${i.id}&select=amount_paise`); const inv = buildManualInvoice(i, st, to, pays || []);
       await sendEmail(invoiceEmail(inv, to, str(b.note, 500))); await q(`invoices?id=eq.${i.id}&status=eq.draft`, { method: 'PATCH', body: { status: 'sent' } }); return json({ ok: true });
+    }
+    if (b.type === 'reminder' && UUID.test(b.invoice_id)) {
+      const [i] = await q(`invoices?id=eq.${b.invoice_id}&select=*`); if (!i) return json({ error: 'not_found' }, 404);
+      const to = cleanEmail(str(b.to || i.customer_email)); if (!isEmail(to)) return json({ error: 'invalid_email' }, 400);
+      const st = await getSettings(); const pays = await q(`invoice_payments?invoice_id=eq.${i.id}&select=amount_paise`); const inv = buildManualInvoice(i, st, to, pays || []);
+      const dmy = (d) => d.split('-').reverse().join('/'); const late = i.due_date && i.due_date < new Date().toISOString().slice(0, 10);
+      await sendEmail(reminderEmail(inv, to, i.due_date ? (late ? `was due on ${dmy(i.due_date)}` : `is due on ${dmy(i.due_date)}`) : 'is still waiting for payment'));
+      await q(`invoices?id=eq.${i.id}`, { method: 'PATCH', body: { last_reminder_at: new Date().toISOString() } }); return json({ ok: true });
     }
     return json({ error: 'bad_request' }, 400);
   } catch (e) { console.error('admin email', e.message); return json({ error: 'email_failed' }, 502); }

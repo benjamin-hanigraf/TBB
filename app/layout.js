@@ -1,5 +1,6 @@
 import '@fontsource-variable/inter';
 import './globals.css';
+import FormErrors from '@/components/FormErrors';
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thinblackbrush.com'),
   title: { default: "Thin Black Brush - The Artists' Commonroom", template: '%s | Thin Black Brush' },
@@ -9,5 +10,5 @@ export const metadata = {
 };
 export const viewport = { width: 'device-width', initialScale: 1, themeColor: '#ffffff' };
 export default function RootLayout({ children }) {
-  return (<html lang="en-IN"><body>{children}</body></html>);
+  return (<html lang="en-IN"><body>{children}<FormErrors /></body></html>);
 }

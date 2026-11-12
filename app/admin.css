@@ -156,3 +156,4 @@ input[type=checkbox]:focus-visible{outline:2px solid #000;outline-offset:2px}
 }
 .mail-row .main{overflow:hidden}.mail-row{max-width:100%}
 @media(max-width:700px){.ad-grid>:last-child:nth-child(odd){grid-column:1/-1}}
+.ad-field .field-err,.ad-check .field-err{margin-top:0}.ad-check{flex-wrap:wrap}.ad-check .field-err{flex-basis:100%;margin-left:32px}

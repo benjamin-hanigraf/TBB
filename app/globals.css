@@ -249,3 +249,7 @@ footer .flogo{height:54px!important;width:auto}footer .fr .fh{height:54px}
 footer .fr .fh{align-items:flex-end;height:54px;margin-bottom:10px}
 @media(max-width:700px){footer .fr .fh{height:auto;margin-bottom:8px}}
 @media(max-width:340px){.pagetitle{font-size:12px;padding:0;letter-spacing:-.02em}.nav .logo img{height:34px}}
+/* form errors: a small red line under the field */
+.field-err{display:block;color:#b42318;font-size:13px;line-height:1.4;font-weight:400;margin-top:-1px;animation:ferr .18s ease-out}@keyframes ferr{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+input.is-invalid,select.is-invalid,textarea.is-invalid{border-color:#b42318!important;box-shadow:0 0 0 1px #b42318}input[type=checkbox].is-invalid{border-color:#b42318}
+@media(prefers-reduced-motion:reduce){.field-err{animation:none}}

@@ -22,38 +22,35 @@ export function PaymentFields({ f }) {
   return (<><F form={f} k="pay" label="Payment" type="select" required options={PAY_OPTIONS} />{f.v.pay === 'paid' && <F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} />}</>);
 }
 
-export function AddOrder({ products, onClose, onSaved }) {
-  const { data: customers } = useCustomers(); const [run, busy] = useAction(); const toast = useToast();
-  const f = useForm({ name: '', phone: '', email: '', line1: '', line2: '', city: '', state: '', pincode: '', shipping: '', pay: 'paid', method: 'upi', notes: '' });
-  const [items, setItems] = useState([{ slug: '', qty: '1' }]);
-  const set = (i, k, v) => setItems((a) => a.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
-  const lines = items.map((x) => { const p = products.find((q) => q.slug === x.slug); const qty = Math.max(1, parseInt(x.qty || '1', 10)); return p ? { p, qty, g: gstLine(p.price_paise, qty, p.gst_mode) } : null; }).filter(Boolean);
+/** Add an order made outside the website, or (with `order`) edit one that was added manually. Payment and shipping are changed from the order itself. */
+export function AddOrder({ products, order, onClose, onSaved }) {
+  const edit = !!order; const a0 = order?.shipping_address || {}; const { data: customers } = useCustomers(); const [run, busy] = useAction();
+  const f = useForm({ name: order?.name || '', phone: order?.phone || '', email: order?.email || '', line1: a0.line1 || '', line2: a0.line2 || '', city: a0.city || '', state: a0.state || '', pincode: a0.pincode || '',
+    shipping: order ? String((order.shipping_paise || 0) / 100) : '', pay: 'paid', method: 'upi' });
+  // an edited order keeps each item's original price until you choose a different product
+  const [items, setItems] = useState(order ? order.order_items.map((i) => ({ slug: products.find((p) => p.id === i.product_id)?.slug || '', qty: String(i.qty), unit: i.unit_paise })) : [{ slug: '', qty: '1' }]);
+  const set = (i, k, v) => setItems((a) => a.map((x, j) => (j === i ? { ...x, [k]: v, ...(k === 'slug' ? { unit: undefined } : {}) } : x)));
+  const lines = items.map((x) => { const p = products.find((q) => q.slug === x.slug); const qty = Math.max(1, parseInt(x.qty || '1', 10)); if (!p) return null; const unit = x.unit ?? p.price_paise; return { p, qty, unit, g: gstLine(unit, qty, p.gst_mode) }; }).filter(Boolean);
   const subtotal = lines.reduce((s, l) => s + l.g.total, 0), ship = rupeesToPaise(f.v.shipping), total = subtotal + ship;
   const save = (e) => { e.preventDefault(); return run(async () => {
     if (!lines.length) throw new Error('Please choose at least one product.'); if (!f.v.name.trim()) throw new Error('Please add the customer name.');
-    const paid = f.v.pay === 'paid';
-    const addr = { recipient: f.v.name, phone: f.v.phone, line1: f.v.line1, line2: f.v.line2, city: f.v.city, state: f.v.state, pincode: f.v.pincode };
-    const itemRows = lines.map((l) => ({ product_id: l.p.id, title: l.p.title, unit_paise: l.p.price_paise, qty: l.qty, gst_paise: l.p.gst_mode === 'none' ? 0 : l.g.gst }));
-    // Saved in one step in the database: the order, its items, the stock and the accounts entry all go in together, or nothing does.
-    const r = await sb().rpc('admin_add_order', { p: { name: f.v.name, email: f.v.email || '', phone: f.v.phone || '', address: addr, subtotal_paise: subtotal, shipping_paise: ship, total_paise: total, pay: paid ? 'paid' : 'pending', method: f.v.method, notes: f.v.notes || '', items: itemRows } });
-    if (r.error && /admin_add_order/.test(r.error.message || '')) {     // database update not run yet: the older step-by-step way
-      const o = must(await sb().from('orders').insert({ name: f.v.name, email: f.v.email || '', phone: f.v.phone || '', shipping_address: addr, subtotal_paise: subtotal, shipping_paise: ship, total_paise: total, status: paid ? 'paid' : 'pending', channel: 'manual', payment_method: paid ? f.v.method : null, paid_at: paid ? nowISO() : null }).select().single());
-      must(await sb().from('order_items').insert(itemRows.map((x) => ({ ...x, order_id: o.id }))));
-      if (paid) { for (const l of lines) await sb().from('products').update({ stock: Math.max(0, l.p.stock - l.qty) }).eq('id', l.p.id); await syncPaymentsToLedger(sb()); }
-    } else must(r);
+    const paid = f.v.pay === 'paid'; const addr = { recipient: f.v.name, phone: f.v.phone, line1: f.v.line1, line2: f.v.line2, city: f.v.city, state: f.v.state, pincode: f.v.pincode };
+    const itemRows = lines.map((l) => ({ product_id: l.p.id, title: l.p.title, unit_paise: l.unit, qty: l.qty, gst_paise: l.p.gst_mode === 'none' ? 0 : l.g.gst }));
+    const body = { name: f.v.name, email: f.v.email || '', phone: f.v.phone || '', address: addr, subtotal_paise: subtotal, shipping_paise: ship, total_paise: total, items: itemRows };
+    // Saved in one step in the database: the order, its items, the stock and the accounts entry go in together, or nothing does.
+    must(edit ? await sb().rpc('admin_update_order', { p: { ...body, id: order.id } }) : await sb().rpc('admin_add_order', { p: { ...body, pay: paid ? 'paid' : 'pending', method: f.v.method } }));
     await ensureCustomer({ name: f.v.name, email: f.v.email, phone: f.v.phone, address_line1: f.v.line1, address_line2: f.v.line2, city: f.v.city, state: f.v.state, pincode: f.v.pincode });
-    onSaved(); }, 'Order added'); };
-  return (<Modal title="Add order" onClose={onClose} wide><form className="ad-form" onSubmit={save}>
+    onSaved(); }, edit ? 'Order updated' : 'Order added'); };
+  return (<Modal title={edit ? 'Edit order' : 'Add order'} onClose={onClose} wide><form className="ad-form" onSubmit={save}>
     <Person f={f} customers={customers} extra />
     <div className="full"><p className="ad-section-t">Products</p>
-      {items.map((x, i) => (<div key={i} className="line-row"><select aria-label="Product" value={x.slug} onChange={(e) => set(i, 'slug', e.target.value)}><option value="">Choose a product</option>{products.map((p) => <option key={p.id} value={p.slug}>{p.title} · {money(p.price_paise)}</option>)}</select>
+      {items.map((x, i) => (<div key={i} className="line-row"><select aria-label="Product" value={x.slug} onChange={(e) => set(i, 'slug', e.target.value)}><option value="">Choose a product</option>{products.map((p) => <option key={p.id} value={p.slug}>{p.title} · {money(x.slug === p.slug && x.unit != null ? x.unit : p.price_paise)}</option>)}</select>
         <input aria-label="Quantity" inputMode="numeric" value={x.qty} onChange={(e) => set(i, 'qty', e.target.value.replace(/\D/g, '').slice(0, 3))} />
         <button type="button" className="ad-x" aria-label="Remove" onClick={() => setItems((a) => (a.length > 1 ? a.filter((_, j) => j !== i) : a))}>✕</button></div>))}
       <div className="ad-actions"><Btn type="button" variant="ghost" className="ad-btn ghost sm" icon="plus" onClick={() => setItems((a) => [...a, { slug: '', qty: '1' }])}>Add product</Btn></div></div>
     <F form={f} k="line1" label="Address line 1" rule="text" /><F form={f} k="line2" label="Address line 2" rule="text" /><F form={f} k="city" label="City" rule="text" /><F form={f} k="state" label="State" rule="text" /><F form={f} k="pincode" label="Pincode" rule="pin" inputMode="numeric" />
     <F form={f} k="shipping" label="Shipping charge (₹)" type="money" rule="money" />
-    <PaymentFields f={f} />
-    <div className="full"><F form={f} k="notes" label="Private note" type="textarea" rule="sentence" rows={2} hint="Only you see this" /></div>
+    {edit ? <p className="ad-help" style={{ margin: 0 }}>Payment and shipping are changed from the order, not here.</p> : <PaymentFields f={f} />}
     <p className="full ad-help" style={{ margin: 0 }}>Total: <b>{money(total)}</b>{lines.some((l) => l.p.gst_mode === 'add') ? ' (includes GST where it applies)' : ''}</p>
     <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn><Btn type="button" variant="ghost" onClick={onClose}>Cancel</Btn></div></form></Modal>);
 }

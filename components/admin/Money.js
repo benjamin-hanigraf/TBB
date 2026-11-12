@@ -17,7 +17,6 @@ export default function Money() {
   if (error) return <Page title="Accounts"><Err e={error} /></Page>; if (!data) return <Page title="Accounts"><Spin /></Page>;
   const sum = summarise(data.entries, fy); const choices = fyChoices(data.entries); const gstOn = data.gst.enabled;
   const rows = data.entries.filter((e) => inFY(e.entry_date, fy) && (kind === 'all' || e.kind === kind) && (!q || `${e.category} ${e.party || ''} ${e.description || ''}`.toLowerCase().includes(q.toLowerCase())));
-  const exportAll = () => download(`accounts-${fy}.csv`, toCSV(data.entries.filter((e) => inFY(e.entry_date, fy)).sort((a, b) => a.entry_date.localeCompare(b.entry_date)), [{ label: 'Date', key: 'entry_date' }, { label: 'Type', get: (e) => (e.kind === 'in' ? 'Income' : 'Expense') }, { label: 'Category', key: 'category' }, { label: 'Party', key: 'party' }, { label: 'Description', key: 'description' }, { label: 'Amount', get: (e) => e.amount_paise / 100 }, { label: 'GST included', get: (e) => e.gst_paise / 100 }, { label: 'Method', key: 'method' }, { label: 'Source', key: 'source' }]));
   return (<Page title="Accounts" action={<><Btn icon="plus" onClick={() => setEdit({ kind: 'in' })}>Income</Btn><Btn variant="ghost" icon="plus" onClick={() => setEdit({ kind: 'out' })}>Expense</Btn></>}>
     <div className="ad-field" style={{ maxWidth: 240, marginBottom: 14 }}><span>Financial year (April to March)</span><select value={fy} onChange={(e) => setFy(e.target.value)} aria-label="Financial year">{choices.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
     <div className="ad-grid"><Stat label="Income" value={money(sum.moneyIn)} /><Stat label="Expense" value={money(sum.moneyOut)} /><Stat label="Profit" value={money(sum.profit)} tone={sum.profit < 0 ? 'bad' : 'good'} />
@@ -29,7 +28,7 @@ export default function Money() {
       <Card tight>{rows.length ? <div className="ad-list">{rows.map((e) => (
         <button key={e.id} className="ad-row" onClick={() => setEdit(e)}><div className="main"><b>{e.category}</b><small>{fmtD(e.entry_date)}{e.party ? ` · ${e.party}` : ''}{e.description ? ` · ${e.description}` : ''}</small></div>
           <div className="end"><b style={{ color: e.kind === 'in' ? '#14532d' : '#9b1c1c' }}>{e.kind === 'in' ? '+' : '−'}{money(e.amount_paise)}</b>{e.source !== 'manual' && <Badge>Automatic</Badge>}</div></button>))}</div> : <Empty>No entries in {fy}. Tap "Income" or "Expense" to add one. Online payments are added automatically.</Empty>}</Card></>)
-    : (<Reports sum={sum} fy={fy} gstOn={gstOn} kind={kind} exportAll={exportAll} />)}
+    : (<Reports sum={sum} gstOn={gstOn} kind={kind} />)}
     {edit && <Entry e={edit} gst={data.gst} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); reload(); }} />}
   </Page>);
 }
@@ -43,7 +42,7 @@ function Donut({ rows, total }) {
     {parts.map((r, i) => { const frac = r.amount / total; const el = <circle key={r.category} cx="70" cy="70" r={R} fill="none" stroke={GREYS[i]} strokeWidth="22" strokeDasharray={`${Math.max(0, frac * C - 1.5)} ${C}`} strokeDashoffset={-acc * C} transform="rotate(-90 70 70)" />; acc += frac; return el; })}</svg>
     <ul>{parts.map((r, i) => <li key={r.category}><i style={{ background: GREYS[i] }} /><span>{r.category}</span><b>{Math.round((r.amount / total) * 100)}%</b><small>{money(r.amount)}</small></li>)}</ul></div>);
 }
-function Reports({ sum, fy, gstOn, kind, exportAll }) {
+function Reports({ sum, gstOn, kind }) {
   return (<>
     {kind !== 'out' && <Card title="Where the income came from"><Donut rows={sum.inByCategory} total={sum.moneyIn} /></Card>}
     {kind !== 'in' && <Card title="Where the expense went"><Donut rows={sum.outByCategory} total={sum.moneyOut} /></Card>}
@@ -51,7 +50,6 @@ function Reports({ sum, fy, gstOn, kind, exportAll }) {
       <tbody>{sum.months.map((m) => <tr key={m.month}><td>{monthLabel(m.month)}</td><td className="r">{money(m.in)}</td><td className="r">{money(m.out)}</td><td className="r" style={{ color: m.profit < 0 ? '#9b1c1c' : undefined }}>{money(m.profit)}</td>{gstOn && <td className="r">{money(m.gstPayable)}</td>}</tr>)}
         {!sum.months.length && <tr><td colSpan={5}><Empty>No entries yet.</Empty></td></tr>}</tbody></table></div></Card>
     {gstOn && <Card title="GST summary"><p style={{ margin: 0 }}>GST collected from customers: <b>{money(sum.gstCollected)}</b><br />GST paid on your purchases: <b>{money(sum.gstPaid)}</b><br />GST payable to the government: <b>{money(sum.gstPayable)}</b></p><p className="ad-help">This is a guide for your accountant. It is not a GST return.</p></Card>}
-    <div className="ad-actions"><Btn variant="ghost" icon="fileout" onClick={exportAll}>Export {fy}</Btn></div>
   </>);
 }
 

@@ -1,76 +1,91 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, useToast, fmtDT, fmtD, STATUS_TONE, download } from './kit';
-import { money, toCSV } from '@/lib/accounting';
+import Icon from '@/components/Icons';
+import { useLoad, sb, must, every, Page, Card, Fold, Badge, Empty, Spin, Err, Modal, Btn, Confirm, F, useForm, useAction, useToast, fmtDT, fmtD } from './kit';
+import { money } from '@/lib/accounting';
+import { orderNumber } from '@/lib/numbering';
 import { syncPaymentsToLedger } from '@/lib/ledgerSync';
-import { RefundDialog } from './Refund';
 import { AddOrder, METHOD_OPTIONS } from './ManualEntry';
+import { RefundDialog } from './Refund';
 import { adminClient as supabase } from '@/lib/supabase-admin';
 
-const ORDER_STATUS = [['pending', 'Not paid yet'], ['paid', 'Paid, to pack'], ['packed', 'Packed'], ['shipped', 'Shipped'], ['delivered', 'Delivered'], ['cancelled', 'Cancelled']];
-const HOLDS_STOCK = ['paid', 'packed', 'shipped', 'delivered'];        // a paid order has taken its items from stock
-const param = (k) => { try { return new URLSearchParams(window.location.search).get(k); } catch { return null; } };   // a link from elsewhere in the app (e.g. Accounts) can open one item
-const addr = (a) => a ? [a.recipient, a.line1, a.line2, a.city, a.state, a.pincode].filter(Boolean).join(', ') : '';
+// An order is either not paid yet, paid (to ship), shipped, or cancelled/refunded. Older "packed" counts as paid and "delivered" as shipped.
+const isPaid = (o) => ['paid', 'packed', 'shipped', 'delivered'].includes(o.status);
+const isShipped = (o) => ['shipped', 'delivered'].includes(o.status);
+const toShip = (o) => ['paid', 'packed'].includes(o.status);
+const isOff = (o) => ['cancelled', 'refunded'].includes(o.status);
+const addr = (a) => (a ? [a.recipient, a.line1, a.line2, a.city, a.state, a.pincode ? `PIN - ${a.pincode}` : ''].filter(Boolean).join(', ') : '');
+const param = (k) => { try { return new URLSearchParams(window.location.search).get(k); } catch { return null; } };   // a link from elsewhere in the app (e.g. Accounts) can open one order
 
 export default function Orders() {
-  const [open, setOpen] = useState(null); const [q, setQ] = useState(''); const [adding, setAdding] = useState(false); const [showOld, setShowOld] = useState(false);
+  const [open, setOpen] = useState(null); const [q, setQ] = useState(''); const [adding, setAdding] = useState(false); const [shownShipped, setShownShipped] = useState(5);
   const { data, error, reload } = useLoad(async () => {
-    const c = sb(); const [o, p] = await Promise.all([
+    const c = sb(); const [o, p, s] = await Promise.all([
       every(() => c.from('orders').select('*,order_items(*)').or('status.neq.pending,channel.eq.manual').order('created_at', { ascending: false }).order('id')),
-      c.from('products').select('id,slug,title,price_paise,stock,gst_mode').order('title')]);
-    return { orders: must(o), products: must(p) };
+      c.from('products').select('id,slug,title,price_paise,stock,gst_mode,active').order('title'), c.from('settings').select('key,value')]);
+    return { orders: must(o), products: must(p), st: Object.fromEntries(must(s).map((r) => [r.key, r.value])) };
   });
   useEffect(() => { const id = param('open'); if (!id || !data) return; const o = data.orders.find((x) => x.id === id); if (o) setOpen(o); else sb().from('orders').select('*,order_items(*)').eq('id', id).maybeSingle().then((r) => r.data && setOpen(r.data)); }, [data]);
   if (error) return <Page title="Orders"><Err e={error} /></Page>; if (!data) return <Page title="Orders"><Spin /></Page>;
-  const has = (x) => !q || JSON.stringify([x.name, x.email, x.phone, x.invoice_no, x.notes]).toLowerCase().includes(q.toLowerCase());
+  const no = (o) => orderNumber(o, data.st);
+  const has = (x) => !q || JSON.stringify([x.name, x.email, x.phone, no(x), x.invoice_no]).toLowerCase().includes(q.toLowerCase());
   const list = data.orders.filter(has);
-  const monthAgo = new Date(Date.now() - 30 * 864e5).toISOString(); const oldDone = (o) => o.status === 'delivered' && (o.paid_at || o.created_at) < monthAgo;   // delivered over 30 days ago: tucked away
-  const old = list.filter(oldDone);
-  const sections = [['To pack', list.filter((o) => ['paid', 'packed'].includes(o.status)), 'Nothing to pack right now.'], ['Shipped', list.filter((o) => ['shipped', 'delivered'].includes(o.status) && (q || !oldDone(o))), 'Nothing shipped yet.'],
-    ['Awaiting payment', list.filter((o) => o.status === 'pending'), null], ['Cancelled or refunded', list.filter((o) => ['cancelled', 'refunded'].includes(o.status)), null]];
-  const exportCsv = () => download('orders.csv', toCSV(data.orders, [{ label: 'Order no', get: (o) => o.invoice_no }, { label: 'Date', get: (o) => o.created_at.slice(0, 10) }, { label: 'Name', key: 'name' }, { label: 'Email', key: 'email' }, { label: 'Phone', key: 'phone' }, { label: 'Items', get: (o) => (o.order_items || []).map((i) => `${i.title} x${i.qty}`).join('; ') }, { label: 'Total', get: (o) => o.total_paise / 100 }, { label: 'Status', key: 'status' }, { label: 'Address', get: (o) => addr(o.shipping_address) }, { label: 'Payment id', key: 'razorpay_payment_id' }]));
-  return (<Page title="Orders" action={<><Btn variant="ghost" icon="fileout" onClick={exportCsv}>Export</Btn><Btn icon="plus" onClick={() => setAdding(true)}>Add order</Btn></>}>
-    <input className="ad-search" type="search" placeholder="Search name, email, phone or number" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search" />
-    {sections.map(([title, rows, empty]) => (rows.length || empty) ? (<Card key={title} title={`${title}${rows.length ? ` (${rows.length})` : ''}`} tight>{rows.length ? <div className="ad-list">{rows.map((o) => (
-      <button key={o.id} className="ad-row" onClick={() => setOpen(o)}><div className="main"><b>{o.name}</b><small>{(o.order_items || []).map((i) => `${i.title} × ${i.qty}`).join(', ')} · {fmtD(o.created_at)}{o.channel === 'manual' ? ' · added by hand' : ''}</small></div><div className="end"><b>{money(o.total_paise)}</b><Badge tone={STATUS_TONE[o.status]}>{o.status === 'pending' ? 'not paid' : o.status}</Badge></div></button>))}</div> : <Empty>{empty}</Empty>}</Card>) : null)}
-    {!q && old.length > 0 && <Card title={`Delivered over a month ago (${old.length})`} tight action={<button className="ad-btn ghost sm" onClick={() => setShowOld(!showOld)}>{showOld ? 'Hide' : 'Show'}</button>}>{showOld && <div className="ad-list">{old.map((o) => (
-      <button key={o.id} className="ad-row" onClick={() => setOpen(o)}><div className="main"><b>{o.name}</b><small>{(o.order_items || []).map((i) => `${i.title} × ${i.qty}`).join(', ')} · {fmtD(o.created_at)}</small></div><div className="end"><b>{money(o.total_paise)}</b><Badge tone={STATUS_TONE[o.status]}>{o.status}</Badge></div></button>))}</div>}</Card>}
-    {open && <OrderModal o={open} onClose={() => setOpen(null)} onSaved={() => { setOpen(null); reload(); }} />}
+  const ship = list.filter(toShip), wait = list.filter((o) => o.status === 'pending'), sent = list.filter(isShipped), off = list.filter(isOff);
+  const row = (o) => (<button key={o.id} className="ad-row" onClick={() => setOpen(o)}><div className="main"><b>{o.name}</b>
+    <small>{[no(o), (o.order_items || []).map((i) => `${i.title} × ${i.qty}`).join(', '), fmtD(o.created_at), o.channel === 'manual' ? 'added manually' : '', isOff(o) ? (o.status === 'refunded' ? 'refunded' : 'cancelled') : ''].filter(Boolean).join(' · ')}</small></div>
+    <div className="end"><b>{money(o.total_paise)}</b><span className="tags">{isPaid(o) && <Badge tone="ok">Paid</Badge>}{isShipped(o) && <Badge tone="ok">Shipped</Badge>}</span></div></button>);
+  const Section = ({ title, rows, empty }) => (rows.length || empty ? <Card title={rows.length ? `${title} (${rows.length})` : title} tight>{rows.length ? <div className="ad-list">{rows.map(row)}</div> : <Empty>{empty}</Empty>}</Card> : null);
+  return (<Page title="Orders" action={<><Link className="ad-btn ghost" href="/manager/labels"><Icon n="print" size={16} /><span>Label printer</span></Link><Btn icon="plus" onClick={() => setAdding(true)}>Add order</Btn></>}>
+    <input className="ad-search" type="search" placeholder="Search name, email, phone or order number" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search" />
+    <Section title="To ship" rows={ship} empty="Nothing to ship right now." />
+    <Section title="Awaiting payment" rows={wait} />
+    {sent.length > 0 && <Fold title="Shipped"><div className="ad-list">{sent.slice(0, shownShipped).map(row)}</div>
+      {sent.length > shownShipped && <div className="row-actions" style={{ justifyContent: 'center', padding: '8px 0 14px' }}><Btn variant="ghost" onClick={() => setShownShipped((n) => n + 10)}>Show more</Btn></div>}</Fold>}
+    {off.length > 0 && <Fold title="Cancelled or refunded"><div className="ad-list">{off.map(row)}</div></Fold>}
+    {open && <OrderModal o={open} st={data.st} products={data.products} onClose={() => setOpen(null)} onSaved={() => { setOpen(null); reload(); }} />}
     {adding && <AddOrder products={data.products} onClose={() => setAdding(false)} onSaved={() => { setAdding(false); reload(); }} />}
   </Page>);
 }
 
-function OrderModal({ o, onClose, onSaved }) {
-  const f = useForm({ status: o.status, carrier: o.tracking_carrier || '', number: o.tracking_number || '', method: o.payment_method || 'upi', notes: o.notes || '', restock: '' }); const [run, busy] = useAction(); const toast = useToast();
-  const [refund, setRefund] = useState(false);
-  const save = () => run(async () => {
-    const from = o.status, to = f.v.status; const becamePaid = !HOLDS_STOCK.includes(from) && HOLDS_STOCK.includes(to); const cancelPaid = HOLDS_STOCK.includes(from) && to === 'cancelled';
-    if (cancelPaid && !f.v.restock) throw new Error('Please choose whether the items go back in stock.');
-    must(await sb().from('orders').update({ status: to, tracking_carrier: f.v.carrier || null, tracking_number: f.v.number || null, notes: f.v.notes.trim() || null, ...(becamePaid && !o.paid_at ? { paid_at: new Date().toISOString(), payment_method: f.v.method } : {}) }).eq('id', o.id));
-    // stock follows the order: taken when it is paid; given back when a paid order is cancelled only if the owner says the items are fine to sell
-    if (becamePaid || (cancelPaid && f.v.restock === 'yes')) { const r = await sb().rpc('admin_order_stock', { p_order: o.id, p_take: becamePaid }); if (r.error) toast('Saved, but stock was not updated: run supabase/database.sql again.', 'err'); }
-    if (becamePaid) await syncPaymentsToLedger(sb()); onSaved(); }, 'Order updated');
+function OrderModal({ o, st, products, onClose, onSaved }) {
+  const [step, setStep] = useState(null); const [edit, setEdit] = useState(false); const [refund, setRefund] = useState(false); const [run, busy] = useAction(); const toast = useToast();
+  const f = useForm({ method: 'upi', carrier: o.tracking_carrier || '', number: o.tracking_number || '' });
+  const no = orderNumber(o, st); const paid = isPaid(o), shipped = isShipped(o), manual = o.channel === 'manual';
+  const markPaid = () => run(async () => {
+    must(await sb().from('orders').update({ status: 'paid', paid_at: new Date().toISOString(), payment_method: f.v.method }).eq('id', o.id));
+    const r = await sb().rpc('admin_order_stock', { p_order: o.id, p_take: true }); if (r.error) toast('Saved, but stock was not updated: run supabase/database.sql again.', 'err');      // a paid order takes its items from stock
+    await syncPaymentsToLedger(sb()); onSaved(); }, 'Marked as paid');
+  const markShipped = () => run(async () => { must(await sb().from('orders').update({ status: 'shipped', tracking_carrier: f.v.carrier.trim() || null, tracking_number: f.v.number.trim() || null }).eq('id', o.id)); onSaved(); }, 'Marked as shipped');
+  const saveTracking = () => run(async () => { must(await sb().from('orders').update({ tracking_carrier: f.v.carrier.trim() || null, tracking_number: f.v.number.trim() || null }).eq('id', o.id)); onSaved(); }, 'Saved');
+  const cancel = () => run(async () => { must(await sb().from('orders').update({ status: 'cancelled' }).eq('id', o.id)); onSaved(); }, 'Order cancelled');      // only an unpaid order is cancelled this way; a paid one is refunded
   const email = () => run(async () => {
     const { data } = await supabase().auth.getSession(); const r = await fetch('/api/manager/email', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ type: 'shipped', order_id: o.id }) });
-    if (!r.ok) throw new Error('Could not send the email. Please check the email settings.');
-  }, 'Shipping email sent');
-  return (<Modal title={`Order ${o.name}`} onClose={onClose}>
-    <p className="ad-help" style={{ marginTop: 0 }}>{fmtDT(o.created_at)} · {o.email} · {o.phone}</p>
+    if (!r.ok) throw new Error('Could not send the email. Please check the email settings.'); }, 'Shipping email sent');
+  return (<Modal title={`${no ? `${no} · ` : ''}${o.name}`} onClose={onClose}>
+    <p className="ad-help" style={{ marginTop: 0 }}>{fmtDT(o.created_at)}{o.channel === 'manual' ? ' · added manually' : ''}{o.email ? ` · ${o.email}` : ''}{o.phone ? ` · ${o.phone}` : ''}</p>
+    <p style={{ margin: '0 0 10px' }}>{paid && <Badge tone="ok">Paid</Badge>} {shipped && <Badge tone="ok">Shipped</Badge>}{isOff(o) && <span className="ad-help">{o.status === 'refunded' ? 'Refunded' : 'Cancelled'}</span>}</p>
     <div className="ad-list" style={{ margin: '10px 0' }}>{(o.order_items || []).map((i) => <div key={i.id} className="ad-row" style={{ cursor: 'default' }}><span>{i.title} × {i.qty}</span><b>{money(i.unit_paise * i.qty)}</b></div>)}
       {o.shipping_paise > 0 && <div className="ad-row" style={{ cursor: 'default' }}><span>Shipping</span><b>{money(o.shipping_paise)}</b></div>}<div className="ad-row" style={{ cursor: 'default' }}><b>Total</b><b>{money(o.total_paise)}</b></div></div>
     <p><b>Ship to</b><br />{addr(o.shipping_address)}<br />{o.shipping_address?.phone}</p>
     {o.gift_message && <p><b>Gift message</b><br />{o.gift_message}</p>}
-    {o.razorpay_payment_id && <p className="ad-help">Paid online · payment ID {o.razorpay_payment_id}. To give money back, use Refund.</p>}
-    <div className="ad-form" style={{ marginTop: 12 }}>
-      <F form={f} k="status" label="Status" type="select" required options={o.status === 'refunded' ? [['refunded', 'Refunded']] : ORDER_STATUS} />
-      {!HOLDS_STOCK.includes(o.status) && !o.paid_at && HOLDS_STOCK.includes(f.v.status) && <F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} />}
-      {HOLDS_STOCK.includes(o.status) && f.v.status === 'cancelled' && <F form={f} k="restock" label="Put the items back in stock?" type="select" required options={[['yes', 'Yes, they are fine to sell'], ['no', 'No (damaged, faulty or not returned)']]} />}
-      <F form={f} k="carrier" label="Courier" rule="text" placeholder="e.g. India Post" /><F form={f} k="number" label="Tracking number" rule="code" />
-      <div className="full"><F form={f} k="notes" label="Private note" type="textarea" rule="sentence" rows={2} hint="Only you see this, never the customer" /></div>
-    </div>
-    <div className="ad-actions"><Btn busy={busy} onClick={save} icon="check">Save</Btn><Link className="ad-btn ghost" href={`/invoice/${o.id}`} target="_blank">Receipt</Link>
-      <Link className="ad-btn ghost" href={`/manager/labels?order=${o.id}`}>Print label</Link>{o.tracking_number && <Btn variant="ghost" busy={busy} onClick={email} icon="mail">Tracking</Btn>}{HOLDS_STOCK.includes(o.status) && <Btn variant="ghost" onClick={() => setRefund(true)}>Refund</Btn>}</div>
+    {o.razorpay_payment_id && <p className="ad-help">Paid online · payment ID {o.razorpay_payment_id}</p>}
+
+    {step === 'pay' && <div className="ad-form" style={{ marginTop: 12 }}><F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} />
+      <div className="ad-actions full"><Btn busy={busy} icon="check" onClick={markPaid}>Confirm paid</Btn><Btn variant="ghost" onClick={() => setStep(null)}>Back</Btn></div></div>}
+    {(step === 'ship' || shipped) && <div className="ad-form" style={{ marginTop: 12 }}><F form={f} k="carrier" label="Courier" rule="text" placeholder="e.g. India Post" /><F form={f} k="number" label="Tracking number" rule="code" />
+      <div className="ad-actions full">{step === 'ship' ? <><Btn busy={busy} icon="check" onClick={markShipped}>Confirm shipped</Btn><Btn variant="ghost" onClick={() => setStep(null)}>Back</Btn></> : <Btn busy={busy} icon="check" onClick={saveTracking}>Save</Btn>}</div></div>}
+
+    {!step && <div className="ad-actions full" style={{ marginTop: 16 }}>
+      {!paid && !isOff(o) && <Btn onClick={() => setStep('pay')}>Mark as paid</Btn>}
+      {toShip(o) && <Btn onClick={() => setStep('ship')}>Mark as shipped</Btn>}
+      {shipped && o.tracking_number && <Btn variant="ghost" busy={busy} onClick={email} icon="mail">Email tracking</Btn>}
+      {paid && <Link className="ad-btn ghost" href={`/manager/labels?order=${o.id}`}>Print label</Link>}
+      {paid && <Link className="ad-btn ghost" href={`/invoice/${o.id}`} target="_blank">Receipt</Link>}
+      {manual && !isOff(o) && <Btn variant="ghost" onClick={() => setEdit(true)}>Edit</Btn>}
+      {paid && <Btn variant="ghost" onClick={() => setRefund(true)}>Refund</Btn>}
+      {o.status === 'pending' && <Confirm onYes={cancel}>Cancel order</Confirm>}</div>}
+    {edit && <AddOrder order={o} products={products} onClose={() => setEdit(false)} onSaved={onSaved} />}
     {refund && <RefundDialog kind="order" rows={[o]} title={`Refund · ${o.name}`} onClose={() => setRefund(false)} onDone={onSaved} />}
   </Modal>);
 }

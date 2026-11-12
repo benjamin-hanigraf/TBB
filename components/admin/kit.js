@@ -18,10 +18,11 @@ const CACHE = new Map();
 export const clearCache = () => CACHE.clear();
 export function useLoad(fn, deps = []) {
   const key = fn.toString() + JSON.stringify(deps);
-  const [data, setData] = useState(() => (CACHE.has(key) ? CACHE.get(key) : null)); const [error, setError] = useState(null); const [tick, setTick] = useState(0);
-  useEffect(() => { let on = true; setError(null); if (CACHE.has(key)) setData(CACHE.get(key)); else setData(null);
-    Promise.resolve().then(fn).then((d) => { CACHE.set(key, d); if (on) setData(d); }).catch((e) => on && setError(e)); return () => { on = false; }; /* eslint-disable-next-line */ }, [tick, key]);
-  return { data, error, loading: data === null && !error, reload: useCallback(() => setTick((t) => t + 1), []) };
+  const [data, setData] = useState(() => (CACHE.has(key) ? CACHE.get(key) : null)); const [error, setError] = useState(null); const [tick, setTick] = useState(0); const [fresh, setFresh] = useState(false);
+  useEffect(() => { let on = true; setError(null); setFresh(false); if (CACHE.has(key)) setData(CACHE.get(key)); else setData(null);
+    Promise.resolve().then(fn).then((d) => { CACHE.set(key, d); if (on) { setData(d); setFresh(true); } }).catch((e) => on && setError(e)); return () => { on = false; }; /* eslint-disable-next-line */ }, [tick, key]);
+  // fresh = the data just came from the database (not the remembered copy). A form that starts from the data should wait for it, or it would start from an old copy.
+  return { data, error, fresh, loading: data === null && !error, reload: useCallback(() => setTick((t) => t + 1), []) };
 }
 
 // ---------- toasts ----------

@@ -140,10 +140,12 @@ input[type=checkbox]:focus-visible{outline:2px solid #000;outline-offset:2px}
 .ad-sort{width:auto;min-width:150px;height:40px;border-radius:980px;font-size:14px;padding:0 36px 0 14px;flex:none}
 /* address labels: A4 portrait, strips 3.5 cm tall across the printable width, black and white */
 .lbl-pages{width:794px}.lbl-page{width:210mm;height:297mm;box-sizing:border-box;padding:10mm;background:#fff;display:grid;grid-template-rows:repeat(7,35mm);align-content:start;box-shadow:0 0 0 1px #e5e5ea;color:#000;filter:grayscale(1)}
-.lbl2{height:35mm;display:grid;grid-template-columns:1fr 1fr;border:.3mm solid #000;box-sizing:border-box;overflow:hidden;break-inside:avoid;font-family:var(--sans);color:#000;background:#fff}
-.lbl2 .from{display:flex;gap:3mm;align-items:center;padding:3mm;border-right:.3mm solid #000;min-width:0}.lbl2 .lg{width:25mm;height:auto;flex:none}
-.lbl2 .tx,.lbl2 .to{display:flex;flex-direction:column;gap:.4mm;font-size:8.5pt;line-height:1.25;min-width:0;overflow-wrap:anywhere}.lbl2 .to{padding:3mm;justify-content:center}
-.lbl2 b{font-size:11pt;font-weight:700;line-height:1.2}
+.lbl2{height:35mm;display:grid;grid-template-columns:1fr 1fr;border:.3mm solid #000;box-sizing:border-box;overflow:hidden;break-inside:avoid;font-family:var(--sans);font-size:10.5pt;line-height:1.28;color:#000;background:#fff}
+.lbl2+.lbl2{border-top:0}                                  /* stacked labels share one line between them, not two */
+.lbl2 .from,.lbl2 .to{display:flex;flex-direction:column;gap:1.2mm;padding:2.5mm 3mm;min-width:0;overflow-wrap:anywhere}.lbl2 .from{border-right:.3mm solid #000}
+.lbl2 .hd{display:flex;align-items:center;gap:2.5mm}.lbl2 .lg{height:8.5mm;width:auto;flex:none;display:block}
+.lbl2 .tag{align-self:flex-start;flex:none;font-size:6.5pt;font-weight:700;letter-spacing:.14em;line-height:1;padding:.7mm 1.6mm;border:.25mm solid #000;border-radius:1mm}
+.lbl2 p{margin:0}.lbl2 b{font-weight:700}
 @media print{@page{size:A4;margin:0}.lbl-pages{width:210mm}.lbl-page{box-shadow:none;break-after:page;page-break-after:always}.lbl-page:last-child{break-after:auto;page-break-after:auto}}
 @media print{
   body{background:#fff!important}.ad-side,.ad-tabs,.ad-head,.ad-noprint,.ad-toast,.ad-modal-bg,.ad-search{display:none!important}.ad-app{display:block}.ad-main{padding:0!important}.ad-page{max-width:none}
@@ -195,3 +197,5 @@ body{overscroll-behavior:none}
 *{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 input,textarea,select,[contenteditable="true"]{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 img,svg{-webkit-user-drag:none;user-drag:none}
+.settings-save{margin:8px 0 32px}
+.tags{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}

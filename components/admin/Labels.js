@@ -8,7 +8,8 @@ import { ADDRESS_TEXT } from '@/lib/address';
 
 // A4 portrait. Every label is one strip, as wide as the printable area and 3.5 cm tall: sender on the left half (stacked logo, name, studio address, phone), recipient on the right half.
 const ROWS_PER_PAGE = 7;
-const lines = (a) => [a.line1, a.line2, [a.city, a.pincode].filter(Boolean).join(' - '), a.state].filter(Boolean);
+// the address is one continuous run (it wraps only at the edge of the cell): line 1, line 2, city, state, then PIN - 600024
+const lines = (a) => [[a.line1, a.line2, a.city, a.state, a.pincode ? `PIN - ${a.pincode}` : ''].filter(Boolean).join(', ')].filter(Boolean);
 const custAddr = (c) => ({ line1: c.address_line1, line2: c.address_line2, city: c.city, state: c.state, pincode: c.pincode });
 
 export default function Labels() {
@@ -31,7 +32,7 @@ export default function Labels() {
   const addCustomer = (c) => { setExtra((a) => [...a, { key: `c${c.id}-${a.length}`, to: c.name, phone: c.phone || '', lines: lines(custAddr(c)), from: 'customer' }]); setWho(''); };
   const addManual = (e) => { e.preventDefault(); const v = m.v; setExtra((a) => [...a, { key: crypto.randomUUID(), to: v.recipient, phone: v.phone, lines: lines(v), from: 'manual' }]); };
   const saveCustomer = () => run(async () => { const v = m.v; if (!v.recipient.trim()) throw new Error('Please enter the recipient name first.'); await ensureCustomer({ name: v.recipient, phone: v.phone, address_line1: v.line1, address_line2: v.line2, city: v.city, state: v.state, pincode: v.pincode }); reloadCustomers(); }, 'Added to customers');
-  return (<Page title="Label printer" action={<Btn icon="print" disabled={!labels.length} onClick={() => window.print()}>Print {labels.length || ''}</Btn>}>
+  return (<Page title="Label printer" back="/manager/orders" action={<Btn icon="print" disabled={!labels.length} onClick={() => window.print()}>Print {labels.length || ''}</Btn>}>
     <div className="ad-noprint">
       <Card title="Orders waiting to be sent">
         {data.orders.length ? <div className="ad-list">{data.orders.map((o) => (<label key={o.id} className="ad-row" style={{ cursor: 'pointer' }}><span style={{ display: 'flex', gap: 12, alignItems: 'center' }}><input type="checkbox" checked={!!pick[o.id]} onChange={(e) => setPick((p) => ({ ...p, [o.id]: e.target.checked }))} /><span className="main"><b>{o.name}</b><small>{o.shipping_address?.city}, {o.shipping_address?.pincode}</small></span></span><Badge tone={o.status === 'packed' ? 'info' : 'warn'}>{o.status === 'paid' ? 'to pack' : o.status}</Badge></label>))}</div> : <Empty>No orders waiting to be sent.</Empty>}
@@ -48,8 +49,8 @@ export default function Labels() {
     </div>
     {labels.length ? <FitA4 pages={pages.length}><div className="lbl-pages">{pages.map((rows, pi) => (<div className="lbl-page" key={pi}>{rows.map((l) => (
       <div className="lbl2" key={l.key}>
-        <div className="from"><img src="/brand/logo-stacked-light.svg" alt="" className="lg" /><div className="tx"><b>{biz.name || 'Thin Black Brush'}</b><span style={{ whiteSpace: 'pre-line' }}>{biz.address || ADDRESS_TEXT}</span>{biz.phone && <span>Ph: {biz.phone}</span>}</div></div>
-        <div className="to"><b>{l.to}</b>{l.lines.map((x) => <span key={x}>{x}</span>)}{l.phone && <span>Ph: {l.phone}</span>}</div></div>))}</div>))}</div></FitA4>
+        <div className="from"><div className="hd"><span className="tag">FROM</span><img src="/brand/logo-line-light.svg" alt={biz.name || 'Thin Black Brush'} className="lg" /></div><p>{String(biz.address || ADDRESS_TEXT).replace(/\s*\n\s*/g, ' ')}</p></div>
+        <div className="to"><span className="tag">TO</span><b>{l.to}</b>{l.lines.length > 0 && <p>{l.lines.join(', ')}</p>}{l.phone && <p>Ph: {l.phone}</p>}</div></div>))}</div>))}</div></FitA4>
       : <p className="ad-empty ad-noprint">Choose parcels or add an address to see your labels here.</p>}
   </Page>);
 }

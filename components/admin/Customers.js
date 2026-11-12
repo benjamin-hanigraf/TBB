@@ -1,14 +1,13 @@
 'use client';
 import { useState } from 'react';
 import { useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, fmtD, download, STATUS_TONE } from './kit';
-import ImportCsv from './ImportCsv';
 import { digits10, findDuplicates, mergeCustomers, MergeModal } from './pickers';
 import { money, toCSV } from '@/lib/accounting';
 const PAID = ['paid', 'packed', 'shipped', 'delivered'];
 const SRC = { website: 'Website', wix: 'Wix', manual: 'Added manually', import: 'Imported' };
 
 export default function Customers() {
-  const [q, setQ] = useState(''); const [open, setOpen] = useState(null); const [imp, setImp] = useState(false); const [merge, setMerge] = useState(false);
+  const [q, setQ] = useState(''); const [open, setOpen] = useState(null); const [merge, setMerge] = useState(false);
   const { data, error, reload } = useLoad(async () => {
     const c = sb(); const [cu, sum] = await Promise.all([every(() => c.from('customers').select('*').order('created_at', { ascending: false }).order('id')), every(() => c.rpc('customer_summary').order('customer_id'))]);
     const customers = must(cu);
@@ -25,15 +24,13 @@ export default function Customers() {
   if (error) return <Page title="Customers"><Err e={error} /></Page>; if (!data) return <Page title="Customers"><Spin /></Page>;
   const dups = findDuplicates(data.rows);
   const rows = data.rows.filter((c) => !q || `${c.name} ${c.email || ''} ${c.phone || ''} ${c.city || ''}`.toLowerCase().includes(q.toLowerCase()));
-  const exportAll = () => download('customers.csv', toCSV(data.rows, [{ label: 'Name', key: 'name' }, { label: 'Email', key: 'email' }, { label: 'Phone', key: 'phone' }, { label: 'Address line 1', key: 'address_line1' }, { label: 'Address line 2', key: 'address_line2' }, { label: 'City', key: 'city' }, { label: 'State', key: 'state' }, { label: 'Pincode', key: 'pincode' }, { label: 'Source', key: 'source' }, { label: 'Marketing OK', get: (c) => (c.marketing_opt_in ? 'yes' : 'no') }, { label: 'Orders', get: (c) => c.n.orders }, { label: 'Workshop bookings', get: (c) => c.n.bookings }, { label: 'Class enrolments', get: (c) => c.n.classes }, { label: 'Total spent', get: (c) => c.spent / 100 }, { label: 'Last purchase', get: (c) => (c.last || '').slice(0, 10) }]));
-  return (<Page title="Customers" action={<>{dups.length > 0 && <Btn variant="ghost" onClick={() => setMerge(true)}>Merge ({dups.length})</Btn>}<Btn variant="ghost" icon="filein" onClick={() => setImp(true)}>Import</Btn><Btn variant="ghost" icon="fileout" onClick={exportAll}>Export</Btn><Btn icon="plus" onClick={() => setOpen({ isNew: true })}>Add customer</Btn></>}>
+  return (<Page title="Customers" action={<>{dups.length > 0 && <Btn variant="ghost" onClick={() => setMerge(true)}>Merge ({dups.length})</Btn>}<Btn icon="plus" onClick={() => setOpen({ isNew: true })}>Add customer</Btn></>}>
     <input className="ad-search" type="search" placeholder="Search name, email, phone or city" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search customers" />
     <Card tight>{rows.length ? <div className="ad-list">{rows.map((c) => (
       <button key={c.id} className="ad-row" onClick={() => setOpen(c)}><div className="main"><b>{c.name}</b><small>{c.email || 'No email'}{c.phone ? ` · ${c.phone}` : ''}</small></div>
         <div className="end"><b>{money(c.spent)}</b><small>{c.n.orders + c.n.bookings + c.n.classes} purchases</small></div></button>))}</div> : <Empty>No customers yet. They appear here after a sign-up or purchase, or you can add or import them.</Empty>}</Card>
     {merge && <MergeModal groups={dups} onClose={() => setMerge(false)} onDone={() => { setMerge(false); reload(); }} />}
     {open && <CustomerModal all={data.rows} c={open} onClose={() => setOpen(null)} onSaved={() => { setOpen(null); reload(); }} />}
-    {imp && <ImportCsv kind="customers" onClose={() => setImp(false)} onDone={reload} />}
   </Page>);
 }
 

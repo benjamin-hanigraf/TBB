@@ -1,7 +1,6 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import { useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Btn, F, useForm, useAction, Confirm, Modal, dmyToISO, isoToDMY, fmtD, fmtDT, download } from './kit';
-import ImportCsv from './ImportCsv';
 import { CustomerSuggest, useCustomers, ensureCustomer } from './pickers';
 import { InvoiceSheet, FitA4 } from './InvoiceSheet';
 import { METHOD_OPTIONS } from './ManualEntry';
@@ -56,7 +55,7 @@ async function nextNumber(type, issue, list, st) {
 }
 
 export default function InvoiceTool() {
-  const [edit, setEdit] = useState(null); const [imp, setImp] = useState(false); const [q, setQ] = useState(''); const [show, setShow] = useState('all'); const [sort, setSort] = useState('new');
+  const [edit, setEdit] = useState(null); const [q, setQ] = useState(''); const [show, setShow] = useState('all'); const [sort, setSort] = useState('new');
   const { data, error, reload } = useLoad(async () => {
     const c = sb(); const [i, s, p] = await Promise.all([every(() => c.from('invoices').select('*').order('created_at', { ascending: false }).order('id')), c.from('settings').select('key,value'), every(() => c.from('invoice_payments').select('*').order('paid_on').order('id'))]);
     return { list: must(i), st: Object.fromEntries(must(s).map((r) => [r.key, r.value])), payments: p.error ? [] : p.data };
@@ -72,8 +71,7 @@ export default function InvoiceTool() {
   if (error) return <Page title="Invoices"><Err e={error} /></Page>; if (!data) return <Page title="Invoices"><Spin /></Page>;
   if (edit) return <Editor inv={edit} data={data} onOpen={setEdit} onBack={() => { setEdit(null); reload(); }} />;
   const owed = data.list.filter((i) => typeOf(i) === 'invoice' && i.status !== 'cancelled').reduce((s, i) => s + balanceOf(i, data.payments).balance, 0);
-  const exportAll = () => download('invoices.csv', toCSV(data.list, [{ label: 'Type', get: (i) => TYPE_NAME[typeOf(i)] }, { label: 'Invoice no', key: 'invoice_no' }, { label: 'Date', key: 'issue_date' }, { label: 'Due', key: 'due_date' }, { label: 'Customer', key: 'customer_name' }, { label: 'Email', key: 'customer_email' }, { label: 'Phone', key: 'customer_phone' }, { label: 'Address', key: 'customer_address' }, { label: 'Amount', get: (i) => i.total_paise / 100 }, { label: 'GST', get: (i) => i.gst_paise / 100 }, { label: 'Paid', get: (i) => balanceOf(i, data.payments).paid / 100 }, { label: 'Balance', get: (i) => (typeOf(i) === 'invoice' ? balanceOf(i, data.payments).balance / 100 : 0) }, { label: 'Status', get: (i) => statusOf(i, data.payments)[0] }, { label: 'Paid on', key: 'paid_on' }]));
-  return (<Page title="Invoices" action={<><Btn variant="ghost" icon="filein" onClick={() => setImp(true)}>Import</Btn><Btn variant="ghost" icon="fileout" onClick={exportAll}>Export</Btn><Btn icon="plus" onClick={() => setEdit({ doc_type: show === 'quotation' ? 'quotation' : 'invoice' })}>New</Btn></>}>
+  return (<Page title="Invoices" action={<><Btn icon="plus" onClick={() => setEdit({ doc_type: show === 'quotation' ? 'quotation' : 'invoice' })}>New</Btn></>}>
     {owed > 0 && <p className="ad-sub">Still to be paid on invoices: <b>{money(owed)}</b></p>}
     <div className="ad-filterbar"><div className="ad-tabsbar" style={{ margin: 0 }}>{SHOW.map(([k, t]) => <button key={k} className={show === k ? 'on' : ''} onClick={() => setShow(k)}>{t}</button>)}</div>
       <select aria-label="Sort" value={sort} onChange={(e) => setSort(e.target.value)} className="ad-sort">{SORTS.map(([k, t]) => <option key={k} value={k}>{t}</option>)}</select></div>
@@ -81,7 +79,6 @@ export default function InvoiceTool() {
     <Card tight>{rows.length ? <div className="ad-list">{rows.map((i) => { const [label, tone] = statusOf(i, data.payments); const b = balanceOf(i, data.payments); const ty = typeOf(i);
       return (<button key={i.id} className="ad-row" onClick={() => setEdit(i)}><div className="main"><b>{i.customer_name}</b><small>{ty !== 'invoice' ? `${TYPE_NAME[ty]} · ` : ''}{i.invoice_no} · {fmtD(i.issue_date)}{label === 'Part paid' ? ` · ${money(b.balance)} left` : ''}</small></div><div className="end"><b>{ty === 'credit_note' ? '− ' : ''}{money(i.total_paise)}</b><Badge tone={tone}>{label}</Badge></div></button>); })}</div>
       : <Empty>{data.list.length ? 'Nothing matches.' : 'No invoices yet. Tap "New".'}</Empty>}</Card>
-    {imp && <ImportCsv kind="invoices" onClose={() => setImp(false)} onDone={reload} />}
   </Page>);
 }
 

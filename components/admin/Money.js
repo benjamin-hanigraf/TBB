@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import Icon from '@/components/Icons';
 import { useLoad, useToast, sb, must, every, Page, Card, Stat, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, dmyToISO, isoToDMY, fmtD, download } from './kit';
 import { syncPaymentsToLedger } from '@/lib/ledgerSync';
-import { IN_CATEGORIES, OUT_CATEGORIES, METHODS, summarise, fyChoices, fyOf, inFY, fyRange, todayISO, money, monthLabel, rupeesToPaise, gstInside, toCSV } from '@/lib/accounting';
+import { IN_CATEGORIES, OUT_CATEGORIES, METHODS, summarise, fyChoices, fyOf, inFY, fyRange, todayISO, money, moneyR, monthLabel, rupeesToPaise, gstInside } from '@/lib/accounting';
 
 export default function Money() {
   const sp = useSearchParams(); const toast = useToast(); const [fy, setFy] = useState(fyOf(todayISO())); const [view, setView] = useState('list'); const [kind, setKind] = useState('all'); const [q, setQ] = useState(''); const [edit, setEdit] = useState(null);
@@ -19,8 +19,8 @@ export default function Money() {
   const rows = data.entries.filter((e) => inFY(e.entry_date, fy) && (kind === 'all' || e.kind === kind) && (!q || `${e.category} ${e.party || ''} ${e.description || ''}`.toLowerCase().includes(q.toLowerCase())));
   return (<Page title="Accounts" action={<><Btn icon="plus" onClick={() => setEdit({ kind: 'in' })}>Income</Btn><Btn variant="ghost" icon="plus" onClick={() => setEdit({ kind: 'out' })}>Expense</Btn></>}>
     <div className="ad-field" style={{ maxWidth: 240, marginBottom: 14 }}><span>Financial year (April to March)</span><select value={fy} onChange={(e) => setFy(e.target.value)} aria-label="Financial year">{choices.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
-    <div className="ad-grid"><Stat label="Income" value={money(sum.moneyIn)} /><Stat label="Expense" value={money(sum.moneyOut)} /><Stat label="Profit" value={money(sum.profit)} tone={sum.profit < 0 ? 'bad' : 'good'} />
-      {gstOn && <Stat label="GST to pay" value={money(sum.gstPayable)} sub={`${money(sum.gstCollected)} collected, ${money(sum.gstPaid)} paid on purchases`} />}</div>
+    <div className="ad-grid"><Stat label="Income" value={moneyR(sum.moneyIn)} /><Stat label="Expense" value={moneyR(sum.moneyOut)} /><Stat label="Profit" value={moneyR(sum.profit)} tone={sum.profit < 0 ? 'bad' : 'good'} />
+      {gstOn && <Stat label="GST to pay" value={moneyR(sum.gstPayable)} sub={`${moneyR(sum.gstCollected)} collected, ${moneyR(sum.gstPaid)} paid on purchases`} />}</div>
     <div className="ad-filterbar"><div className="ad-tabsbar" style={{ margin: 0 }}>{[['all', 'All'], ['in', 'Income'], ['out', 'Expense']].map(([k, t]) => <button key={k} className={kind === k ? 'on' : ''} onClick={() => setKind(k)}>{t}</button>)}</div>
       <button type="button" className="ad-x ad-toggle" aria-label={view === 'list' ? 'Show reports' : 'Show entries'} title={view === 'list' ? 'Reports' : 'Entries'} onClick={() => setView(view === 'list' ? 'report' : 'list')}><Icon n={view === 'list' ? 'chartpie' : 'list'} size={18} /></button></div>
     {view === 'list' ? (<>
@@ -40,16 +40,16 @@ function Donut({ rows, total }) {
   const R = 52, C = 2 * Math.PI * R; let acc = 0;
   return (<div className="ad-donut"><svg viewBox="0 0 140 140" role="img" aria-label="Share by category" width="150" height="150"><circle cx="70" cy="70" r={R} fill="none" stroke="#f0f0f3" strokeWidth="22" />
     {parts.map((r, i) => { const frac = r.amount / total; const el = <circle key={r.category} cx="70" cy="70" r={R} fill="none" stroke={GREYS[i]} strokeWidth="22" strokeDasharray={`${Math.max(0, frac * C - 1.5)} ${C}`} strokeDashoffset={-acc * C} transform="rotate(-90 70 70)" />; acc += frac; return el; })}</svg>
-    <ul>{parts.map((r, i) => <li key={r.category}><i style={{ background: GREYS[i] }} /><span>{r.category}</span><b>{Math.round((r.amount / total) * 100)}%</b><small>{money(r.amount)}</small></li>)}</ul></div>);
+    <ul>{parts.map((r, i) => <li key={r.category}><i style={{ background: GREYS[i] }} /><span>{r.category}</span><b>{Math.round((r.amount / total) * 100)}%</b><small>{moneyR(r.amount)}</small></li>)}</ul></div>);
 }
 function Reports({ sum, gstOn, kind }) {
   return (<>
     {kind !== 'out' && <Card title="Where the income came from"><Donut rows={sum.inByCategory} total={sum.moneyIn} /></Card>}
     {kind !== 'in' && <Card title="Where the expense went"><Donut rows={sum.outByCategory} total={sum.moneyOut} /></Card>}
     <Card title="Month by month"><div className="ad-scroll"><table className="ad-table"><thead><tr><th>Month</th><th className="r">Income</th><th className="r">Expense</th><th className="r">Profit</th>{gstOn && <th className="r">GST due</th>}</tr></thead>
-      <tbody>{sum.months.map((m) => <tr key={m.month}><td>{monthLabel(m.month)}</td><td className="r">{money(m.in)}</td><td className="r">{money(m.out)}</td><td className="r" style={{ color: m.profit < 0 ? '#9b1c1c' : undefined }}>{money(m.profit)}</td>{gstOn && <td className="r">{money(m.gstPayable)}</td>}</tr>)}
+      <tbody>{sum.months.map((m) => <tr key={m.month}><td>{monthLabel(m.month)}</td><td className="r">{moneyR(m.in)}</td><td className="r">{moneyR(m.out)}</td><td className="r" style={{ color: m.profit < 0 ? '#9b1c1c' : undefined }}>{moneyR(m.profit)}</td>{gstOn && <td className="r">{moneyR(m.gstPayable)}</td>}</tr>)}
         {!sum.months.length && <tr><td colSpan={5}><Empty>No entries yet.</Empty></td></tr>}</tbody></table></div></Card>
-    {gstOn && <Card title="GST summary"><p style={{ margin: 0 }}>GST collected from customers: <b>{money(sum.gstCollected)}</b><br />GST paid on your purchases: <b>{money(sum.gstPaid)}</b><br />GST payable to the government: <b>{money(sum.gstPayable)}</b></p><p className="ad-help">This is a guide for your accountant. It is not a GST return.</p></Card>}
+    {gstOn && <Card title="GST summary"><p style={{ margin: 0 }}>GST collected from customers: <b>{moneyR(sum.gstCollected)}</b><br />GST paid on your purchases: <b>{moneyR(sum.gstPaid)}</b><br />GST payable to the government: <b>{moneyR(sum.gstPayable)}</b></p><p className="ad-help">This is a guide for your accountant. It is not a GST return.</p></Card>}
   </>);
 }
 
@@ -60,6 +60,7 @@ async function sourceLink(e) {
   const b = await one('bookings', 'workshop_id'); if (b) return `/manager/workshops?people=${b.workshop_id}`;
   const en = await one('class_enrolments', 'class_id'); if (en) return `/manager/classes?people=${en.class_id}`;
   if (await one('invoices', 'id')) return `/manager/money?tab=invoices&open=${id}`;
+  if (await one('rentouts', 'id')) return '/manager/planner';
   const p = await one('invoice_payments', 'invoice_id'); if (p) return `/manager/money?tab=invoices&open=${p.invoice_id}`;
   return null;
 }

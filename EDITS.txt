@@ -145,3 +145,4 @@ Settings
 - Every Settings section collapsible (accordion)
 - PIN login page (/manager): redo the whole page, tidy: alignment, sizing, positions (owner request, added mid-round)
 - Website: cancelled workshops must not appear anywhere (list, detail page by direct link, sitemap, home, search engines). Owner request, repeated.
+- Website gallery: "Show more" must only add photos below with a short fade-in; photos already on screen must never move or reorder (owner request)

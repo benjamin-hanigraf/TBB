@@ -207,3 +207,9 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .mail-tools{display:flex;align-items:center;gap:6px;flex:none}
 .mail-tools .ad-x{width:34px;height:34px;background:#f0f0f3;color:#6e6e73}.mail-tools .ad-x.tg.on{background:#000;color:#fff}
 .mail-date{color:#6e6e73;font-size:12px;white-space:nowrap;min-width:46px;text-align:right}
+/* long names, emails and links never push a pop-up or a box wider than the screen */
+.ad-modal,.ad-modal-b,.ad-card,.ad-help,.ad-row small,.ws-text small,.cls-main small,.ad-modal-h h2{overflow-wrap:anywhere;min-width:0}
+.ad-modal-h h2{flex:1 1 auto}.ad-modal-h .ad-x{flex:none;margin-left:12px}
+@media(max-width:560px){.ad-table{font-size:13px}.ad-table th,.ad-table td{padding-left:4px;padding-right:4px}}
+.ad-stat{min-width:0}.ad-stat b,.ad-stat span,.ad-stat em{overflow-wrap:break-word}
+.ad-modal .ad-row>b,.ad-row .end b,.ad-row .end small{white-space:nowrap;flex:none}.ad-modal .ad-row>span{min-width:0}

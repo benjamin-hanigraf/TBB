@@ -79,6 +79,9 @@ This file holds (1) the scenario list that was run through the app and the datab
 | 14 | Customers' totals ignored bookings and enrolments marked Transferred. | Counted. |
 | 15 | Notes written on a record (transfer note, the new warnings) were never shown. | Shown on the booking, enrolment and order screens (red if it needs attention). |
 | 16 | On an iPhone with the app installed, the page title, top buttons, the full-screen pop-up headers and the PIN screen sat under the clock / notch / Dynamic Island, and landscape sides under the notch. | Space for the notch and sides is now added (no change on desktop, tablet or Safari). |
+| 17 | **Pop-ups cut off on phones.** Every "wide" pop-up (edit workshop, participants, students, edit product, orders, add order, and more) was pushed 56 px down on phones, so its bottom 56 px, including Save and other buttons, was off the screen. A website style named "wide" was also being applied to the Manager. | The Manager's style is renamed so the website style no longer touches it. |
+| 18 | A long unbroken email or name widened a pop-up past the screen edge, pushing the close button and buttons off-screen. | Long text now wraps inside pop-ups, lists and cards; amounts never split across lines. |
+| 19 | The Accounts "Month by month" table could scroll sideways on phones when GST is on. | Slightly tighter on phones so it fits. |
 
 The database itself held up: seats cannot be oversold by two people at once, expiry of holds frees seats, stock cannot go below zero or be taken or given back twice, a payment can only create one ledger row, zero or negative money is refused, deleting records the accounts need is refused.
 
@@ -91,6 +94,7 @@ The database itself held up: seats cannot be oversold by two people at once, exp
 - If a seat frees up (refund / transfer) the waitlist is not told automatically; you see "N seats are free" and use the Book / WhatsApp buttons.
 - Someone can book the same workshop twice (e.g. two friends using one phone). This is allowed on purpose; a duplicate warning would be a new screen.
 - An income entry deleted by hand for an online payment is added back by the safety net the next time Accounts or Orders opens. To remove one for good, refund it.
+- Extreme amounts: a receivable above about one crore rupees makes one Home tile slightly too narrow at 1024 px wide. Normal amounts fit everywhere.
 - Pinch-zoom is switched off in the Manager as you asked. This is the one thing Apple's accessibility guidance discourages (see section 4).
 
 ## 4. The Manager app against Apple's Human Interface Guidelines
@@ -118,3 +122,7 @@ The database itself held up: seats cannot be oversold by two people at once, exp
 8. Large titles: Apple uses a large title that shrinks on scroll; here the title scrolls away. Optional.
 9. Icons and splash: a splash image for each iPhone size is missing, so the app shows a white flash on launch.
 10. Contrast: grey helper text (#6e6e73) on white passes for body text but is near the limit on the lightest tags; the "Automatic" and status chips could be a shade darker.
+
+## 5. How the screens were checked
+
+Every Manager page and every website page was opened in a phone-sized browser (iPhone SE, iPhone 14, iPhone Plus / Max sizes), tablet sizes (iPad mini, iPad, iPad landscape) and desktop (1280, 1440), 126 page and size combinations per round. Each pop-up and its first level of buttons was also opened on a phone. Two kinds of data were used: normal sample data, and a "stress" set with very long names, long emails and amounts above one crore, because real data is never as tidy as sample data. The iPhone status bar and home-bar spacing was simulated. The checks look for: anything wider than the screen, anything overlapping something else, text clipped or poking out of its box, pop-ups taller than the screen, and the bottom tab bar covering the last item. Result after the fixes: nothing found with normal data; one extreme-amount case (see section 3).

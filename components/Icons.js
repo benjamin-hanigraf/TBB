@@ -5,7 +5,7 @@ const P = {
   chat: <path d="M20.5 12a8.5 8.5 0 0 1-12.4 7.5L3.5 20.5l1.1-4.4A8.5 8.5 0 1 1 20.5 12Z" />,
   mail: <><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m4 8 8 6 8-6" /></>,
   pin: <><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.800 12 21 12 21Z" /><circle cx="12" cy="9.500" r="2.500" /></>,
-  send: <><mask id="plane-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24"><rect width="24" height="24" fill="#fff" /><path d="m22 2-10.4 10.4" stroke="#000" strokeWidth="2.4" fill="none" /></mask><path mask="url(#plane-cut)" fill="currentColor" d="M14.54 21.69a.5.5 0 0 0 .94-.02l6.5-19a.5.5 0 0 0-.64-.64l-19 6.5a.5.5 0 0 0-.02.94l7.93 3.18a2 2 0 0 1 1.11 1.11z" /></>,
+  send: <path d="M1.4 2.3 23 11.7 1.4 21.7 4.9 13.7Q9.5 13.2 14.9 12 9.5 10.8 4.9 10.2Z" fill="currentColor" strokeWidth="1.6" strokeLinejoin="round" />,
   user: <><circle cx="12" cy="8" r="4" /><path d="M4.500 20a7.500 7.500 0 0 1 15 0" /></>,
   check: <path d="m5 13 4 4L19 7" />,
   left: <path d="m15 5-7 7 7 7" />, right: <path d="m9 5 7 7-7 7" />,

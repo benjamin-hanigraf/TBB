@@ -1,5 +1,4 @@
 'use client';
-import Link from 'next/link';
 import Icon from './Icons';
 import { useCart } from './Cart';
 // One control that is a button until the item is in the bag, then a − 1 + pill of the same size.
@@ -14,7 +13,7 @@ export default function AddToCart({ product, label }) {
       <span aria-live="polite">{qty}</span>
       <button type="button" aria-label="One more" disabled={qty >= max} onClick={() => add({ slug: product.slug, title: product.title, price: product.price, image: product.image, gstMode: product.gstMode })}>+</button>
     </div>
-    <Link href="/bag" className="small viewbag">View bag</Link></div>);
+  </div>);
   return (<button className="btn fixw" disabled={blocked} onClick={() => add({ slug: product.slug, title: product.title, price: product.price, image: product.image, gstMode: product.gstMode })}>
     <Icon n="bag" size={18} /><span>{blocked ? 'Sold out' : label}</span></button>);
 }

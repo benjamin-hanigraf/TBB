@@ -51,7 +51,7 @@ p{text-wrap:pretty}
 .cards{display:flex;flex-wrap:wrap;justify-content:center;gap:24px;margin-top:56px}
 .card{flex:1 1 280px;max-width:336px;background:var(--soft);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;text-align:center;transition:transform .3s,box-shadow .3s}
 .soft .card{background:#fff}
-a.card:hover{transform:translateY(-4px);box-shadow:0 14px 34px rgba(0,0,0,.08)}
+a.card:hover{transform:translateY(-4px);box-shadow:0 16px 38px rgba(0,0,0,.18)}
 .card .ph{aspect-ratio:4/5;background:#ececee;overflow:hidden}.card .ph img{width:100%;height:100%;object-fit:cover}
 .card .body{padding:22px 22px 28px;display:grid;gap:6px;justify-items:center}
 .card .small{margin-top:2px}
@@ -210,7 +210,6 @@ footer .fbase{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 
 .qty.big{min-width:176px;justify-content:space-between;min-height:48px}.qty.big button{width:52px;height:46px;font-size:20px}.qty.big button:disabled{opacity:.35;cursor:default}.qty.big span{font-size:16px;font-weight:500}
 /* no scrollbars anywhere (scrolling still works) */
 *{scrollbar-width:none;-ms-overflow-style:none}*::-webkit-scrollbar{display:none;width:0;height:0}
-footer .ficons{display:flex;gap:10px;margin-top:14px}footer .ficons a{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink);transition:background .2s,color .2s,border-color .2s}footer .ficons a:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
 
 /* black checkboxes on the website too */
 input[type=checkbox]{-webkit-appearance:none;appearance:none;width:22px;height:22px;min-width:22px;padding:0;margin:0;border:1.5px solid #1d1d1f;border-radius:6px;background:#fff;display:inline-grid;place-content:center;cursor:pointer;flex:none}
@@ -228,3 +227,14 @@ input[type=checkbox]:checked::after{content:"";width:11px;height:6px;border-left
 .v-close{top:max(14px,env(safe-area-inset-top));right:14px}.v-nav{top:50%;transform:translateY(-50%)}.v-nav.l{left:12px}.v-nav.r{right:12px}
 @media(max-width:700px){.v-stage{padding:60px 8px 4px}.v-nav{display:none}.v-cap{padding-left:16px;padding-right:16px}}
 @media(prefers-reduced-motion:reduce){.v-img{animation:none}.wall-item{transition:none}}
+.head h2.sm{font-size:clamp(21px,2.6vw,28px);letter-spacing:-.02em}
+/* footer v3: two straight columns, address on the right on desktop, plain icons */
+footer .cols{align-items:start}footer .flogo{display:block;height:38px;width:auto;margin:0 0 12px}
+footer .fr .fh{height:38px;display:flex;align-items:center;margin:0 0 12px;line-height:1}footer .fl p,footer .fr p{margin:0}
+footer .maplink .al{display:block}footer .fr{text-align:right}
+footer .ficons{display:flex;gap:6px;justify-content:flex-end;margin-top:12px;margin-right:-6px}footer .ficons a{width:36px;height:36px;display:grid;place-items:center;color:var(--ink);border:0;border-radius:0;background:none}footer .ficons a:hover{background:none;color:#000;opacity:.6}
+@media(max-width:700px){footer .fr{text-align:left}footer .fr .fh{justify-content:flex-start}footer .ficons{justify-content:flex-start;margin-left:-6px;margin-right:0}}
+.seatrow{display:grid;gap:7px;justify-items:start}.seatrow>span{font-size:14px;font-weight:500}.seatrow i{font-style:normal;color:#c00}.seatrow .qty.big{width:100%;max-width:220px}
+.cols3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px;margin-top:48px;text-align:center}.cols3>div{min-width:0}@media(max-width:860px){.cols3{grid-template-columns:minmax(0,1fr);gap:36px}}.note-c{text-align:center;color:var(--mute);font-size:15px;margin:44px auto 0;max-width:620px;text-wrap:balance}
+.invband{display:grid;grid-template-columns:repeat(3,minmax(0,260px));gap:16px;justify-content:center;margin:40px auto 0}.invband img{width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;border-radius:16px}@media(max-width:700px){.invband{gap:10px;margin-top:32px}.invband img{border-radius:12px}}
+footer .fr .fh{justify-content:flex-end}@media(max-width:700px){footer .fr .fh{justify-content:flex-start}}

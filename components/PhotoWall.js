@@ -1,20 +1,19 @@
 'use client';
-// Photo gallery: a tidy wall of photos in their natural shapes, three filters, "show more", and a full-screen viewer with swipe, arrows and keyboard.
+// Photo gallery: a tidy wall of photos in their natural shapes, a "Show more" button, and a full-screen viewer with swipe, arrows and keyboard.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Icon from './Icons';
 import Btn from './Btn';
-const FILTERS = [['all', 'All'], ['w', 'Workshops'], ['a', 'Artwork']]; const FIRST = 12;
+const STEP = 12;
 const src = (id) => `/img/${id}.webp`, small = (id) => `/img/${id}-640.webp`;
 
 export default function PhotoWall({ photos }) {
-  const [f, setF] = useState('all'); const [all, setAll] = useState(false); const [open, setOpen] = useState(null);
-  const list = photos.filter((p) => f === 'all' || p.tag === f); const shown = all ? list : list.slice(0, FIRST);
+  const [count, setCount] = useState(STEP); const [open, setOpen] = useState(null);
+  const list = photos; const shown = list.slice(0, count);
   return (<div className="wall">
-    <div className="wall-filters" role="tablist" aria-label="Filter photos">{FILTERS.map(([k, t]) => <button key={k} role="tab" aria-selected={f === k} className={f === k ? 'on' : ''} onClick={() => { setF(k); setAll(false); }}>{t}</button>)}</div>
     <div className="wall-grid">{shown.map((p, i) => (
       <button key={p.id} type="button" className="wall-item" onClick={() => setOpen(i)} aria-label={`Open photo: ${p.alt}`}>
         <img src={small(p.id)} srcSet={`${small(p.id)} 640w, ${src(p.id)} 1600w`} sizes="(max-width: 700px) 46vw, (max-width: 1100px) 31vw, 340px" alt={p.alt} width={p.w} height={p.h} loading={i < 6 ? 'eager' : 'lazy'} decoding="async" /></button>))}</div>
-    {list.length > FIRST && <div className="row c"><Btn variant="ghost" icon={all ? 'left' : 'plus'} onClick={() => setAll(!all)}>{all ? 'Show less' : `Show all ${list.length}`}</Btn></div>}
+    {count < list.length && <div className="row c"><Btn variant="ghost" icon="plus" onClick={() => setCount((c) => c + STEP)}>Show more</Btn></div>}
     {open !== null && <Viewer list={shown} start={open} onClose={() => setOpen(null)} />}
   </div>);
 }

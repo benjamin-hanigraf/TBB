@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { useLoad, sb, must, Page, Card, Spin, Err, Btn, F, useForm, useAction } from './kit';
 import { rupeesToPaise } from '@/lib/accounting';
+import { ADDRESS_TEXT } from '@/lib/address';
 import { pinApi, setToken } from '@/lib/adminApi';
 import { useState } from 'react';
 const get = (rows, k, d) => ({ ...d, ...(rows.find((r) => r.key === k)?.value || {}) });
@@ -13,7 +14,7 @@ export default function Settings() {
 async function save(key, value, pub) { must(await sb().from('settings').upsert({ key, value, is_public: pub })); }
 function Main({ rows }) {
   const b = get(rows, 'business', {}); const g = get(rows, 'gst', { enabled: false, gstin: '', rate_percent: 18 }); const inv = get(rows, 'invoice', { prefix: 'TBB/YYYY-YY', start: 1, terms: '' }); const s = get(rows, 'shipping', { flat_paise: 6000, free_above_paise: 200000 }); const [run, busy] = useAction();
-  const f = useForm({ name: b.name || 'Thin Black Brush', phone: b.phone || '', phone2: b.phone2 || '', map: b.map || '', email: b.email || '', address: b.address || '', instagram: b.instagram || '', facebook: b.facebook || '', whatsapp: b.whatsapp || '', upi: b.upi || '',
+  const f = useForm({ name: b.name || 'Thin Black Brush', phone: b.phone || '', phone2: b.phone2 || '', map: b.map || '', email: b.email || '', address: b.address || ADDRESS_TEXT, instagram: b.instagram || '', facebook: b.facebook || '', whatsapp: b.whatsapp || '', upi: b.upi || '',
     enabled: !!g.enabled, gstin: g.gstin || '', prefix: inv.prefix || 'TBB/YYYY-YY', start: String(inv.start || 1), terms: inv.terms || '', flat: String((s.flat_paise || 0) / 100), free: String((s.free_above_paise || 0) / 100) });
   const submit = (e) => { e.preventDefault(); run(async () => {
     const v = f.v; if (v.enabled && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(v.gstin)) throw new Error('Please enter a valid 15-character GSTIN, or turn GST off.');

@@ -10,18 +10,15 @@ export default function Contact() {
     <section className="section"><div className="wrap">
       <div className="contactgrid" style={{marginTop:0}}>
         <div className="cc"><span className="cic"><Icon n="phone" size={22} /></span><h2 className="t3">Call Rahi</h2>
-          <div className="cl"><a href={`tel:${b.phone.replace(/\s/g,'')}`}>{b.phone}</a><a href="tel:+919566625373">{b.phone2}</a></div>
+          <div className="cl"><span>{b.phone}</span><span>{b.phone2}</span></div>
           <Btn href={`tel:${b.phone.replace(/\s/g,'')}`} variant="ghost" icon="phone" className="sm">Call</Btn></div>
         <div className="cc"><span className="cic"><Icon n="mail" size={22} /></span><h2 className="t3">Email</h2>
-          <div className="cl"><a href={`mailto:${b.email}`}>{b.email}</a><span className="muted">We reply within a day</span></div>
+          <div className="cl"><span>{b.email}</span><span className="muted">We reply within a day</span></div>
           <Btn href={`mailto:${b.email}`} variant="ghost" icon="mail" className="sm">Write</Btn></div>
         <div className="cc"><span className="cic"><Icon n="pin" size={22} /></span><h2 className="t3">Visit the studio</h2>
-          <address className="cl"><a href={b.map} target="_blank" rel="noopener noreferrer" style={{ display: 'grid', gap: 3 }}>{b.address.map((l) => <span key={l}>{l}</span>)}</a></address>
+          <address className="cl">{b.address.map((l) => <span key={l}>{l}</span>)}</address>
           <Btn href={b.map} variant="ghost" icon="arrow" className="sm" target="_blank" rel="noopener noreferrer">Directions</Btn></div></div>
       <div className="row c"><Btn href={b.whatsapp} icon="chat">WhatsApp</Btn><Btn href={b.instagram} variant="ghost" icon="instagram">Instagram</Btn></div></div></section>
-    <section className="section soft" id="message-form"><div className="wrap"><div className="head"><p className="eyebrow">Write to us</p><h2>How can we help?</h2>
-      <p className="lead">Choose what this is about and we will ask only what we need. Looking to teach or work with us? Choose "A job application".</p>
-      <div className="row c"><Btn href="/contact?topic=hiring#message-form" variant="ghost" icon="arrow">Apply</Btn></div></div>
-      <ContactForm /></div></section>
+    <section className="section soft" id="message-form"><div className="wrap"><ContactForm /></div></section>
   </main>);
 }

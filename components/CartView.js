@@ -12,7 +12,7 @@ export function useShipping() {
 }
 export default function CartView() {
   const { items, subtotal, itemsTotal, gstAdd, setQty, remove } = useCart(); const ship = useShipping()(subtotal);
-  if (!items.length) return (<div className="center"><p className="lead" style={{ marginTop: 0 }}>Your bag is empty.</p><div className="row c"><Btn href="/store" icon="bag">Shop</Btn></div></div>);
+  if (!items.length) return (<div className="center"><p className="lead" style={{ marginTop: 0 }}>Your bag is empty.</p><div className="row c"><Btn href="/store" icon="bag">Visit Store</Btn></div></div>);
   return (<>
     <div className="acct-list">{items.map((i) => (
       <div key={i.slug} className="acct-row"><div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>{i.image && <img src={i.image} alt="" width="56" height="56" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 12 }} />}

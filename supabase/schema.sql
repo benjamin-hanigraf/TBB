@@ -149,7 +149,7 @@ create table settings (
   key text primary key, value jsonb not null, is_public boolean not null default false
 );
 insert into settings (key, value, is_public) values
- ('business', '{"name":"Thin Black Brush","phone":"+91 99620 50962","phone2":"+91 95666 25373","email":"thinblackbrush@gmail.com","address":"2nd Floor - Berachah, 13/7, 1st Cross St, Trustpuram, Kodambakkam, Chennai, Tamil Nadu 600024","instagram":"https://www.instagram.com/thinblackbrush","facebook":"https://www.facebook.com/thinblackbrush","whatsapp":"919962050962","upi":"thinblack@ybl"}', true),
+ ('business', '{"name":"Thin Black Brush","phone":"+91 99620 50962","phone2":"+91 95666 25373","email":"thinblackbrush@gmail.com","address":"2nd Floor, Berachah Building, 13/7, 1st Cross St,\nTrustpuram, Kodambakkam, Chennai - 600024.","instagram":"https://www.instagram.com/thinblackbrush","facebook":"https://www.facebook.com/thinblackbrush","whatsapp":"919962050962","upi":"thinblack@ybl"}', true),
  ('gst', '{"enabled":false,"gstin":"","rate_percent":18}', false),
  ('shipping', '{"flat_paise":6000,"free_above_paise":200000}', true);
 

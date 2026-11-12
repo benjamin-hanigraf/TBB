@@ -20,7 +20,7 @@ const security = [
 /** @type {import('next').NextConfig} */
 export default {
   poweredByHeader: false,
-  async redirects() { return [{ source: '/cart', destination: '/bag', permanent: true }, { source: '/basket', destination: '/bag', permanent: true }, { source: '/manager/tools', destination: '/manager', permanent: true }, { source: '/manager/tools/invoice', destination: '/manager/invoices', permanent: true }, { source: '/manager/tools/:p', destination: '/manager/:p', permanent: true }, { source: '/manager/photos', destination: '/manager', permanent: true }, { source: '/admin', destination: '/manager', permanent: true }, { source: '/admin/:path*', destination: '/manager/:path*', permanent: true }]; },
+  async redirects() { return [{ source: '/cart', destination: '/bag', permanent: true }, { source: '/services', destination: '/custom-invitations#services', permanent: true }, { source: '/basket', destination: '/bag', permanent: true }, { source: '/manager/tools', destination: '/manager', permanent: true }, { source: '/manager/tools/invoice', destination: '/manager/invoices', permanent: true }, { source: '/manager/tools/:p', destination: '/manager/:p', permanent: true }, { source: '/manager/photos', destination: '/manager', permanent: true }, { source: '/admin', destination: '/manager', permanent: true }, { source: '/admin/:path*', destination: '/manager/:path*', permanent: true }]; },
   images: { remotePatterns: [{ protocol: 'https', hostname: '*.supabase.co' }] },
   async headers() {
     return [

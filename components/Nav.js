@@ -6,7 +6,7 @@ import { images } from '@/lib/data';
 import Icon from './Icons';
 import { supabase } from '@/lib/supabase-browser';
 import { useCart } from './Cart';
-const links = [['/', 'Home'], ['/workshops', 'Workshops'], ['/writing-classes', 'Classes'], ['/store', 'Store'], ['/custom-invitations', 'Invitations'], ['/services', 'Services'], ['/collaborations', 'Collaborations'], ['/contact', 'Contact']];
+const links = [['/', 'Home'], ['/workshops', 'Workshops'], ['/writing-classes', 'Classes'], ['/store', 'Store'], ['/custom-invitations', 'Invitations'], ['/collaborations', 'Collaborations'], ['/contact', 'Contact']];
 export default function Nav() {
   const p = usePathname(); const [open, setOpen] = useState(false); const [signedIn, setSignedIn] = useState(false); const { count } = useCart();
   useEffect(() => { const sb = supabase(); if (!sb) return; sb.auth.getSession().then(({ data }) => setSignedIn(!!data.session)); const { data } = sb.auth.onAuthStateChange((_e, s) => setSignedIn(!!s)); return () => data.subscription.unsubscribe(); }, []);

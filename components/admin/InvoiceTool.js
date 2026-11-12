@@ -8,6 +8,7 @@ import { METHOD_OPTIONS } from './ManualEntry';
 import { nextInvoiceNo, todayISO, money, rupeesToPaise, toCSV, IN_CATEGORIES } from '@/lib/accounting';
 import { calcInvoice } from '@/lib/invoiceCalc';
 import { RULES } from '@/lib/format';
+import { ADDRESS_TEXT } from '@/lib/address';
 import { adminClient as supabase } from '@/lib/supabase-admin';
 
 const SORTS = [['new', 'Newest first'], ['old', 'Oldest first'], ['high', 'Highest amount'], ['low', 'Lowest amount'], ['name', 'Customer A to Z']];
@@ -51,7 +52,7 @@ function Editor({ inv, data, onBack }) {
   const setItem = (i, k, v) => setItems((a) => a.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
   const clean = items.filter((x) => x.desc.trim() || x.price).map((x) => ({ desc: RULES.title.done(x.desc), qty: Number(x.qty) || 1, unit_paise: rupeesToPaise(x.price), gst_rate: Number(x.rate) || 0, hsn: x.hsn.trim() }));
   const calc = calcInvoice(clean, rupeesToPaise(f.v.discount), f.v.gst);
-  const biz = { ...(st.business || {}), name: st.business?.name || 'Thin Black Brush', gstin: gstSet.gstin || '' };
+  const biz = { ...(st.business || {}), address: st.business?.address || ADDRESS_TEXT, name: st.business?.name || 'Thin Black Brush', gstin: gstSet.gstin || '' };
   const doc = { no: f.v.no || 'Preview', date: issue, due: dmyToISO(f.v.due), title: f.v.pay === 'paid' ? 'Receipt' : 'Invoice', biz, customer: { name: f.v.name, address: f.v.address, phone: f.v.phone, email: f.v.email, gstin: f.v.gstin }, calc, gstOn: f.v.gst, notes: f.v.notes, terms: st.invoice?.terms || '', paid: f.v.pay === 'paid', method: f.v.method, paidOn: dmyToISO(f.v.paidOn) };
   const pick = (c) => f.setAll((v) => ({ ...v, name: c.name, phone: c.phone || v.phone, email: c.email || v.email, address: [c.address_line1, c.address_line2, [c.city, c.pincode].filter(Boolean).join(' - '), c.state].filter(Boolean).join('\n') || v.address }));
   const addNew = (name) => run(async () => { await ensureCustomer({ name, email: f.v.email, phone: f.v.phone }); reloadCustomers(); }, `${name} added to customers`);

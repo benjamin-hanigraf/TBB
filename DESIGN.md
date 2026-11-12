@@ -97,7 +97,7 @@ Always use the `Btn` component (`components/Btn.js`) or `<button className="btn 
 ## 7. Icons
 
 One component: `components/Icons.js`, used as `<Icon n="bag" size={18} />`.
-- 24×24 viewBox, **outline only**: stroke `currentColor`, width 1.7, round caps and joins, no fill (exceptions: `send` is a filled paper plane with a cut-out fold line; `chair` is a filled glyph).
+- 24×24 viewBox, **outline only**: stroke `currentColor`, width 1.7, round caps and joins, no fill (exceptions: `send` is the filled arrow-shaped paper plane; `chair` is a filled glyph).
 - Sizes: 17-18px inside buttons, 20-22px in the nav, 15px for ticks in lists.
 - To add an icon: add a new key to the `P` object in `Icons.js`, drawn on the 24×24 grid with the same stroke style. Never add an icon library and never use emoji.
 - Meaning is fixed, do not reuse for something else: `bag` = shopping bag (everywhere, including the Store menu item), `chair` = writing classes, `calendar` = workshops, `calendardays` = calendar tool, `wallet` = pay (cash, UPI and card alike), `note` = rupee note (Accounts), `rupee` = price, `listcheck` = to-do, `grip` = drag handle, `gear` = settings, `logout` = log out, `send` = send/submit, `fileout` = export, `filein` = import, `user` = login/account.
@@ -150,7 +150,9 @@ The gallery lives at the bottom of the Workshops page (`/workshops#gallery`), bu
 - Children are **5 to 15**. Forms say "Participant", never "Student".
 - The class form shows only the fields that apply: a child needs participant name, age and parent or guardian name; an adult needs just their name.
 - Checkboxes are always black (square, 6px radius, white tick). Never the browser's blue.
-- Footer contact links are four round icon buttons (phone, email, Instagram, Facebook), 40px, 1px border.
+- Footer: logo and tagline on the left, "Studio" with the address and four plain icons (phone, email, Instagram, Facebook, no circles) on the right on desktop; everything left-aligned on phones. The address is always `lib/address.js`, with its line break.
+- Class cards show the Level in an outline pill, no type label and no price. The Pay button carries the price. The card's fill shade comes from its type.
+- Seats are chosen with the − 1 + pill, never a drop-down.
 - Prices: GST is set per product (No GST / Add 18% / Includes 18%). Shop pages show "+ 18% GST" or "incl. GST" beside the price when it applies.
 - Use **Bag** everywhere, never basket or cart.
 - **One message form.** Every enquiry (message, invitation, service, collaboration, job application) uses `components/ContactForm.js` on `/contact`. Other pages never contain a form of their own: they show a button to `/contact?topic=<message|invitation|service|collaboration|hiring>#message-form` (optionally `&for=<option>` to pre-select the second drop-down). To add a topic, add it to `TOPICS` in that file and to `KINDS` in `app/api/enquiry/route.js`.

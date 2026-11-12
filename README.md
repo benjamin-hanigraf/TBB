@@ -8,7 +8,7 @@ Secret (server only, never share): `SUPABASE_SECRET_KEY`, `RAZORPAY_KEY_ID`, `RA
 Optional: `OWNER_EMAIL` (internal address of the Manager owner account; never used to log in), `INSTAGRAM_FEED_URL` (Behold JSON feed), `NEXT_PUBLIC_GOOGLE_LOGIN=1` (shows the Google sign-in button once Google is set up in Supabase)
 
 ## Database
-Run in the Supabase SQL Editor, in order: `supabase/schema.sql`, `supabase/seed.sql`, `supabase/v2.sql`, `supabase/v3.sql`, `supabase/v4.sql`, `supabase/v5.sql`, `supabase/v6.sql`.
+Run in the Supabase SQL Editor, in order: `supabase/schema.sql`, `supabase/seed.sql`, `supabase/v2.sql`, `supabase/v3.sql`, `supabase/v4.sql`, `supabase/v5.sql`, `supabase/v6.sql`, `supabase/v7.sql`.
 Make the owner an admin: `update profiles set role='admin' where email='owner@example.com';`
 
 ## Tests

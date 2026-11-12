@@ -13,7 +13,7 @@ export default function LevelPicker({ classes, phone, whatsapp }) {
   const router = useRouter(); const [sel, setSel] = useState(''); const [open, setOpen] = useState(false); const [group, setGroup] = useState('child');
   const [busy, setBusy] = useState(false); const [err, setErr] = useState(''); const [pre, setPre] = useState({});
   const chosen = classes.find((c) => c.slug === sel); const panel = useRef(null); const formRef = useRef(null);
-  const stacked = () => typeof window !== 'undefined' && window.matchMedia('(max-width: 1060px)').matches;
+    const showPay = () => requestAnimationFrame(() => setTimeout(() => { const b = panel.current?.querySelector('.btn'); if (!b) return; const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches; const over = b.getBoundingClientRect().bottom - (window.innerHeight - 24); if (over > 0) window.scrollBy({ top: over, behavior: calm ? 'auto' : 'smooth' }); }, 60));
   const reveal = (el, block) => { if (!el) return; const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches; requestAnimationFrame(() => el.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block })); };
   useEffect(() => { const sb = supabase(); if (!sb || !open) return; sb.auth.getSession().then(async ({ data }) => { const u = data.session?.user; if (!u) return; const { data: p } = await sb.from('profiles').select('full_name,phone').eq('id', u.id).single(); setPre({ name: p?.full_name || '', email: u.email || '', phone: p?.phone || '' }); }); }, [open]);
   const label = chosen ? `${chosen.title}, ${chosen.level}` : '';
@@ -32,11 +32,11 @@ export default function LevelPicker({ classes, phone, whatsapp }) {
   return (<>
     <div className="levels" role="radiogroup" aria-label="Class level">{classes.map((c) => (
       <label key={c.slug} className={`level ${c.tone ? `t${c.tone}` : ''} ${sel === c.slug ? 'sel' : ''}`}>
-        <input type="radio" className="sr" name="level" value={c.slug} checked={sel === c.slug} onChange={() => { setSel(c.slug); setErr(''); if (stacked()) reveal(panel.current, 'center'); }} />
-        <span className="tag">{c.track}</span>
-        <h3>{c.title}</h3><p className="small lv">{c.level}</p><p className="desc">{c.text}</p>
+        <input type="radio" className="sr" name="level" value={c.slug} checked={sel === c.slug} onChange={() => { setSel(c.slug); setErr(''); showPay(); }} />
+        <span className="tag">{c.level}</span>
+        <h3>{c.title}</h3><p className="desc">{c.text}</p>
         <ul className="covers">{c.covers.map((x) => <li key={x}><Icon n="check" size={15} /><span>{x}</span></li>)}</ul>
-        <p className="foot">{rupees(c.price)}<span> · {c.sessions || 8} classes</span></p>
+        <p className="foot">{c.sessions || 8} classes</p>
 </label>))}</div>
     <div className="enrol" aria-live="polite" ref={panel}>
       <p className="small center">{chosen ? <>You chose <b>{label}</b>, {rupees(chosen.price)} for {chosen.sessions || 8} classes.</> : 'Choose a level to continue.'}</p>

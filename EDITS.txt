@@ -72,3 +72,6 @@ Open question
 - Tip: when copying SQL from GitHub use "Copy raw file"; line 1 must start with "-- ====". Copying the page gave a "Claude Code" syntax error.
 - Status: this batch done and tested, on branch claude/zealous-turing-jqe6sd
 - Combined database update for owner: supabase/updates-v6-to-v10.sql (run once; safe to repeat)
+
+== Deploy ==
+- Owner asked: bring dev up to date with claude/zealous-turing-jqe6sd (Vercel deploys dev). Fast-forward only, nothing on dev lost.

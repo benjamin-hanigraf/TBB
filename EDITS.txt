@@ -143,3 +143,4 @@ Settings
 - Invoice and quotation number prefix/format with a live preview and leading zeros
 - Space between Save settings and the Device PIN box
 - Every Settings section collapsible (accordion)
+- PIN login page (/manager): redo the whole page, tidy: alignment, sizing, positions (owner request, added mid-round)

@@ -1,38 +1,49 @@
 'use client';
 import { useState } from 'react';
-import { useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, useAction, Confirm, fmtDT, fmtD } from './kit';
+import Icon from '@/components/Icons';
+import { useLoad, sb, must, every, Page, Card, Fold, Badge, Empty, Spin, Err, Modal, Btn, useAction, Confirm, fmtDT, fmtD } from './kit';
 // Everything people send through the website forms: contact messages, custom invitation requests, service requests, collaboration offers and job applications.
-// Opening a message marks it read. "Dealt with" is separate, so a message you opened but have not answered yet is not lost.
+// Two separate marks: read (opening a message reads it) and attended (you have dealt with it).
 const KIND = { contact: 'Message', invitation: 'Invitation request', service: 'Service request', collaboration: 'Collaboration', hiring: 'Job application' };
-const isRead = (e) => (e.read_at !== undefined ? !!e.read_at : !!e.handled);     // before database update v9 there is no read_at
+const hasRead = (e) => e.read_at !== undefined;                        // before the database was updated there is no read_at
+const isRead = (e) => (hasRead(e) ? !!e.read_at : !!e.handled);
+const waNumber = (p) => String(p || '').replace(/\D/g, '').slice(-10);
+
 export default function Inbox() {
-  const [open, setOpen] = useState(null); const [show, setShow] = useState('open'); const [kind, setKind] = useState('all');
+  const [open, setOpen] = useState(null); const [, setBusy] = useState(false);
   const { data, error, reload } = useLoad(async () => must(await every(() => sb().from('enquiries').select('*').order('created_at', { ascending: false }).order('id'))));
   if (error) return <Page title="Inbox"><Err e={error} /></Page>; if (!data) return <Page title="Inbox"><Spin /></Page>;
-  const unread = data.filter((e) => !isRead(e)).length; const kinds = Object.keys(KIND).filter((k) => data.some((e) => e.kind === k));
-  const rows = data.filter((e) => (show === 'all' || !e.handled) && (kind === 'all' || e.kind === kind));
-  const view = async (e) => { setOpen(e); if (!isRead(e)) { await sb().from('enquiries').update(e.read_at !== undefined ? { read_at: new Date().toISOString() } : { handled: true }).eq('id', e.id); reload(); } };
+  const unread = data.filter((e) => !isRead(e)).length; const todo = data.filter((e) => !e.handled), done = data.filter((e) => e.handled);
+  const setRead = async (e, read) => { setBusy(true); await sb().from('enquiries').update(hasRead(e) ? { read_at: read ? new Date().toISOString() : null } : { handled: read }).eq('id', e.id); setBusy(false); reload(); };
+  const setHandled = async (e, v) => { setBusy(true); await sb().from('enquiries').update({ handled: v }).eq('id', e.id); setBusy(false); reload(); };
+  const view = async (e) => { setOpen(e); if (!isRead(e)) setRead(e, true); };
+  const row = (e) => (<div key={e.id} className={`ad-row mail-row ${isRead(e) ? '' : 'unread'}`} style={{ cursor: 'default' }}>
+    <button type="button" className="mail-open" onClick={() => view(e)}><span className="udot" aria-hidden="true" />
+      <span className="main"><b>{e.name}</b><small className="mail-sub"><span>{KIND[e.kind] || 'Message'}</span> · {(e.message || '').slice(0, 90)}</small></span></button>
+    <div className="mail-tools">
+      <button type="button" className={`ad-x tg ${e.handled ? 'on' : ''}`} aria-pressed={!!e.handled} aria-label={e.handled ? 'Mark as not attended' : 'Mark as attended'} title={e.handled ? 'Attended. Tap to undo' : 'Mark as attended'} onClick={() => setHandled(e, !e.handled)}><Icon n="circlecheck" size={18} /></button>
+      <button type="button" className={`ad-x tg ${isRead(e) ? '' : 'on'}`} aria-pressed={!isRead(e)} aria-label={isRead(e) ? 'Mark as unread' : 'Mark as read'} title={isRead(e) ? 'Read. Tap to mark unread' : 'Unread. Tap to mark read'} onClick={() => setRead(e, !isRead(e))}><Icon n={isRead(e) ? 'mailopen' : 'mail'} size={18} /></button>
+      <small className="mail-date">{fmtD(e.created_at)}</small></div></div>);
   return (<Page title={unread ? `Inbox (${unread})` : 'Inbox'}>
-    <div className="ad-filterbar"><div className="ad-tabsbar" style={{ margin: 0 }}>{[['open', 'Not dealt with'], ['all', 'All']].map(([k, t]) => <button key={k} className={show === k ? 'on' : ''} onClick={() => setShow(k)}>{t}</button>)}</div>
-      {kinds.length > 1 && <select aria-label="Type" value={kind} onChange={(e) => setKind(e.target.value)} className="ad-sort"><option value="all">All types</option>{kinds.map((k) => <option key={k} value={k}>{KIND[k]}</option>)}</select>}</div>
-    <Card tight>{rows.length ? <div className="ad-list">{rows.map((e) => (
-      <button key={e.id} className={`ad-row mail-row ${isRead(e) ? '' : 'unread'}`} onClick={() => view(e)}><span className="udot" aria-hidden="true" />
-        <div className="main"><b>{e.name}</b><small className="mail-sub"><span>{KIND[e.kind] || 'Message'}</span> · {(e.message || '').slice(0, 90)}</small></div><div className="end"><small>{fmtD(e.created_at)}</small>{e.handled && show === 'all' && <Badge tone="ok">Dealt with</Badge>}</div></button>))}</div>
-      : <Empty>{data.length ? (show === 'open' ? 'Everything is dealt with.' : 'Nothing matches.') : 'No messages yet.'}</Empty>}</Card>
+    <Card title={`Not attended${todo.length ? ` (${todo.length})` : ''}`} tight>{todo.length ? <div className="ad-list">{todo.map(row)}</div> : <Empty>{data.length ? 'Everything is attended.' : 'No messages yet.'}</Empty>}</Card>
+    {done.length > 0 && <Fold title="Attended"><div className="ad-list">{done.map(row)}</div></Fold>}
     {open && <Detail e={open} onClose={() => setOpen(null)} onDone={() => { setOpen(null); reload(); }} />}
   </Page>);
 }
+
 function Detail({ e, onClose, onDone }) {
-  const [run, busy] = useAction(); const wa = String(e.phone || '').replace(/\D/g, '').slice(-10);
-  const done = () => run(async () => { must(await sb().from('enquiries').update({ handled: !e.handled }).eq('id', e.id)); onDone(); }, e.handled ? 'Moved back to "Not dealt with"' : 'Marked as dealt with');
-  const unread = () => run(async () => { must(await sb().from('enquiries').update(e.read_at !== undefined ? { read_at: null } : { handled: false }).eq('id', e.id)); onDone(); }, 'Marked as unread');
+  const [run, busy] = useAction(); const wa = waNumber(e.phone);
+  const attended = () => run(async () => { must(await sb().from('enquiries').update({ handled: !e.handled }).eq('id', e.id)); onDone(); }, e.handled ? 'Moved back to Not attended' : 'Marked as attended');
   const del = () => run(async () => { must(await sb().from('enquiries').delete().eq('id', e.id)); onDone(); }, 'Deleted');
   return (<Modal title={e.name} onClose={onClose}>
-    <p style={{ marginTop: 0 }}><Badge tone="info">{KIND[e.kind] || 'Message'}</Badge> {e.handled && <Badge tone="ok">Dealt with</Badge>} <span className="ad-help">{fmtDT(e.created_at)}</span></p>
+    <p style={{ marginTop: 0 }}><Badge tone="info">{KIND[e.kind] || 'Message'}</Badge> {e.handled && <Badge tone="ok">Attended</Badge>} <span className="ad-help">{fmtDT(e.created_at)}</span></p>
     <p style={{ whiteSpace: 'pre-wrap' }}>{e.message}</p>
     {Object.entries(e.details || {}).filter(([, v]) => v).map(([k, v]) => <p key={k} className="ad-help" style={{ margin: '2px 0' }}><b>{k.replace(/_/g, ' ')}:</b> {v}</p>)}
-    <p className="ad-help">{e.email}{e.phone ? ` · ${e.phone}` : ''}</p>
-    <div className="ad-actions full"><a className="ad-btn" href={`mailto:${e.email}`}>Reply</a>{e.phone && <a className="ad-btn ghost" href={`tel:${e.phone}`}>Call</a>}{wa.length === 10 && <a className="ad-btn ghost" target="_blank" rel="noopener" href={`https://wa.me/91${wa}`}>WhatsApp</a>}
-      <Btn variant="ghost" busy={busy} onClick={done} icon={e.handled ? undefined : 'check'}>{e.handled ? 'Not dealt with yet' : 'Dealt with'}</Btn><Btn variant="ghost" busy={busy} onClick={unread}>Mark unread</Btn><Confirm onYes={del}>Delete</Confirm></div>
+    <p className="ad-help">{e.email}{e.phone && <>{e.email ? ' · ' : ''}<a href={`tel:${e.phone}`} style={{ textDecoration: 'underline' }}>{e.phone}</a></>}</p>
+    <div className="ad-actions full">
+      {e.email ? <a className="ad-btn" href={`mailto:${e.email}`}>Reply</a> : wa.length === 10 ? <a className="ad-btn" target="_blank" rel="noopener" href={`https://wa.me/91${wa}`}>Reply on WhatsApp</a> : null}
+      {e.email && wa.length === 10 && <a className="ad-btn ghost" target="_blank" rel="noopener" href={`https://wa.me/91${wa}`}>WhatsApp</a>}
+      <Btn variant="ghost" busy={busy} onClick={attended}>{e.handled ? 'Not attended yet' : 'Mark as attended'}</Btn></div>
+    <div className="row-actions" style={{ marginTop: 14 }}><Confirm onYes={del}>Delete</Confirm></div>
   </Modal>);
 }

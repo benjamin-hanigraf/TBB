@@ -200,3 +200,10 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .cal-pick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.cal-pick button{min-height:44px;border:1px solid #d2d2d7;background:#fff;border-radius:12px;font:inherit;font-size:15px;color:#1d1d1f;cursor:pointer}.cal-pick button.on{background:#000;color:#fff;border-color:#000}
 @media(max-width:420px){.cal-pick{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .chip.rentout{background:#636366;color:#fff}.cal-dots i.rentout{background:#636366;border-radius:2px;width:7px;height:7px}.dotk.rentout{background:#636366;border-radius:2px;width:9px;height:9px}.kindtag.rentout{background:#636366;color:#fff}
+/* inbox rows: the message opens on tap; two round toggles (attended, read) sit left of the date */
+.mail-row{align-items:center;gap:10px;cursor:default}
+.mail-open{display:flex;align-items:center;gap:12px;flex:1;min-width:0;background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.mail-open .main{min-width:0;flex:1}
+.mail-tools{display:flex;align-items:center;gap:6px;flex:none}
+.mail-tools .ad-x{width:34px;height:34px;background:#f0f0f3;color:#6e6e73}.mail-tools .ad-x.tg.on{background:#000;color:#fff}
+.mail-date{color:#6e6e73;font-size:12px;white-space:nowrap;min-width:46px;text-align:right}

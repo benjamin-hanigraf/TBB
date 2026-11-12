@@ -1,14 +1,21 @@
 # Thin Black Brush: website and Manager app
 
-Next.js website (`app/(site)`), installable owner app at `/manager` (`app/(admin)`), Supabase database, Razorpay payments, Resend emails.
+Next.js website (`app/(site)`), installable owner app at `/manager` (`app/(admin)`), Supabase database, Razorpay payments, Resend emails. Hosted on **Vercel** (Mumbai region, set in `vercel.json`) until the site goes live; `netlify.toml` is kept in case it moves back.
 
-## Settings (Netlify, Site configuration, Environment variables)
+## Settings (Vercel, Project Settings, Environment Variables)
 Public (safe in browsers): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SITE_URL`
 Secret (server only, never share): `SUPABASE_SECRET_KEY`, `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, `BUSINESS_EMAIL`
 Optional: `OWNER_EMAIL` (internal address of the Manager owner account; never used to log in), `INSTAGRAM_FEED_URL` (Behold JSON feed), `NEXT_PUBLIC_GOOGLE_LOGIN=1` (shows the Google sign-in button once Google is set up in Supabase)
 
+## Hosting address checklist
+Whenever the web address changes (Vercel address now, real domain at launch), update it in all of these:
+- Vercel: `NEXT_PUBLIC_SITE_URL` (sitemap, robots, link previews)
+- Supabase, Authentication, URL Configuration: **Site URL** and **Redirect URLs** (e.g. `https://<address>/**`), or emailed sign-in links will not work
+- Razorpay, Webhooks: `https://<address>/api/payments/webhook`
+- Google Cloud console (only if Google login is on): authorised origins
+
 ## Database
-Run in the Supabase SQL Editor, in order: `supabase/schema.sql`, `supabase/seed.sql`, `supabase/v2.sql`, `supabase/v3.sql`, `supabase/v4.sql`, `supabase/v5.sql`, `supabase/v6.sql`, `supabase/v7.sql`.
+Run in the Supabase SQL Editor, in order: `supabase/schema.sql`, `supabase/seed.sql`, `supabase/v2.sql`, `supabase/v3.sql`, `supabase/v4.sql`, `supabase/v5.sql`, `supabase/v6.sql`, `supabase/v7.sql`, `supabase/v8.sql`.
 Make the owner an admin: `update profiles set role='admin' where email='owner@example.com';`
 
 ## Tests

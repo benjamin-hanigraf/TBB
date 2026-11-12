@@ -65,11 +65,11 @@ function Main({ rows }) {
     <Fold big tight={false} title="Numbers and GST"><div className="ad-form">
       <p className="ad-help full" style={{ margin: 0 }}>Each number is made from a format. <b>#</b> is one digit of the number, so #### gives leading zeros (0042). <b>YYYY-YY</b> becomes the financial year (2026-27), April to March.</p>
       <p className="ad-section-t full">Invoices (website receipts share this series)</p>
-      <F form={f} k="invFormat" label="Format" autoCapitalize="characters" spellCheck={false} /><F form={f} k="invStart" label="Start from" rule="digits" inputMode="numeric" hint="The next one gets this number if it is higher than the last one used" /><Preview format={f.v.invFormat} n={f.v.invStart} />
+      <F form={f} k="invFormat" label="Format" required autoCapitalize="characters" spellCheck={false} /><F form={f} k="invStart" label="Start from" rule="digits" inputMode="numeric" hint="The next one gets this number if it is higher than the last one used" /><Preview format={f.v.invFormat} n={f.v.invStart} />
       <p className="ad-section-t full">Quotations</p>
-      <F form={f} k="quoFormat" label="Format" autoCapitalize="characters" spellCheck={false} /><F form={f} k="quoStart" label="Start from" rule="digits" inputMode="numeric" /><Preview format={f.v.quoFormat} n={f.v.quoStart} />
+      <F form={f} k="quoFormat" label="Format" required autoCapitalize="characters" spellCheck={false} /><F form={f} k="quoStart" label="Start from" rule="digits" inputMode="numeric" /><Preview format={f.v.quoFormat} n={f.v.quoStart} />
       <p className="ad-section-t full">Orders</p>
-      <F form={f} k="ordFormat" label="Format" autoCapitalize="characters" spellCheck={false} /><F form={f} k="ordStart" label="Start from" rule="digits" inputMode="numeric" /><Preview format={f.v.ordFormat} n={f.v.ordStart} />
+      <F form={f} k="ordFormat" label="Format" required autoCapitalize="characters" spellCheck={false} /><F form={f} k="ordStart" label="Start from" rule="digits" inputMode="numeric" /><Preview format={f.v.ordFormat} n={f.v.ordStart} />
       <p className="ad-section-t full">GST</p>
       <div className="full"><F form={f} k="enabled" label="My business is registered for GST" type="check" /></div>
       {f.v.enabled && <F form={f} k="gstin" label="GSTIN" rule="code" maxLength={15} />}

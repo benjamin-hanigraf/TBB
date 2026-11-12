@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Icon from '@/components/Icons';
-import { useLoad, sb, must, every, Page, Card, Fold, Badge, Empty, Spin, Err, Modal, Btn, useAction, Confirm, fmtDT, fmtD } from './kit';
+import { useLoad, sb, must, every, Page, Card, Fold, Badge, Empty, Spin, Err, Modal, Btn, useAction, Confirm, fmtDT } from './kit';
 // Everything people send through the website forms: contact messages, custom invitation requests, service requests, collaboration offers and job applications.
 // Two separate marks: read (opening a message reads it) and attended (you have dealt with it).
 const KIND = { contact: 'Message', invitation: 'Invitation request', service: 'Service request', collaboration: 'Collaboration', hiring: 'Job application' };
@@ -23,7 +23,7 @@ export default function Inbox() {
     <div className="mail-tools">
       <button type="button" className={`ad-x tg ${e.handled ? 'on' : ''}`} aria-pressed={!!e.handled} aria-label={e.handled ? 'Mark as not attended' : 'Mark as attended'} title={e.handled ? 'Attended. Tap to undo' : 'Mark as attended'} onClick={() => setHandled(e, !e.handled)}><Icon n="circlecheck" size={18} /></button>
       <button type="button" className={`ad-x tg ${isRead(e) ? '' : 'on'}`} aria-pressed={!isRead(e)} aria-label={isRead(e) ? 'Mark as unread' : 'Mark as read'} title={isRead(e) ? 'Read. Tap to mark unread' : 'Unread. Tap to mark read'} onClick={() => setRead(e, !isRead(e))}><Icon n={isRead(e) ? 'mailopen' : 'mail'} size={18} /></button>
-      <small className="mail-date">{fmtD(e.created_at)}</small></div></div>);
+      <small className="mail-date">{new Date(e.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' })}</small></div></div>);
   return (<Page title={unread ? `Inbox (${unread})` : 'Inbox'}>
     <Card title={`Not attended${todo.length ? ` (${todo.length})` : ''}`} tight>{todo.length ? <div className="ad-list">{todo.map(row)}</div> : <Empty>{data.length ? 'Everything is attended.' : 'No messages yet.'}</Empty>}</Card>
     {done.length > 0 && <Fold title="Attended"><div className="ad-list">{done.map(row)}</div></Fold>}

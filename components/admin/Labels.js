@@ -9,7 +9,7 @@ import { ADDRESS_TEXT } from '@/lib/address';
 // A4 portrait. Every label is one strip, as wide as the printable area and 3.5 cm tall: sender on the left half (stacked logo, name, studio address, phone), recipient on the right half.
 const ROWS_PER_PAGE = 7;
 // the address is one continuous run (it wraps only at the edge of the cell): line 1, line 2, city, state, then PIN - 600024
-const lines = (a) => [[a.line1, a.line2, a.city, a.state, a.pincode ? `PIN - ${a.pincode}` : ''].filter(Boolean).join(', ')].filter(Boolean);
+const lines = (a) => [[a.line1, a.line2, a.city, a.state, a.pincode ? `PIN\u00A0-\u00A0${a.pincode}` : ''].filter(Boolean).join(', ')].filter(Boolean);
 const custAddr = (c) => ({ line1: c.address_line1, line2: c.address_line2, city: c.city, state: c.state, pincode: c.pincode });
 
 export default function Labels() {

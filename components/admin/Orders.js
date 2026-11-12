@@ -15,7 +15,7 @@ const isPaid = (o) => ['paid', 'packed', 'shipped', 'delivered'].includes(o.stat
 const isShipped = (o) => ['shipped', 'delivered'].includes(o.status);
 const toShip = (o) => ['paid', 'packed'].includes(o.status);
 const isOff = (o) => ['cancelled', 'refunded'].includes(o.status);
-const addr = (a) => (a ? [a.recipient, a.line1, a.line2, a.city, a.state, a.pincode ? `PIN - ${a.pincode}` : ''].filter(Boolean).join(', ') : '');
+const addr = (a) => (a ? [a.recipient, a.line1, a.line2, a.city, a.state, a.pincode ? `PIN\u00A0-\u00A0${a.pincode}` : ''].filter(Boolean).join(', ') : '');
 const param = (k) => { try { return new URLSearchParams(window.location.search).get(k); } catch { return null; } };   // a link from elsewhere in the app (e.g. Accounts) can open one order
 
 export default function Orders() {

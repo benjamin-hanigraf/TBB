@@ -4,6 +4,7 @@ import Btn from '@/components/Btn';
 import Pic from '@/components/Pic';
 import JsonLd from '@/components/JsonLd';
 import BookWorkshop from '@/components/BookWorkshop';
+import WaitlistForm from '@/components/WaitlistForm';
 import Icon from '@/components/Icons';
 import { rupees, isPast, fmtDate } from '@/lib/data';
 import { getBusiness } from '@/lib/db';
@@ -26,7 +27,8 @@ export default async function Workshop({ params }) {
           <li><Icon n="pin" /><span><b>{w.venue}</b><br /><span className="muted">{w.address}</span></span></li>
           <li><Icon n="note" /><span>{rupees(w.price)}{w.gstMode === 'add' ? ' + 18% GST' : w.gstMode === 'included' ? ' incl. GST' : ''} per person, kit included{w.regularPrice ? <><br /><span className="muted">Early-bird price until {fmtDate(w.earlyUntil)}. Then {rupees(w.regularPrice)}.</span></> : null}{w.friendPrice ? <><br /><span className="muted">{rupees(w.friendPrice)} each when you bring a friend</span></> : null}</span></li>
         </ul>
-        {closed || w.seatsLeft === 0 ? <div className="row"><Btn icon="calendar" disabled>{w.cancelled ? 'Cancelled' : isPast(w) ? 'Booking closed' : 'Sold out'}</Btn><Btn href={business.whatsapp} variant="ghost" icon="chat">WhatsApp</Btn></div>
+        {closed ? <div className="row"><Btn icon="calendar" disabled>{w.cancelled ? 'Cancelled' : 'Booking closed'}</Btn><Btn href={business.whatsapp} variant="ghost" icon="chat">WhatsApp</Btn></div>
+          : w.seatsLeft === 0 ? <div className="row"><WaitlistForm slug={w.slug} /></div>
           : <><div className="row"><BookWorkshop slug={w.slug} title={w.title} price={w.price} friendPrice={w.friendPrice} gstMode={w.gstMode} seatsLeft={w.seatsLeft} whatsapp={business.whatsapp} /></div></>}
         {closed && <p className="fine">This workshop is over. <Link href="/workshops" style={{textDecoration:'underline'}}>See upcoming workshops</Link>.</p>}
       </div></div></section>

@@ -15,8 +15,9 @@ Whenever the web address changes (Vercel address now, real domain at launch), up
 - Google Cloud console (only if Google login is on): authorised origins
 
 ## Database
-Run in the Supabase SQL Editor, in order: `supabase/schema.sql`, `supabase/seed.sql`, `supabase/v2.sql`, `supabase/v3.sql`, `supabase/v4.sql`, `supabase/v5.sql`, `supabase/v6.sql`, `supabase/v7.sql`, `supabase/v8.sql`, `supabase/v9.sql`, `supabase/v10.sql`.
-**Test data:** `supabase/dummy.sql` fills every table with at least 10 varied rows (every status, part-paid invoices, a sold-out workshop, class batches with attendance, and so on) so each screen can be tried. Run it once after the files above. `supabase/dummy-remove.sql` takes all of it out again, including anything made while testing with `@example.com` emails: **run it before the site goes live**, because the dummy workshops, products and classes show on the public website. To change the data, edit `tools/make_dummy_sql.py` and run `python3 tools/make_dummy_sql.py`.
+**One file:** `supabase/database.sql` is the complete, latest database (tables, security rules, functions, starting data). Paste it into the Supabase SQL Editor and press Run. It works on a brand-new project and on the existing database, never deletes or resets anything you entered, and is safe to run again. Whenever the database changes, this same file is edited and run again (no new files).
+
+**Test data:** `supabase/dummy.sql` fills every table with at least 10 varied rows (every status, part-paid invoices, a sold-out workshop, one-on-one classes, rent-outs, and so on) so each screen can be tried. Run it once after the file above. `supabase/dummy-remove.sql` takes all of it out again, including anything made while testing with `@example.com` emails: **run it before the site goes live**, because the dummy workshops, products and classes show on the public website. To change the data, edit `tools/make_dummy_sql.py` and run `python3 tools/make_dummy_sql.py`.
 
 Make the owner an admin: `update profiles set role='admin' where email='owner@example.com';`
 

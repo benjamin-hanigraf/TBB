@@ -49,7 +49,7 @@ export default function CalendarPanel({ version = 0 }) {
   const row = (e, i, showDate) => { const inner = (<><div className="main"><b>{e.title}</b><small>{[showDate && new Date(`${e.date}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }), e.time, e.note].filter(Boolean).join(' · ') || KINDS[e.kind]}</small></div><div className="end">{e.draft && <Badge>Draft</Badge>}<span className={`kindtag ${e.kind}`}>{KINDS[e.kind]}</span></div></>);
     return e.event ? <button key={i} className="ad-row" onClick={() => setEdit(e.event)}>{inner}</button> : <Link key={i} href={e.href} className="ad-row">{inner}</Link>; };
   return (<>
-    {data.missing?.length > 0 && <p className="ad-err" role="alert">Could not load {data.missing.join(', ')}. If this keeps happening, the latest database update (supabase/v8.sql) may not have been run yet.</p>}
+    {data.missing?.length > 0 && <p className="ad-err" role="alert">Could not load {data.missing.join(', ')}. If this keeps happening, supabase/database.sql may not have been run yet.</p>}
     <Card>
       <div className="cal-head"><button className="ad-x" aria-label="Previous month" onClick={() => go(-1)}><Icon n="left" size={18} /></button><h2>{MONTHS[m - 1]} {y}</h2><button className="ad-x" aria-label="Next month" onClick={() => go(1)}><Icon n="right" size={18} /></button>
         <button className="ad-btn ghost sm" onClick={() => { setYm(today.slice(0, 7)); setSel(today); }}>Today</button><button className="ad-btn sm" onClick={() => setEdit({ on_date: sel })}><Icon n="plus" size={14} /><span>Event</span></button></div>

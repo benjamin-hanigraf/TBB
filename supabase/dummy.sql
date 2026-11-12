@@ -1,6 +1,6 @@
 -- ============ DUMMY TEST DATA (made by tools/make_dummy_sql.py, do not edit by hand) ============
 -- Fills every table with at least 10 varied rows so every screen of the website and the Manager app can be tried.
--- Run AFTER schema.sql, seed.sql and v2.sql to v10.sql. Run it once; to take everything out again run supabase/dummy-remove.sql.
+-- Run AFTER supabase/database.sql. Run it once; to take everything out again run supabase/dummy-remove.sql.
 -- Every dummy row has an id starting with dededede- and every dummy person uses an @example.com email.
 -- Dummy workshops, products and classes are named "Demo ..." and DO show on the public website while they are in the database.
 -- Website receipt numbers are not used up: dummy orders, bookings and enrolments use numbers 9001 and up.
@@ -80,62 +80,17 @@ insert into class_types (id, name, sort_order) values
 
 -- class levels: several tracks, active and hidden, every GST option
 
-insert into class_levels (id, slug, track, title, level, description, covers, price_paise, sessions, active, sort_order, days, time_text, gst_mode) values
-('dededede-0003-4000-8000-000000000001', 'demo-cursive-1', 'Demo: Cursive', 'Cursive Writing', 'Level 1', 'A dummy class level for testing enrolments, batches and attendance.', array['Posture and grip','Basic strokes','Letters and joins'], 500000, 8, true, 100, array[2,4], '4:30 to 5:30 pm', 'none'),
-('dededede-0003-4000-8000-000000000002', 'demo-cursive-2', 'Demo: Cursive', 'Cursive Writing', 'Level 2', 'A dummy class level for testing enrolments, batches and attendance.', array['Posture and grip','Basic strokes','Letters and joins'], 550000, 8, true, 101, array[2,4], '5:30 to 6:30 pm', 'none'),
-('dededede-0003-4000-8000-000000000003', 'demo-brush-1', 'Demo: Brush Lettering', 'Brush Lettering', 'Beginner', 'A dummy class level for testing enrolments, batches and attendance.', array['Posture and grip','Basic strokes','Letters and joins'], 650000, 6, true, 102, array[6], '11 am to 12:30 pm', 'included'),
-('dededede-0003-4000-8000-000000000004', 'demo-brush-2', 'Demo: Brush Lettering', 'Brush Lettering', 'Intermediate', 'A dummy class level for testing enrolments, batches and attendance.', array['Posture and grip','Basic strokes','Letters and joins'], 700000, 6, true, 103, array[6], '2 to 3:30 pm', 'add'),
-('dededede-0003-4000-8000-000000000005', 'demo-copperplate-1', 'Demo: Copperplate', 'Copperplate', 'Foundation', 'A dummy class level for testing enrolments, batches and attendance.', array['Posture and grip','Basic strokes','Letters and joins'], 900000, 10, true, 104, array[1,3], '7 to 8 pm', 'add'),
-('dededede-0003-4000-8000-000000000006', 'demo-italic-1', 'Demo: Italic', 'Italic Hand', 'Level 1', 'A dummy class level for testing enrolments, batches and attendance.', array['Posture and grip','Basic strokes','Letters and joins'], 600000, 8, true, 105, array[5], '4 to 5 pm', 'none'),
-('dededede-0003-4000-8000-000000000007', 'demo-kids-art', 'Demo: Kids Art', 'Kids Art Club', 'Ages 5 to 8', 'A dummy class level for testing enrolments, batches and attendance.', array['Posture and grip','Basic strokes','Letters and joins'], 400000, 12, true, 106, array[0], '10 to 11 am', 'none'),
-('dededede-0003-4000-8000-000000000008', 'demo-watercolour-1', 'Demo: Watercolour', 'Watercolour', 'Beginner', 'A dummy class level for testing enrolments, batches and attendance.', array['Posture and grip','Basic strokes','Letters and joins'], 800000, 8, true, 107, array[3], '6 to 7:30 pm', 'included'),
-('dededede-0003-4000-8000-000000000009', 'demo-gothic-1', 'Demo: Gothic', 'Gothic Script', 'Level 1', 'A dummy class level for testing enrolments, batches and attendance.', array['Posture and grip','Basic strokes','Letters and joins'], 750000, 8, false, 108, array[2], '7 to 8 pm', 'none'),
-('dededede-0003-4000-8000-000000000010', 'demo-sketching-1', 'Demo: Sketching', 'Urban Sketching', 'Open level', 'A dummy class level for testing enrolments, batches and attendance.', array['Posture and grip','Basic strokes','Letters and joins'], 450000, 4, true, 109, array[0,6], '7 to 9 am', 'add');
-
--- class batches: running, finished, starting soon, weekday and weekend, with and without a seat limit; plus three one-on-one schedules
-
-insert into class_batches (id, class_id, name, starts_on, days, time_text, sessions, capacity, active, solo) values
-('dededede-0004-4000-8000-000000000001', 'dededede-0003-4000-8000-000000000001', 'Demo: Cursive L1, Tue Thu (running)', (current_date + -21), array[2,4], '4:30 to 5:30 pm', 8, 10, true, false),
-('dededede-0004-4000-8000-000000000002', 'dededede-0003-4000-8000-000000000001', 'Demo: Cursive L1, next batch', (current_date + 14), array[2,4], '4:30 to 5:30 pm', 8, 10, true, false),
-('dededede-0004-4000-8000-000000000003', 'dededede-0003-4000-8000-000000000002', 'Demo: Cursive L2, finished', (current_date + -70), array[2,4], '5:30 to 6:30 pm', 8, 8, false, false),
-('dededede-0004-4000-8000-000000000004', 'dededede-0003-4000-8000-000000000003', 'Demo: Brush Beginner, Saturdays', (current_date + -14), array[6], '11 am to 12:30 pm', 6, 8, true, false),
-('dededede-0004-4000-8000-000000000005', 'dededede-0003-4000-8000-000000000004', 'Demo: Brush Intermediate', (current_date + 7), array[6], '2 to 3:30 pm', 6, 6, true, false),
-('dededede-0004-4000-8000-000000000006', 'dededede-0003-4000-8000-000000000005', 'Demo: Copperplate Mon Wed', (current_date + -10), array[1,3], '7 to 8 pm', 10, 6, true, false),
-('dededede-0004-4000-8000-000000000007', 'dededede-0003-4000-8000-000000000006', 'Demo: Italic Fridays', (current_date + -35), array[5], '4 to 5 pm', 8, 8, true, false),
-('dededede-0004-4000-8000-000000000008', 'dededede-0003-4000-8000-000000000007', 'Demo: Kids Art Sundays', (current_date + -28), array[0], '10 to 11 am', 12, 15, true, false),
-('dededede-0004-4000-8000-000000000009', 'dededede-0003-4000-8000-000000000008', 'Demo: Watercolour Wednesdays', (current_date + 3), array[3], '6 to 7:30 pm', 8, null, true, false),
-('dededede-0004-4000-8000-000000000010', 'dededede-0003-4000-8000-000000000010', 'Demo: Sketching weekends', (current_date + -7), array[0,6], '7 to 9 am', 4, 12, true, false),
-('dededede-0004-4000-8000-000000000011', 'dededede-0003-4000-8000-000000000001', 'Demo: Cursive L1, holiday batch', (current_date + 30), array[1,2,3,4,5], '10 to 11 am', 8, 12, true, false),
-('dededede-0004-4000-8000-000000000012', 'dededede-0003-4000-8000-000000000009', 'Demo: Gothic (hidden level)', (current_date + -40), array[2], '7 to 8 pm', 8, 6, false, false),
-('dededede-0004-4000-8000-000000000013', 'dededede-0003-4000-8000-000000000003', 'Fatima Sheikh', (current_date + -20), '{}', null, 6, 1, true, true),
-('dededede-0004-4000-8000-000000000014', 'dededede-0003-4000-8000-000000000005', 'Priya Sundaram', (current_date + -9), '{}', null, 10, 1, true, true),
-('dededede-0004-4000-8000-000000000015', 'dededede-0003-4000-8000-000000000001', 'Anika', (current_date + -3), '{}', null, 8, 1, true, true);
-
--- class sessions: one dated class for each lesson of each dummy batch, on the batch's days. Past ones are marked done.
-insert into class_sessions (id, batch_id, no, on_date, status)
-select ('dededede-0005-4000-8000-' || lpad((row_number() over ())::text, 12, '0'))::uuid, x.batch_id, x.no, x.d, case when x.d < current_date then 'done' else 'scheduled' end
-from (select b.id batch_id, g.d::date d, row_number() over (partition by b.id order by g.d) no, b.sessions
-      from class_batches b cross join generate_series(b.starts_on, b.starts_on + 400, interval '1 day') g(d)
-      where b.id::text like 'dededede-%' and extract(dow from g.d)::int = any(b.days)) x
-where x.no <= x.sessions;
--- one-on-one classes: chosen dates, each with its own time
-insert into class_sessions (id, batch_id, no, on_date, time_text, status) values
-('dededede-0005-4000-8000-000000005130', 'dededede-0004-4000-8000-000000000013', 1, (current_date + -20), '11 am', 'done'),
-('dededede-0005-4000-8000-000000005131', 'dededede-0004-4000-8000-000000000013', 2, (current_date + -13), '11 am', 'done'),
-('dededede-0005-4000-8000-000000005132', 'dededede-0004-4000-8000-000000000013', 3, (current_date + -6), '4 pm', 'done'),
-('dededede-0005-4000-8000-000000005133', 'dededede-0004-4000-8000-000000000013', 4, (current_date + 2), '11 am', 'scheduled'),
-('dededede-0005-4000-8000-000000005134', 'dededede-0004-4000-8000-000000000013', 5, (current_date + 9), '11 am', 'scheduled'),
-('dededede-0005-4000-8000-000000005135', 'dededede-0004-4000-8000-000000000013', 6, (current_date + 16), '5:30 pm', 'scheduled'),
-('dededede-0005-4000-8000-000000005140', 'dededede-0004-4000-8000-000000000014', 1, (current_date + -9), '7 pm', 'done'),
-('dededede-0005-4000-8000-000000005141', 'dededede-0004-4000-8000-000000000014', 2, (current_date + -2), '7 pm', 'done'),
-('dededede-0005-4000-8000-000000005142', 'dededede-0004-4000-8000-000000000014', 3, (current_date + 0), '6 pm', 'scheduled'),
-('dededede-0005-4000-8000-000000005143', 'dededede-0004-4000-8000-000000000014', 4, (current_date + 5), '7 pm', 'scheduled'),
-('dededede-0005-4000-8000-000000005150', 'dededede-0004-4000-8000-000000000015', 1, (current_date + -3), '4:30 pm', 'done'),
-('dededede-0005-4000-8000-000000005151', 'dededede-0004-4000-8000-000000000015', 2, (current_date + 4), '4:30 pm', 'scheduled'),
-('dededede-0005-4000-8000-000000005152', 'dededede-0004-4000-8000-000000000015', 3, (current_date + 11), '10 am', 'scheduled');
--- one class cancelled and one moved to another day, to see how they look
-update class_sessions set status = 'cancelled', note = 'Teacher unwell (dummy)' where batch_id = 'dededede-0004-4000-8000-000000000001' and no = (select min(no) from class_sessions where batch_id = 'dededede-0004-4000-8000-000000000001' and status = 'scheduled');
-update class_sessions set moved_from = on_date, on_date = on_date + 1, note = 'Moved for a holiday (dummy)' where batch_id = 'dededede-0004-4000-8000-000000000006' and no = (select max(no) from class_sessions where batch_id = 'dededede-0004-4000-8000-000000000006');
+insert into class_levels (id, slug, track, title, level, description, covers, price_paise, sessions, active, sort_order, gst_mode) values
+('dededede-0003-4000-8000-000000000001', 'demo-cursive-1', 'Demo: Cursive', 'Cursive Writing', 'Level 1', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 500000, 8, true, 100, 'none'),
+('dededede-0003-4000-8000-000000000002', 'demo-cursive-2', 'Demo: Cursive', 'Cursive Writing', 'Level 2', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 550000, 8, true, 101, 'none'),
+('dededede-0003-4000-8000-000000000003', 'demo-brush-1', 'Demo: Brush Lettering', 'Brush Lettering', 'Beginner', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 650000, 6, true, 102, 'included'),
+('dededede-0003-4000-8000-000000000004', 'demo-brush-2', 'Demo: Brush Lettering', 'Brush Lettering', 'Intermediate', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 700000, 6, true, 103, 'add'),
+('dededede-0003-4000-8000-000000000005', 'demo-copperplate-1', 'Demo: Copperplate', 'Copperplate', 'Foundation', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 900000, 10, true, 104, 'add'),
+('dededede-0003-4000-8000-000000000006', 'demo-italic-1', 'Demo: Italic', 'Italic Hand', 'Level 1', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 600000, 8, true, 105, 'none'),
+('dededede-0003-4000-8000-000000000007', 'demo-kids-art', 'Demo: Kids Art', 'Kids Art Club', 'Ages 5 to 8', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 400000, 12, true, 106, 'none'),
+('dededede-0003-4000-8000-000000000008', 'demo-watercolour-1', 'Demo: Watercolour', 'Watercolour', 'Beginner', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 800000, 8, true, 107, 'included'),
+('dededede-0003-4000-8000-000000000009', 'demo-gothic-1', 'Demo: Gothic', 'Gothic Script', 'Level 1', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 750000, 8, false, 108, 'none'),
+('dededede-0003-4000-8000-000000000010', 'demo-sketching-1', 'Demo: Sketching', 'Urban Sketching', 'Open level', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 450000, 4, true, 109, 'add');
 
 -- customers: every source, opted in and out, with and without email, and a duplicate pair (same phone) to try Merge
 
@@ -191,34 +146,91 @@ insert into workshop_waitlist (id, workshop_id, name, email, phone, seats, notif
 ('dededede-0008-4000-8000-000000000009', 'dededede-0001-4000-8000-000000000011', 'Rohan Mehta', 'rohan.mehta@example.com', '+91 98765 00004', 1, null, ((current_date + -3) + time '15:00') at time zone 'Asia/Kolkata'),
 ('dededede-0008-4000-8000-000000000010', 'dededede-0001-4000-8000-000000000011', 'Arjun Nair', 'arjun.nair@example.com', null, 2, null, ((current_date + -2) + time '15:00') at time zone 'Asia/Kolkata');
 
--- class enrolments: children 5 to 15 and adults, placed in a batch or not yet, paid, unpaid, refunded, cancelled, transferred
+-- class enrolments: children 5 to 15 and adults; paid, unpaid, refunded, cancelled, transferred
 
-insert into class_enrolments (id, class_id, batch_id, student_name, student_group, student_age, name, email, phone, amount_paise, gst_paise, status, channel, payment_method, razorpay_order_id, razorpay_payment_id, invoice_no, notes, created_at, paid_at) values
-('dededede-0006-4000-8000-000000000001', 'dededede-0003-4000-8000-000000000001', 'dededede-0004-4000-8000-000000000001', 'Aadhya', 'child', 7, 'Anita Rao', 'anita.rao@example.com', '+91 98765 00001', 500000, 0, 'paid', 'website', 'razorpay', 'order_demo_en001', 'pay_demo_en001', 9101, null, ((current_date + -25) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -25) + time '18:10') at time zone 'Asia/Kolkata'),
-('dededede-0006-4000-8000-000000000002', 'dededede-0003-4000-8000-000000000001', 'dededede-0004-4000-8000-000000000001', 'Ishaan', 'child', 9, 'Vikram Iyer', 'vikram.iyer@example.com', '+91 98765 00002', 500000, 0, 'paid', 'manual', 'cash', null, null, 9102, null, ((current_date + -24) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -24) + time '18:10') at time zone 'Asia/Kolkata'),
-('dededede-0006-4000-8000-000000000003', 'dededede-0003-4000-8000-000000000001', 'dededede-0004-4000-8000-000000000001', 'Kavya', 'child', 6, 'Meera Krishnan', 'meera.k@example.com', '+91 98765 00003', 500000, 0, 'paid', 'website', 'razorpay', 'order_demo_en003', 'pay_demo_en003', 9103, null, ((current_date + -23) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -23) + time '18:10') at time zone 'Asia/Kolkata'),
-('dededede-0006-4000-8000-000000000004', 'dededede-0003-4000-8000-000000000001', 'dededede-0004-4000-8000-000000000001', 'Rohan Mehta', 'adult', null, 'Rohan Mehta', 'rohan.mehta@example.com', '+91 98765 00004', 500000, 0, 'paid', 'manual', 'upi', null, null, 9104, 'Needs a left-handed holder', ((current_date + -22) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -22) + time '18:10') at time zone 'Asia/Kolkata'),
-('dededede-0006-4000-8000-000000000005', 'dededede-0003-4000-8000-000000000001', 'dededede-0004-4000-8000-000000000002', 'Vihaan', 'child', 11, 'Fatima Sheikh', 'fatima.s@example.com', '+91 98765 00005', 500000, 0, 'pending', 'website', null, 'order_demo_en005', null, 9105, null, ((current_date + -21) + time '18:00') at time zone 'Asia/Kolkata', null),
-('dededede-0006-4000-8000-000000000006', 'dededede-0003-4000-8000-000000000002', 'dededede-0004-4000-8000-000000000003', 'Diya', 'child', 12, 'Arjun Nair', 'arjun.nair@example.com', '+91 98765 00006', 550000, 0, 'paid', 'website', 'razorpay', 'order_demo_en006', 'pay_demo_en006', 9106, null, ((current_date + -20) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -20) + time '18:10') at time zone 'Asia/Kolkata'),
-('dededede-0006-4000-8000-000000000007', 'dededede-0003-4000-8000-000000000003', 'dededede-0004-4000-8000-000000000004', 'Priya Sundaram', 'adult', null, 'Priya Sundaram', 'priya.s@example.com', '+91 98765 00007', 650000, 99153, 'paid', 'website', 'razorpay', 'order_demo_en007', 'pay_demo_en007', 9107, null, ((current_date + -19) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -19) + time '18:10') at time zone 'Asia/Kolkata'),
-('dededede-0006-4000-8000-000000000008', 'dededede-0003-4000-8000-000000000003', 'dededede-0004-4000-8000-000000000004', 'Karthik Raman', 'adult', null, 'Karthik Raman', 'karthik.r@example.com', '+91 98765 00008', 650000, 99153, 'paid', 'manual', 'cash', null, null, 9108, null, ((current_date + -18) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -18) + time '18:10') at time zone 'Asia/Kolkata'),
-('dededede-0006-4000-8000-000000000009', 'dededede-0003-4000-8000-000000000005', 'dededede-0004-4000-8000-000000000006', 'Divya Menon', 'adult', null, 'Divya Menon', 'divya.menon@example.com', '+91 98765 00009', 1062000, 162000, 'paid', 'website', 'razorpay', 'order_demo_en009', 'pay_demo_en009', 9109, null, ((current_date + -17) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -17) + time '18:10') at time zone 'Asia/Kolkata'),
-('dededede-0006-4000-8000-000000000010', 'dededede-0003-4000-8000-000000000005', 'dededede-0004-4000-8000-000000000006', 'Sanjay Gupta', 'adult', null, 'Sanjay Gupta', 'sanjay.g@example.com', '+91 98765 00010', 1062000, 162000, 'refunded', 'website', 'razorpay', 'order_demo_en010', 'pay_demo_en010', 9110, null, ((current_date + -16) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -16) + time '18:10') at time zone 'Asia/Kolkata'),
-('dededede-0006-4000-8000-000000000011', 'dededede-0003-4000-8000-000000000006', 'dededede-0004-4000-8000-000000000007', 'Advik', 'child', 15, 'Lakshmi Venkat', 'lakshmi.v@example.com', '+91 98765 00011', 600000, 0, 'paid', 'manual', 'cash', null, null, 9111, null, ((current_date + -15) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -15) + time '18:10') at time zone 'Asia/Kolkata'),
-('dededede-0006-4000-8000-000000000012', 'dededede-0003-4000-8000-000000000007', 'dededede-0004-4000-8000-000000000008', 'Myra', 'child', 5, 'Neha Joshi', 'neha.joshi@example.com', '+91 98765 00012', 400000, 0, 'paid', 'website', 'razorpay', 'order_demo_en012', 'pay_demo_en012', 9112, null, ((current_date + -14) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -14) + time '18:10') at time zone 'Asia/Kolkata'),
-('dededede-0006-4000-8000-000000000013', 'dededede-0003-4000-8000-000000000007', 'dededede-0004-4000-8000-000000000008', 'Reyansh', 'child', 8, 'Rahul Das', 'rahul.das@example.com', '+91 98765 00013', 400000, 0, 'cancelled', 'manual', null, null, null, 9113, null, ((current_date + -13) + time '18:00') at time zone 'Asia/Kolkata', null),
-('dededede-0006-4000-8000-000000000014', 'dededede-0003-4000-8000-000000000008', 'dededede-0004-4000-8000-000000000009', 'Sneha Pillai', 'adult', null, 'Sneha Pillai', 'sneha.p@example.com', '+91 98765 00014', 800000, 122034, 'pending', 'manual', null, null, null, 9114, null, ((current_date + -12) + time '18:00') at time zone 'Asia/Kolkata', null),
-('dededede-0006-4000-8000-000000000015', 'dededede-0003-4000-8000-000000000010', 'dededede-0004-4000-8000-000000000010', 'Anita Rao', 'adult', null, 'Anita Rao', 'anita.rao@example.com', '+91 98765 00001', 531000, 81000, 'paid', 'manual', 'bank', null, null, 9115, null, ((current_date + -11) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -11) + time '18:10') at time zone 'Asia/Kolkata'),
-('dededede-0006-4000-8000-000000000016', 'dededede-0003-4000-8000-000000000001', null, 'Saanvi', 'child', 10, 'Meera Krishnan', 'meera.k@example.com', '+91 98765 00003', 500000, 0, 'transferred', 'website', 'razorpay', 'order_demo_en016', 'pay_demo_en016', 9116, null, ((current_date + -10) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -10) + time '18:10') at time zone 'Asia/Kolkata'),
-('dededede-0006-4000-8000-000000000017', 'dededede-0003-4000-8000-000000000003', 'dededede-0004-4000-8000-000000000013', 'Fatima Sheikh', 'adult', null, 'Fatima Sheikh', 'fatima.s@example.com', '+91 98765 00005', 650000, 99153, 'paid', 'manual', 'cash', null, null, 9117, null, ((current_date + -9) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -9) + time '18:10') at time zone 'Asia/Kolkata'),
-('dededede-0006-4000-8000-000000000018', 'dededede-0003-4000-8000-000000000005', 'dededede-0004-4000-8000-000000000014', 'Priya Sundaram', 'adult', null, 'Priya Sundaram', 'priya.s@example.com', '+91 98765 00007', 1062000, 162000, 'paid', 'website', 'razorpay', 'order_demo_en018', 'pay_demo_en018', 9118, null, ((current_date + -8) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -8) + time '18:10') at time zone 'Asia/Kolkata'),
-('dededede-0006-4000-8000-000000000019', 'dededede-0003-4000-8000-000000000001', 'dededede-0004-4000-8000-000000000015', 'Anika', 'child', 8, 'Sanjay Gupta', 'sanjay.g@example.com', '+91 98765 00010', 500000, 0, 'paid', 'manual', 'upi', null, null, 9119, null, ((current_date + -7) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -7) + time '18:10') at time zone 'Asia/Kolkata');
+insert into class_enrolments (id, class_id, student_name, student_group, student_age, name, email, phone, amount_paise, gst_paise, status, channel, payment_method, razorpay_order_id, razorpay_payment_id, invoice_no, notes, created_at, paid_at) values
+('dededede-0006-4000-8000-000000000001', 'dededede-0003-4000-8000-000000000001', 'Aadhya', 'child', 7, 'Anita Rao', 'anita.rao@example.com', '+91 98765 00001', 500000, 0, 'paid', 'website', 'razorpay', 'order_demo_en001', 'pay_demo_en001', 9101, null, ((current_date + -25) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -25) + time '18:10') at time zone 'Asia/Kolkata'),
+('dededede-0006-4000-8000-000000000002', 'dededede-0003-4000-8000-000000000001', 'Ishaan', 'child', 9, 'Vikram Iyer', 'vikram.iyer@example.com', '+91 98765 00002', 500000, 0, 'paid', 'manual', 'cash', null, null, 9102, null, ((current_date + -24) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -24) + time '18:10') at time zone 'Asia/Kolkata'),
+('dededede-0006-4000-8000-000000000003', 'dededede-0003-4000-8000-000000000001', 'Kavya', 'child', 6, 'Meera Krishnan', 'meera.k@example.com', '+91 98765 00003', 500000, 0, 'paid', 'website', 'razorpay', 'order_demo_en003', 'pay_demo_en003', 9103, null, ((current_date + -23) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -23) + time '18:10') at time zone 'Asia/Kolkata'),
+('dededede-0006-4000-8000-000000000004', 'dededede-0003-4000-8000-000000000001', 'Rohan Mehta', 'adult', null, 'Rohan Mehta', 'rohan.mehta@example.com', '+91 98765 00004', 500000, 0, 'paid', 'manual', 'upi', null, null, 9104, 'Needs a left-handed holder', ((current_date + -22) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -22) + time '18:10') at time zone 'Asia/Kolkata'),
+('dededede-0006-4000-8000-000000000005', 'dededede-0003-4000-8000-000000000001', 'Vihaan', 'child', 11, 'Fatima Sheikh', 'fatima.s@example.com', '+91 98765 00005', 500000, 0, 'pending', 'website', null, 'order_demo_en005', null, 9105, null, ((current_date + -21) + time '18:00') at time zone 'Asia/Kolkata', null),
+('dededede-0006-4000-8000-000000000006', 'dededede-0003-4000-8000-000000000002', 'Diya', 'child', 12, 'Arjun Nair', 'arjun.nair@example.com', '+91 98765 00006', 550000, 0, 'paid', 'website', 'razorpay', 'order_demo_en006', 'pay_demo_en006', 9106, null, ((current_date + -20) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -20) + time '18:10') at time zone 'Asia/Kolkata'),
+('dededede-0006-4000-8000-000000000007', 'dededede-0003-4000-8000-000000000003', 'Priya Sundaram', 'adult', null, 'Priya Sundaram', 'priya.s@example.com', '+91 98765 00007', 650000, 99153, 'paid', 'website', 'razorpay', 'order_demo_en007', 'pay_demo_en007', 9107, null, ((current_date + -19) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -19) + time '18:10') at time zone 'Asia/Kolkata'),
+('dededede-0006-4000-8000-000000000008', 'dededede-0003-4000-8000-000000000003', 'Karthik Raman', 'adult', null, 'Karthik Raman', 'karthik.r@example.com', '+91 98765 00008', 650000, 99153, 'paid', 'manual', 'cash', null, null, 9108, null, ((current_date + -18) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -18) + time '18:10') at time zone 'Asia/Kolkata'),
+('dededede-0006-4000-8000-000000000009', 'dededede-0003-4000-8000-000000000005', 'Divya Menon', 'adult', null, 'Divya Menon', 'divya.menon@example.com', '+91 98765 00009', 1062000, 162000, 'paid', 'website', 'razorpay', 'order_demo_en009', 'pay_demo_en009', 9109, null, ((current_date + -17) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -17) + time '18:10') at time zone 'Asia/Kolkata'),
+('dededede-0006-4000-8000-000000000010', 'dededede-0003-4000-8000-000000000005', 'Sanjay Gupta', 'adult', null, 'Sanjay Gupta', 'sanjay.g@example.com', '+91 98765 00010', 1062000, 162000, 'refunded', 'website', 'razorpay', 'order_demo_en010', 'pay_demo_en010', 9110, null, ((current_date + -16) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -16) + time '18:10') at time zone 'Asia/Kolkata'),
+('dededede-0006-4000-8000-000000000011', 'dededede-0003-4000-8000-000000000006', 'Advik', 'child', 15, 'Lakshmi Venkat', 'lakshmi.v@example.com', '+91 98765 00011', 600000, 0, 'paid', 'manual', 'cash', null, null, 9111, null, ((current_date + -15) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -15) + time '18:10') at time zone 'Asia/Kolkata'),
+('dededede-0006-4000-8000-000000000012', 'dededede-0003-4000-8000-000000000007', 'Myra', 'child', 5, 'Neha Joshi', 'neha.joshi@example.com', '+91 98765 00012', 400000, 0, 'paid', 'website', 'razorpay', 'order_demo_en012', 'pay_demo_en012', 9112, null, ((current_date + -14) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -14) + time '18:10') at time zone 'Asia/Kolkata'),
+('dededede-0006-4000-8000-000000000013', 'dededede-0003-4000-8000-000000000007', 'Reyansh', 'child', 8, 'Rahul Das', 'rahul.das@example.com', '+91 98765 00013', 400000, 0, 'cancelled', 'manual', null, null, null, 9113, null, ((current_date + -13) + time '18:00') at time zone 'Asia/Kolkata', null),
+('dededede-0006-4000-8000-000000000014', 'dededede-0003-4000-8000-000000000008', 'Sneha Pillai', 'adult', null, 'Sneha Pillai', 'sneha.p@example.com', '+91 98765 00014', 800000, 122034, 'pending', 'manual', null, null, null, 9114, null, ((current_date + -12) + time '18:00') at time zone 'Asia/Kolkata', null),
+('dededede-0006-4000-8000-000000000015', 'dededede-0003-4000-8000-000000000010', 'Anita Rao', 'adult', null, 'Anita Rao', 'anita.rao@example.com', '+91 98765 00001', 531000, 81000, 'paid', 'manual', 'bank', null, null, 9115, null, ((current_date + -11) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -11) + time '18:10') at time zone 'Asia/Kolkata'),
+('dededede-0006-4000-8000-000000000016', 'dededede-0003-4000-8000-000000000001', 'Saanvi', 'child', 10, 'Meera Krishnan', 'meera.k@example.com', '+91 98765 00003', 500000, 0, 'transferred', 'website', 'razorpay', 'order_demo_en016', 'pay_demo_en016', 9116, null, ((current_date + -10) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -10) + time '18:10') at time zone 'Asia/Kolkata'),
+('dededede-0006-4000-8000-000000000017', 'dededede-0003-4000-8000-000000000003', 'Fatima Sheikh', 'adult', null, 'Fatima Sheikh', 'fatima.s@example.com', '+91 98765 00005', 650000, 99153, 'paid', 'manual', 'cash', null, null, 9117, null, ((current_date + -9) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -9) + time '18:10') at time zone 'Asia/Kolkata'),
+('dededede-0006-4000-8000-000000000018', 'dededede-0003-4000-8000-000000000005', 'Priya Sundaram', 'adult', null, 'Priya Sundaram', 'priya.s@example.com', '+91 98765 00007', 1062000, 162000, 'paid', 'website', 'razorpay', 'order_demo_en018', 'pay_demo_en018', 9118, null, ((current_date + -8) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -8) + time '18:10') at time zone 'Asia/Kolkata'),
+('dededede-0006-4000-8000-000000000019', 'dededede-0003-4000-8000-000000000001', 'Anika', 'child', 8, 'Sanjay Gupta', 'sanjay.g@example.com', '+91 98765 00010', 500000, 0, 'paid', 'manual', 'upi', null, null, 9119, null, ((current_date + -7) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -7) + time '18:10') at time zone 'Asia/Kolkata');
 
--- attendance: for every class already held, each paid student in that batch is marked present or absent
-insert into class_attendance (session_id, enrolment_id, present)
-select s.id, e.id, (abs(hashtext(s.id::text || e.id::text)) % 5) <> 0
-from class_sessions s join class_enrolments e on e.batch_id = s.batch_id and e.status = 'paid'
-where s.batch_id::text like 'dededede-%' and s.status = 'done';
+-- classes: every paid student has their own dates and times (attended in the past, scheduled ahead)
+
+insert into class_sessions (id, enrolment_id, no, on_date, time_text, status) values
+('dededede-0005-4000-8000-000000000001', 'dededede-0006-4000-8000-000000000001', 1, (current_date + -30), '4:30 pm', 'done'),
+('dededede-0005-4000-8000-000000000002', 'dededede-0006-4000-8000-000000000001', 2, (current_date + -23), '4:30 pm', 'done'),
+('dededede-0005-4000-8000-000000000003', 'dededede-0006-4000-8000-000000000001', 3, (current_date + -16), '4:30 pm', 'done'),
+('dededede-0005-4000-8000-000000000004', 'dededede-0006-4000-8000-000000000001', 4, (current_date + -9), '4:30 pm', 'done'),
+('dededede-0005-4000-8000-000000000005', 'dededede-0006-4000-8000-000000000001', 5, (current_date + -2), '4:30 pm', 'done'),
+('dededede-0005-4000-8000-000000000006', 'dededede-0006-4000-8000-000000000001', 6, (current_date + 5), '4:30 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000007', 'dededede-0006-4000-8000-000000000001', 7, (current_date + 12), '4:30 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000008', 'dededede-0006-4000-8000-000000000001', 8, (current_date + 19), '4:30 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000009', 'dededede-0006-4000-8000-000000000002', 1, (current_date + -25), '5 pm', 'done'),
+('dededede-0005-4000-8000-000000000010', 'dededede-0006-4000-8000-000000000002', 2, (current_date + -12), '5 pm', 'done'),
+('dededede-0005-4000-8000-000000000011', 'dededede-0006-4000-8000-000000000002', 3, (current_date + 1), '5 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000012', 'dededede-0006-4000-8000-000000000002', 4, (current_date + 8), '5 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000013', 'dededede-0006-4000-8000-000000000002', 5, (current_date + 20), '5 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000014', 'dededede-0006-4000-8000-000000000003', 1, (current_date + -14), '11 am', 'done'),
+('dededede-0005-4000-8000-000000000015', 'dededede-0006-4000-8000-000000000003', 2, (current_date + -7), '11 am', 'done'),
+('dededede-0005-4000-8000-000000000016', 'dededede-0006-4000-8000-000000000003', 3, (current_date + 0), '11 am', 'scheduled'),
+('dededede-0005-4000-8000-000000000017', 'dededede-0006-4000-8000-000000000003', 4, (current_date + 7), '11 am', 'scheduled'),
+('dededede-0005-4000-8000-000000000018', 'dededede-0006-4000-8000-000000000004', 1, (current_date + -6), '7 pm', 'done'),
+('dededede-0005-4000-8000-000000000019', 'dededede-0006-4000-8000-000000000004', 2, (current_date + 3), '7 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000020', 'dededede-0006-4000-8000-000000000004', 3, (current_date + 10), '7 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000021', 'dededede-0006-4000-8000-000000000006', 1, (current_date + -18), '6 pm', 'done'),
+('dededede-0005-4000-8000-000000000022', 'dededede-0006-4000-8000-000000000006', 2, (current_date + -11), '6 pm', 'done'),
+('dededede-0005-4000-8000-000000000023', 'dededede-0006-4000-8000-000000000006', 3, (current_date + -4), '6 pm', 'done'),
+('dededede-0005-4000-8000-000000000024', 'dededede-0006-4000-8000-000000000006', 4, (current_date + 4), '6 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000025', 'dededede-0006-4000-8000-000000000006', 5, (current_date + 11), '6 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000026', 'dededede-0006-4000-8000-000000000006', 6, (current_date + 18), '6 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000027', 'dededede-0006-4000-8000-000000000007', 1, (current_date + -10), '10 am', 'done'),
+('dededede-0005-4000-8000-000000000028', 'dededede-0006-4000-8000-000000000007', 2, (current_date + -3), '10 am', 'done'),
+('dededede-0005-4000-8000-000000000029', 'dededede-0006-4000-8000-000000000007', 3, (current_date + 2), '10 am', 'scheduled'),
+('dededede-0005-4000-8000-000000000030', 'dededede-0006-4000-8000-000000000008', 1, (current_date + -8), '3 pm', 'done'),
+('dededede-0005-4000-8000-000000000031', 'dededede-0006-4000-8000-000000000008', 2, (current_date + 6), '3 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000032', 'dededede-0006-4000-8000-000000000008', 3, (current_date + 13), '3 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000033', 'dededede-0006-4000-8000-000000000009', 1, (current_date + -1), '12 pm', 'done'),
+('dededede-0005-4000-8000-000000000034', 'dededede-0006-4000-8000-000000000009', 2, (current_date + 9), '12 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000035', 'dededede-0006-4000-8000-000000000011', 1, (current_date + -15), '4 pm', 'done'),
+('dededede-0005-4000-8000-000000000036', 'dededede-0006-4000-8000-000000000011', 2, (current_date + -8), '4 pm', 'done'),
+('dededede-0005-4000-8000-000000000037', 'dededede-0006-4000-8000-000000000011', 3, (current_date + -1), '4 pm', 'done'),
+('dededede-0005-4000-8000-000000000038', 'dededede-0006-4000-8000-000000000011', 4, (current_date + 6), '4 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000039', 'dededede-0006-4000-8000-000000000011', 5, (current_date + 13), '4 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000040', 'dededede-0006-4000-8000-000000000012', 1, (current_date + -5), '5:30 pm', 'done'),
+('dededede-0005-4000-8000-000000000041', 'dededede-0006-4000-8000-000000000012', 2, (current_date + 1), '5:30 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000042', 'dededede-0006-4000-8000-000000000012', 3, (current_date + 14), '5:30 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000043', 'dededede-0006-4000-8000-000000000017', 1, (current_date + -20), '11 am', 'done'),
+('dededede-0005-4000-8000-000000000044', 'dededede-0006-4000-8000-000000000017', 2, (current_date + -13), '11 am', 'done'),
+('dededede-0005-4000-8000-000000000045', 'dededede-0006-4000-8000-000000000017', 3, (current_date + -6), '4 pm', 'done'),
+('dededede-0005-4000-8000-000000000046', 'dededede-0006-4000-8000-000000000017', 4, (current_date + 2), '11 am', 'scheduled'),
+('dededede-0005-4000-8000-000000000047', 'dededede-0006-4000-8000-000000000017', 5, (current_date + 9), '11 am', 'scheduled'),
+('dededede-0005-4000-8000-000000000048', 'dededede-0006-4000-8000-000000000017', 6, (current_date + 16), '5:30 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000049', 'dededede-0006-4000-8000-000000000018', 1, (current_date + -9), '7 pm', 'done'),
+('dededede-0005-4000-8000-000000000050', 'dededede-0006-4000-8000-000000000018', 2, (current_date + -2), '7 pm', 'done'),
+('dededede-0005-4000-8000-000000000051', 'dededede-0006-4000-8000-000000000018', 3, (current_date + 0), '6 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000052', 'dededede-0006-4000-8000-000000000018', 4, (current_date + 5), '7 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000053', 'dededede-0006-4000-8000-000000000019', 1, (current_date + -3), '4:30 pm', 'done'),
+('dededede-0005-4000-8000-000000000054', 'dededede-0006-4000-8000-000000000019', 2, (current_date + 4), '4:30 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000000055', 'dededede-0006-4000-8000-000000000019', 3, (current_date + 11), '10 am', 'scheduled');
+
+-- one class cancelled and one moved to another day, to see how they look
+update class_sessions set status = 'cancelled', note = 'Teacher unwell (dummy)' where enrolment_id = 'dededede-0006-4000-8000-000000000001' and no = 6;
+update class_sessions set moved_from = on_date, on_date = on_date + 1, note = 'Moved for a holiday (dummy)' where enrolment_id = 'dededede-0006-4000-8000-000000000006' and no = 4;
 
 -- orders: every status (to pack, packed, shipped, delivered, unpaid, cancelled, refunded), online and by hand, gift messages, tracking, private notes, free and paid shipping
 
@@ -263,7 +275,7 @@ insert into order_items (id, order_id, product_id, title, unit_paise, qty, gst_p
 -- inbox: every kind of enquiry: unread, read but not dealt with, and dealt with
 
 insert into enquiries (id, kind, name, email, phone, message, details, handled, read_at, created_at) values
-('dededede-000c-4000-8000-000000000001', 'contact', 'Anita Rao', 'anita.rao@example.com', '+91 98765 00001', 'Do you have weekend batches?', '{"topic": "Classes"}'::jsonb, true, ((current_date + 0) + time '12:00') at time zone 'Asia/Kolkata', ((current_date + 0) + time '11:00') at time zone 'Asia/Kolkata'),
+('dededede-000c-4000-8000-000000000001', 'contact', 'Anita Rao', 'anita.rao@example.com', '+91 98765 00001', 'Do you have weekend slots?', '{"topic": "Classes"}'::jsonb, true, ((current_date + 0) + time '12:00') at time zone 'Asia/Kolkata', ((current_date + 0) + time '11:00') at time zone 'Asia/Kolkata'),
 ('dededede-000c-4000-8000-000000000002', 'invitation', 'Vikram Iyer', 'vikram.iyer@example.com', '+91 98765 00002', 'Wedding invitations for 250 guests, hand lettered names.', '{"event": "Wedding", "quantity": 250, "date": "February"}'::jsonb, false, ((current_date + -2) + time '12:00') at time zone 'Asia/Kolkata', ((current_date + -2) + time '11:00') at time zone 'Asia/Kolkata'),
 ('dededede-000c-4000-8000-000000000003', 'service', 'Meera Krishnan', 'meera.k@example.com', '+91 98765 00003', 'Live calligraphy at our store launch.', '{"service": "Live event", "city": "Chennai"}'::jsonb, false, null, ((current_date + -4) + time '11:00') at time zone 'Asia/Kolkata'),
 ('dededede-000c-4000-8000-000000000004', 'collaboration', 'Rohan Mehta', 'rohan.mehta@example.com', '+91 98765 00004', 'Brand collaboration for Diwali hampers.', '{"brand": "Demo Sweets Co."}'::jsonb, true, ((current_date + -6) + time '12:00') at time zone 'Asia/Kolkata', ((current_date + -6) + time '11:00') at time zone 'Asia/Kolkata'),
@@ -371,6 +383,22 @@ insert into invoice_payments (id, invoice_id, amount_paise, paid_on, method, not
 ('dededede-0010-4000-8000-000000000011', 'dededede-000f-4000-8000-000000000009', 100000, (current_date + -2), 'upi', null),
 ('dededede-0010-4000-8000-000000000012', 'dededede-000f-4000-8000-000000000014', 201600, (current_date + -8), 'upi', null);
 
+-- studio rent-outs: paid and unpaid, one day and several days, with and without a time
+
+insert into rentouts (id, name, phone, email, purpose, on_date, end_date, time_text, amount_paise, paid, paid_on, method, note) values
+('dededede-0013-4000-8000-000000000001', 'Karthik Photography', '+91 98765 00001', 'anita.rao@example.com', 'Product photo shoot', (current_date + -40), null, '10 am to 2 pm', 450000, true, (current_date + -40), 'upi', 'Dummy rent-out'),
+('dededede-0013-4000-8000-000000000002', 'Meera Birthday Party', '+91 98765 00002', 'vikram.iyer@example.com', 'Birthday party for 20', (current_date + -28), null, '4 to 8 pm', 800000, true, (current_date + -28), 'cash', null),
+('dededede-0013-4000-8000-000000000003', 'Yoga with Divya', '+91 98765 00003', 'meera.k@example.com', 'Weekly yoga class', (current_date + -21), null, '6 to 7:30 am', 150000, true, (current_date + -21), 'upi', null),
+('dededede-0013-4000-8000-000000000004', 'Rohan Mehta', '+91 98765 00004', 'rohan.mehta@example.com', 'Team meeting', (current_date + -14), null, '3 to 5 pm', 250000, true, (current_date + -14), 'bank', 'Dummy rent-out'),
+('dededede-0013-4000-8000-000000000005', 'Anita Rao', '+91 98765 00005', 'fatima.s@example.com', 'Baby shower', (current_date + -6), null, '11 am to 3 pm', 700000, false, null, null, null),
+('dededede-0013-4000-8000-000000000006', 'Arjun Nair', '+91 98765 00006', 'arjun.nair@example.com', 'Photo exhibition', (current_date + 3), (current_date + 5), 'All day', 1800000, false, null, null, null),
+('dededede-0013-4000-8000-000000000007', 'Fatima Sheikh', '+91 98765 00007', 'priya.s@example.com', 'Sketching club', (current_date + 8), null, '5 to 7 pm', 200000, true, (current_date + 8), 'upi', 'Dummy rent-out'),
+('dededede-0013-4000-8000-000000000008', 'Sanjay Gupta', '+91 98765 00008', 'karthik.r@example.com', 'Corporate offsite', (current_date + 14), null, '9 am to 5 pm', 2200000, false, null, null, null),
+('dededede-0013-4000-8000-000000000009', 'Lakshmi Venkat', '+91 98765 00009', 'divya.menon@example.com', 'Mehendi workshop', (current_date + 17), null, '2 to 6 pm', 600000, true, (current_date + 17), 'cash', null),
+('dededede-0013-4000-8000-000000000010', 'Neha Joshi', '+91 98765 00010', 'sanjay.g@example.com', 'Pop-up store', (current_date + 25), (current_date + 26), '10 am to 8 pm', 3000000, false, null, null, 'Dummy rent-out'),
+('dededede-0013-4000-8000-000000000011', 'Rahul Das', '+91 98765 00011', 'lakshmi.v@example.com', 'Music rehearsal', (current_date + 30), null, null, 300000, false, null, null, null),
+('dededede-0013-4000-8000-000000000012', 'Sneha Pillai', '+91 98765 00012', 'neha.joshi@example.com', 'Engagement shoot', (current_date + 45), null, '7 to 11 am', 500000, false, null, null, null);
+
 -- accounts: money in and out by hand in every main category, plus the invoice payments and the refund above
 
 insert into ledger_entries (id, entry_date, kind, category, description, amount_paise, gst_paise, method, party, source, source_id) values
@@ -399,7 +427,13 @@ insert into ledger_entries (id, entry_date, kind, category, description, amount_
 ('dededede-0011-4000-8000-000000000023', (current_date + -1), 'in', 'Services', 'Invoice DEMO/2026-27/007 (part payment)', 500000, 76271, 'upi', 'Priya Sundaram', 'invoice', 'dededede-0010-4000-8000-000000000009'),
 ('dededede-0011-4000-8000-000000000024', (current_date + -14), 'in', 'Services', 'Invoice DEMO/2026-27/008', 1792000, 192000, 'card', 'Karthik Raman', 'invoice', 'dededede-0010-4000-8000-000000000010'),
 ('dededede-0011-4000-8000-000000000025', (current_date + -2), 'in', 'Services', 'Invoice DEMO/2026-27/009 (part payment)', 100000, 0, 'upi', 'Divya Menon', 'invoice', 'dededede-0010-4000-8000-000000000011'),
-('dededede-0011-4000-8000-000000000026', (current_date + -8), 'in', 'Services', 'Invoice DEMO/2026-27/010', 201600, 21600, 'upi', 'Karthik Raman', 'invoice', 'dededede-0010-4000-8000-000000000012');
+('dededede-0011-4000-8000-000000000026', (current_date + -8), 'in', 'Services', 'Invoice DEMO/2026-27/010', 201600, 21600, 'upi', 'Karthik Raman', 'invoice', 'dededede-0010-4000-8000-000000000012'),
+('dededede-0011-4000-8000-000000000027', (current_date + -40), 'in', 'Studio rent-outs', 'Rent-out: Product photo shoot', 450000, 0, 'upi', 'Karthik Photography', 'rentout', 'dededede-0013-4000-8000-000000000001'),
+('dededede-0011-4000-8000-000000000028', (current_date + -28), 'in', 'Studio rent-outs', 'Rent-out: Birthday party for 20', 800000, 0, 'cash', 'Meera Birthday Party', 'rentout', 'dededede-0013-4000-8000-000000000002'),
+('dededede-0011-4000-8000-000000000029', (current_date + -21), 'in', 'Studio rent-outs', 'Rent-out: Weekly yoga class', 150000, 0, 'upi', 'Yoga with Divya', 'rentout', 'dededede-0013-4000-8000-000000000003'),
+('dededede-0011-4000-8000-000000000030', (current_date + -14), 'in', 'Studio rent-outs', 'Rent-out: Team meeting', 250000, 0, 'bank', 'Rohan Mehta', 'rentout', 'dededede-0013-4000-8000-000000000004'),
+('dededede-0011-4000-8000-000000000031', (current_date + 8), 'in', 'Studio rent-outs', 'Rent-out: Sketching club', 200000, 0, 'upi', 'Fatima Sheikh', 'rentout', 'dededede-0013-4000-8000-000000000007'),
+('dededede-0011-4000-8000-000000000032', (current_date + 17), 'in', 'Studio rent-outs', 'Rent-out: Mehendi workshop', 600000, 0, 'cash', 'Lakshmi Venkat', 'rentout', 'dededede-0013-4000-8000-000000000009');
 
 -- accounts: money in for every paid dummy order, booking and enrolment (as the website does), Razorpay fees for online ones, and refunds
 insert into ledger_entries (id, entry_date, kind, category, description, amount_paise, gst_paise, method, party, source, source_id)
@@ -425,8 +459,7 @@ select ('dededede-0011-4000-8000-' || lpad((3000 + row_number() over ())::text, 
 select t.name as "table", t.n as "dummy rows" from (values
   ('workshops', (select count(*) from workshops where id::text like 'dededede-%')), ('products', (select count(*) from products where id::text like 'dededede-%')),
   ('class_types', (select count(*) from class_types where id::text like 'dededede-%')), ('class_levels', (select count(*) from class_levels where id::text like 'dededede-%')),
-  ('class_batches', (select count(*) from class_batches where id::text like 'dededede-%')), ('class_sessions', (select count(*) from class_sessions where id::text like 'dededede-%')),
-  ('class_attendance', (select count(*) from class_attendance a join class_sessions s on s.id = a.session_id where s.id::text like 'dededede-%')),
+  ('rentouts', (select count(*) from rentouts where id::text like 'dededede-%')), ('class_sessions', (select count(*) from class_sessions where id::text like 'dededede-%')),
   ('class_enrolments', (select count(*) from class_enrolments where id::text like 'dededede-%')), ('bookings', (select count(*) from bookings where id::text like 'dededede-%')),
   ('workshop_waitlist', (select count(*) from workshop_waitlist where id::text like 'dededede-%')), ('customers', (select count(*) from customers where id::text like 'dededede-%')),
   ('orders', (select count(*) from orders where id::text like 'dededede-%')), ('order_items', (select count(*) from order_items where id::text like 'dededede-%')),

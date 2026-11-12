@@ -55,6 +55,7 @@ do $$ begin
   assert pg_temp.denied($q$select decrement_stock((select id from products limit 1), 1)$q$), 'anon cannot call decrement_stock';
   assert pg_temp.denied($q$insert into storage.objects (bucket_id,name) values ('media','evil.webp')$q$), 'anon cannot upload files';
   assert pg_temp.denied($q$insert into ledger_entries (kind,category,amount_paise) values ('in','x',1)$q$), 'anon cannot write accounts';
+  assert pg_temp.denied($q$insert into rentouts (name,on_date) values ('x', current_date)$q$) and pg_temp.count_of('rentouts') = 0, 'anon cannot read or write rent-outs';
   assert (select count(*) from class_levels) = 3, 'anon sees only active class levels';
   assert pg_temp.count_of('class_enrolments') = 0, 'anon sees no enrolments';
   assert pg_temp.count_of('admin_security') = 0, 'anon cannot read the PIN record';
@@ -90,7 +91,7 @@ do $$ begin
   assert pg_temp.denied($q$update admin_security set value='{}'$q$), 'a customer cannot change the PIN';
   assert pg_temp.denied($q$update class_enrolments set status='refunded' where id='ffffffff-0000-0000-0000-000000000001'$q$), 'alice cannot change her enrolment';
   assert pg_temp.denied($q$update class_levels set price_paise = 1$q$), 'alice cannot change class prices';
-  assert pg_temp.count_of('class_batches') = 0 and pg_temp.count_of('class_sessions') = 0 and pg_temp.count_of('class_attendance') = 0 and pg_temp.count_of('events') = 0 and pg_temp.count_of('workshop_waitlist') = 0 and pg_temp.count_of('invoice_payments') = 0 and pg_temp.count_of('todos') = 0, 'alice sees none of the owner-only tables';
+  assert pg_temp.count_of('class_sessions') = 0 and pg_temp.count_of('rentouts') = 0 and pg_temp.count_of('events') = 0 and pg_temp.count_of('workshop_waitlist') = 0 and pg_temp.count_of('invoice_payments') = 0 and pg_temp.count_of('todos') = 0, 'alice sees none of the owner-only tables';
   assert pg_temp.denied($q$select next_invoice_number()$q$), 'alice cannot take an invoice number';
   assert pg_temp.denied($q$select admin_add_order('{}'::jsonb)$q$), 'alice cannot add orders by hand';
   assert pg_temp.denied($q$select * from customer_summary()$q$) or (select count(*) from customer_summary()) = 0, 'alice gets no customer totals';
@@ -114,6 +115,7 @@ do $$ begin
   assert pg_temp.denied($q$select decrement_stock((select id from products limit 1), 1)$q$), 'even the owner browser cannot call server-only functions';
   assert not pg_temp.denied($q$select next_invoice_number()$q$), 'owner can take an invoice number';
   assert not pg_temp.denied($q$insert into events (title,on_date) values ('Studio visit', current_date)$q$), 'owner can add events';
+  assert not pg_temp.denied($q$insert into rentouts (name,on_date) values ('Hirer', current_date)$q$), 'owner can add rent-outs';
   assert not pg_temp.denied($q$select admin_add_order('{"name":"Walk In","pay":"paid","method":"cash","subtotal_paise":1000,"shipping_paise":0,"total_paise":1000,"items":[{"title":"X","unit_paise":1000,"qty":1,"gst_paise":0}]}'::jsonb)$q$), 'owner can add an order by hand in one step';
   assert pg_temp.count_of('class_enrolments') = 2 and (select count(*) from class_levels) = 4, 'owner sees all enrolments and inactive levels';
   assert pg_temp.count_of('admin_security') = 0, 'even the owner browser session cannot read the PIN record (only the server can)';

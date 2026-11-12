@@ -49,7 +49,7 @@ function OrderModal({ o, onClose, onSaved }) {
     if (cancelPaid && !f.v.restock) throw new Error('Please choose whether the items go back in stock.');
     must(await sb().from('orders').update({ status: to, tracking_carrier: f.v.carrier || null, tracking_number: f.v.number || null, notes: f.v.notes.trim() || null, ...(becamePaid && !o.paid_at ? { paid_at: new Date().toISOString(), payment_method: f.v.method } : {}) }).eq('id', o.id));
     // stock follows the order: taken when it is paid; given back when a paid order is cancelled only if the owner says the items are fine to sell
-    if (becamePaid || (cancelPaid && f.v.restock === 'yes')) { const r = await sb().rpc('admin_order_stock', { p_order: o.id, p_take: becamePaid }); if (r.error) toast('Saved, but stock was not updated: run the latest database update (supabase/v9.sql).', 'err'); }
+    if (becamePaid || (cancelPaid && f.v.restock === 'yes')) { const r = await sb().rpc('admin_order_stock', { p_order: o.id, p_take: becamePaid }); if (r.error) toast('Saved, but stock was not updated: run supabase/database.sql again.', 'err'); }
     if (becamePaid) await syncPaymentsToLedger(sb()); onSaved(); }, 'Order updated');
   const email = () => run(async () => {
     const { data } = await supabase().auth.getSession(); const r = await fetch('/api/manager/email', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ type: 'shipped', order_id: o.id }) });

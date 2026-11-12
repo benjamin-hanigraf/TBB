@@ -21,7 +21,7 @@ delete from workshop_waitlist where id::text like 'dededede-%' or email ilike '%
 delete from bookings where id::text like 'dededede-%' or email ilike '%@example.com' or workshop_id::text like 'dededede-%';
 delete from class_enrolments where id::text like 'dededede-%' or email ilike '%@example.com' or class_id::text like 'dededede-%';
 
--- 4. classes (batches, dated classes and attendance go with the level), class types, workshops, products
+-- 4. classes (each student's dated classes went with their enrolment), class types, workshops, products
 delete from class_levels where id::text like 'dededede-%';
 delete from class_types where id::text like 'dededede-%';
 delete from workshops where id::text like 'dededede-%';
@@ -32,6 +32,7 @@ update products set active = false where id::text like 'dededede-%';   -- only l
 delete from customers where id::text like 'dededede-%' or email ilike '%@example.com';
 delete from enquiries where id::text like 'dededede-%' or email ilike '%@example.com';
 delete from events where id::text like 'dededede-%';
+delete from rentouts where id::text like 'dededede-%' or email ilike '%@example.com';
 delete from todos where id::text like 'dededede-%';
 
 -- what is left (should all be 0)

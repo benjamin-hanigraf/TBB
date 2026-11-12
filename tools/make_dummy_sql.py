@@ -29,7 +29,7 @@ def ins(table, cols, rows):
 
 sql = ["""-- ============ DUMMY TEST DATA (made by tools/make_dummy_sql.py, do not edit by hand) ============
 -- Fills every table with at least 10 varied rows so every screen of the website and the Manager app can be tried.
--- Run AFTER schema.sql, seed.sql and v2.sql to v10.sql. Run it once; to take everything out again run supabase/dummy-remove.sql.
+-- Run AFTER supabase/database.sql. Run it once; to take everything out again run supabase/dummy-remove.sql.
 -- Every dummy row has an id starting with dededede- and every dummy person uses an @example.com email.
 -- Dummy workshops, products and classes are named "Demo ..." and DO show on the public website while they are in the database.
 -- Website receipt numbers are not used up: dummy orders, bookings and enrolments use numbers 9001 and up.
@@ -90,39 +90,11 @@ L = [('demo-cursive-1', 'Demo: Cursive', 'Cursive Writing', 'Level 1', 500000, 8
      ('demo-copperplate-1', 'Demo: Copperplate', 'Copperplate', 'Foundation', 900000, 10, True, 'add', [1, 3], '7 to 8 pm'), ('demo-italic-1', 'Demo: Italic', 'Italic Hand', 'Level 1', 600000, 8, True, 'none', [5], '4 to 5 pm'),
      ('demo-kids-art', 'Demo: Kids Art', 'Kids Art Club', 'Ages 5 to 8', 400000, 12, True, 'none', [0], '10 to 11 am'), ('demo-watercolour-1', 'Demo: Watercolour', 'Watercolour', 'Beginner', 800000, 8, True, 'included', [3], '6 to 7:30 pm'),
      ('demo-gothic-1', 'Demo: Gothic', 'Gothic Script', 'Level 1', 750000, 8, False, 'none', [2], '7 to 8 pm'), ('demo-sketching-1', 'Demo: Sketching', 'Urban Sketching', 'Open level', 450000, 4, True, 'add', [0, 6], '7 to 9 am')]
-rows = [{'id': did(3, i + 1), 'slug': s, 'track': tr, 'title': t, 'level': lv, 'description': 'A dummy class level for testing enrolments, batches and attendance.', 'covers': ['Posture and grip', 'Basic strokes', 'Letters and joins'],
-         'price_paise': p, 'sessions': n, 'active': a, 'sort_order': 100 + i, 'days': d, 'time_text': tm, 'gst_mode': g} for i, (s, tr, t, lv, p, n, a, g, d, tm) in enumerate(L)]
+rows = [{'id': did(3, i + 1), 'slug': s, 'track': tr, 'title': t, 'level': lv, 'description': 'A dummy class level for testing enrolments and one-on-one classes.', 'covers': ['Posture and grip', 'Basic strokes', 'Letters and joins'],
+         'price_paise': p, 'sessions': n, 'active': a, 'sort_order': 100 + i, 'gst_mode': g} for i, (s, tr, t, lv, p, n, a, g, d, tm) in enumerate(L)]
 sql.append('-- class levels: several tracks, active and hidden, every GST option')
 sql.append(ins('class_levels', list(rows[0].keys()), rows))
 LEVEL = {did(3, i + 1): x for i, x in enumerate(L)}
-
-# ---------- class batches (12): sessions are made below from their days ----------
-B = [(1, 'Demo: Cursive L1, Tue Thu (running)', -21, [2, 4], '4:30 to 5:30 pm', 8, 10, True), (1, 'Demo: Cursive L1, next batch', 14, [2, 4], '4:30 to 5:30 pm', 8, 10, True),
-     (2, 'Demo: Cursive L2, finished', -70, [2, 4], '5:30 to 6:30 pm', 8, 8, False), (3, 'Demo: Brush Beginner, Saturdays', -14, [6], '11 am to 12:30 pm', 6, 8, True),
-     (4, 'Demo: Brush Intermediate', 7, [6], '2 to 3:30 pm', 6, 6, True), (5, 'Demo: Copperplate Mon Wed', -10, [1, 3], '7 to 8 pm', 10, 6, True),
-     (6, 'Demo: Italic Fridays', -35, [5], '4 to 5 pm', 8, 8, True), (7, 'Demo: Kids Art Sundays', -28, [0], '10 to 11 am', 12, 15, True),
-     (8, 'Demo: Watercolour Wednesdays', 3, [3], '6 to 7:30 pm', 8, None, True), (10, 'Demo: Sketching weekends', -7, [0, 6], '7 to 9 am', 4, 12, True),
-     (1, 'Demo: Cursive L1, holiday batch', 30, [1, 2, 3, 4, 5], '10 to 11 am', 8, 12, True), (9, 'Demo: Gothic (hidden level)', -40, [2], '7 to 8 pm', 8, 6, False)]
-rows = [{'id': did(4, i + 1), 'class_id': did(3, lv), 'name': nm, 'starts_on': D(st), 'days': ds, 'time_text': tm, 'sessions': n, 'capacity': cap, 'active': a, 'solo': False} for i, (lv, nm, st, ds, tm, n, cap, a) in enumerate(B)]
-# one-on-one students: a private schedule each (no weekly days; every class has its own date and time, added below)
-SOLO = [(13, 3, 'Fatima Sheikh', [(-20, '11 am'), (-13, '11 am'), (-6, '4 pm'), (2, '11 am'), (9, '11 am'), (16, '5:30 pm')]),
-        (14, 5, 'Priya Sundaram', [(-9, '7 pm'), (-2, '7 pm'), (0, '6 pm'), (5, '7 pm')]),
-        (15, 1, 'Anika', [(-3, '4:30 pm'), (4, '4:30 pm'), (11, '10 am')])]
-rows += [{'id': did(4, b), 'class_id': did(3, lv), 'name': who, 'starts_on': D(dates[0][0]), 'days': [], 'time_text': None, 'sessions': LEVEL[did(3, lv)][5], 'capacity': 1, 'active': True, 'solo': True} for b, lv, who, dates in SOLO]
-sql.append('-- class batches: running, finished, starting soon, weekday and weekend, with and without a seat limit; plus three one-on-one schedules')
-sql.append(ins('class_batches', list(rows[0].keys()), rows))
-sql.append("""-- class sessions: one dated class for each lesson of each dummy batch, on the batch's days. Past ones are marked done.
-insert into class_sessions (id, batch_id, no, on_date, status)
-select ('dededede-0005-4000-8000-' || lpad((row_number() over ())::text, 12, '0'))::uuid, x.batch_id, x.no, x.d, case when x.d < current_date then 'done' else 'scheduled' end
-from (select b.id batch_id, g.d::date d, row_number() over (partition by b.id order by g.d) no, b.sessions
-      from class_batches b cross join generate_series(b.starts_on, b.starts_on + 400, interval '1 day') g(d)
-      where b.id::text like 'dededede-%' and extract(dow from g.d)::int = any(b.days)) x
-where x.no <= x.sessions;
--- one-on-one classes: chosen dates, each with its own time
-""" + ins('class_sessions', ['id', 'batch_id', 'no', 'on_date', 'time_text', 'status'], [{'id': did(5, 5000 + b * 10 + k), 'batch_id': did(4, b), 'no': k + 1, 'on_date': D(d), 'time_text': t, 'status': 'done' if d < 0 else 'scheduled'} for b, lv, who, dates in SOLO for k, (d, t) in enumerate(dates)]) + """
--- one class cancelled and one moved to another day, to see how they look
-update class_sessions set status = 'cancelled', note = 'Teacher unwell (dummy)' where batch_id = 'dededede-0004-4000-8000-000000000001' and no = (select min(no) from class_sessions where batch_id = 'dededede-0004-4000-8000-000000000001' and status = 'scheduled');
-update class_sessions set moved_from = on_date, on_date = on_date + 1, note = 'Moved for a holiday (dummy)' where batch_id = 'dededede-0004-4000-8000-000000000006' and no = (select max(no) from class_sessions where batch_id = 'dededede-0004-4000-8000-000000000006');""")
 
 # ---------- people ----------
 PEOPLE = [('Anita Rao', 'anita.rao', '9876500001', 'Chennai', 'Tamil Nadu', '600024'), ('Vikram Iyer', 'vikram.iyer', '9876500002', 'Chennai', 'Tamil Nadu', '600017'),
@@ -181,17 +153,28 @@ for i, (lv, bt, grp, kid, age, pi, st, ch) in enumerate(EN):
     l = LEVEL[did(3, lv)]; amt = l[4]; g = round(amt * 0.18) if l[7] == 'add' else round(amt - amt / 1.18) if l[7] == 'included' else 0
     if l[7] == 'add': amt += g
     paid = st in ('paid', 'refunded', 'transferred')
-    rows.append({'id': did(6, i + 1), 'class_id': did(3, lv), 'batch_id': did(4, bt) if bt else None, 'student_name': kid if grp == 'child' else nm(pi), 'student_group': grp, 'student_age': age,
+    rows.append({'id': did(6, i + 1), 'class_id': did(3, lv), 'student_name': kid if grp == 'child' else nm(pi), 'student_group': grp, 'student_age': age,
                  'name': nm(pi), 'email': em(pi), 'phone': ph(pi), 'amount_paise': amt, 'gst_paise': g, 'status': st, 'channel': ch, 'payment_method': ('razorpay' if ch == 'website' else ['upi', 'cash', 'bank'][i % 3]) if paid else None,
                  'razorpay_order_id': f'order_demo_en{i + 1:03d}' if ch == 'website' else None, 'razorpay_payment_id': f'pay_demo_en{i + 1:03d}' if ch == 'website' and paid else None,
                  'invoice_no': 9101 + i, 'notes': 'Needs a left-handed holder' if i == 3 else None, 'created_at': TS(-25 + i, '18:00'), 'paid_at': TS(-25 + i, '18:10') if paid else None})
-sql.append('-- class enrolments: children 5 to 15 and adults, placed in a batch or not yet, paid, unpaid, refunded, cancelled, transferred')
+sql.append('-- class enrolments: children 5 to 15 and adults; paid, unpaid, refunded, cancelled, transferred')
 sql.append(ins('class_enrolments', list(rows[0].keys()), rows))
-sql.append("""-- attendance: for every class already held, each paid student in that batch is marked present or absent
-insert into class_attendance (session_id, enrolment_id, present)
-select s.id, e.id, (abs(hashtext(s.id::text || e.id::text)) % 5) <> 0
-from class_sessions s join class_enrolments e on e.batch_id = s.batch_id and e.status = 'paid'
-where s.batch_id::text like 'dededede-%' and s.status = 'done';""")
+# ---------- one-on-one classes: each paid student has their own dates, any day, any time ----------
+SCHED = {1: [(-30, '4:30 pm'), (-23, '4:30 pm'), (-16, '4:30 pm'), (-9, '4:30 pm'), (-2, '4:30 pm'), (5, '4:30 pm'), (12, '4:30 pm'), (19, '4:30 pm')],
+         2: [(-25, '5 pm'), (-12, '5 pm'), (1, '5 pm'), (8, '5 pm'), (20, '5 pm')], 3: [(-14, '11 am'), (-7, '11 am'), (0, '11 am'), (7, '11 am')], 4: [(-6, '7 pm'), (3, '7 pm'), (10, '7 pm')],
+         6: [(-18, '6 pm'), (-11, '6 pm'), (-4, '6 pm'), (4, '6 pm'), (11, '6 pm'), (18, '6 pm')], 7: [(-10, '10 am'), (-3, '10 am'), (2, '10 am')], 8: [(-8, '3 pm'), (6, '3 pm'), (13, '3 pm')],
+         9: [(-1, '12 pm'), (9, '12 pm')], 11: [(-15, '4 pm'), (-8, '4 pm'), (-1, '4 pm'), (6, '4 pm'), (13, '4 pm')], 12: [(-5, '5:30 pm'), (1, '5:30 pm'), (14, '5:30 pm')],
+         17: [(-20, '11 am'), (-13, '11 am'), (-6, '4 pm'), (2, '11 am'), (9, '11 am'), (16, '5:30 pm')], 18: [(-9, '7 pm'), (-2, '7 pm'), (0, '6 pm'), (5, '7 pm')], 19: [(-3, '4:30 pm'), (4, '4:30 pm'), (11, '10 am')]}
+srows = []; n = 0
+for en_no, dates in SCHED.items():
+    for k, (d, t) in enumerate(dates):
+        n += 1; srows.append({'id': did(5, n), 'enrolment_id': did(6, en_no), 'no': k + 1, 'on_date': D(d), 'time_text': t, 'status': 'done' if d < 0 else 'scheduled'})
+sql.append('-- classes: every paid student has their own dates and times (attended in the past, scheduled ahead)')
+sql.append(ins('class_sessions', list(srows[0].keys()), srows))
+sql.append("""-- one class cancelled and one moved to another day, to see how they look
+update class_sessions set status = 'cancelled', note = 'Teacher unwell (dummy)' where enrolment_id = 'dededede-0006-4000-8000-000000000001' and no = 6;
+update class_sessions set moved_from = on_date, on_date = on_date + 1, note = 'Moved for a holiday (dummy)' where enrolment_id = 'dededede-0006-4000-8000-000000000006' and no = 4;""")
+
 
 # ---------- orders (15) and their items ----------
 O = [('paid', 'website', [(1, 2)], 6000, 0, 'Happy birthday, Meera!', None, None), ('packed', 'website', [(2, 1), (5, 2)], 6000, 1, None, None, 'Pack with bubble wrap'), ('shipped', 'website', [(6, 1)], 0, 2, None, ('India Post', 'EM123456789IN'), None),
@@ -217,7 +200,7 @@ sql.append(ins('orders', list(orows[0].keys()), orows))
 sql.append(ins('order_items', list(irows[0].keys()), irows))
 
 # ---------- enquiries (12) ----------
-E = [('contact', 'Do you have weekend batches?', {'topic': 'Classes'}), ('invitation', 'Wedding invitations for 250 guests, hand lettered names.', {'event': 'Wedding', 'quantity': 250, 'date': 'February'}),
+E = [('contact', 'Do you have weekend slots?', {'topic': 'Classes'}), ('invitation', 'Wedding invitations for 250 guests, hand lettered names.', {'event': 'Wedding', 'quantity': 250, 'date': 'February'}),
      ('service', 'Live calligraphy at our store launch.', {'service': 'Live event', 'city': 'Chennai'}), ('collaboration', 'Brand collaboration for Diwali hampers.', {'brand': 'Demo Sweets Co.'}),
      ('hiring', 'I would love to teach kids art on weekends.', {'role': 'Teacher', 'portfolio': 'https://example.com/portfolio'}), ('contact', 'Is the nib set compatible with my holder?', {'topic': 'Store'}),
      ('invitation', 'Baby shower invitations, pastel colours.', {'event': 'Baby shower', 'quantity': 60}), ('service', 'Corporate workshop for 30 people.', {'service': 'Corporate workshop', 'people': 30}),
@@ -283,6 +266,20 @@ sql.append(ins('invoices', list(irows[0].keys()), irows))
 sql.append('-- payments received against those invoices (full and part payments)')
 sql.append(ins('invoice_payments', list(prows[0].keys()), prows))
 
+# ---------- studio rent-outs (12): paid and unpaid, one day and several days, with and without a time ----------
+RT = [('Karthik Photography', 'Product photo shoot', -40, None, '10 am to 2 pm', 450000, True, 'upi'), ('Meera Birthday Party', 'Birthday party for 20', -28, None, '4 to 8 pm', 800000, True, 'cash'),
+      ('Yoga with Divya', 'Weekly yoga class', -21, None, '6 to 7:30 am', 150000, True, 'upi'), ('Rohan Mehta', 'Team meeting', -14, None, '3 to 5 pm', 250000, True, 'bank'),
+      ('Anita Rao', 'Baby shower', -6, None, '11 am to 3 pm', 700000, False, None), ('Arjun Nair', 'Photo exhibition', 3, 5, 'All day', 1800000, False, None),
+      ('Fatima Sheikh', 'Sketching club', 8, None, '5 to 7 pm', 200000, True, 'upi'), ('Sanjay Gupta', 'Corporate offsite', 14, None, '9 am to 5 pm', 2200000, False, None),
+      ('Lakshmi Venkat', 'Mehendi workshop', 17, None, '2 to 6 pm', 600000, True, 'cash'), ('Neha Joshi', 'Pop-up store', 25, 26, '10 am to 8 pm', 3000000, False, None),
+      ('Rahul Das', 'Music rehearsal', 30, None, None, 300000, False, None), ('Sneha Pillai', 'Engagement shoot', 45, None, '7 to 11 am', 500000, False, None)]
+rrows = [{'id': did(0x13, i + 1), 'name': n_, 'phone': ph(i), 'email': em(i), 'purpose': pu, 'on_date': D(a), 'end_date': D(b) if b else None, 'time_text': t, 'amount_paise': am, 'paid': pd,
+          'paid_on': D(a) if pd else None, 'method': m, 'note': 'Dummy rent-out' if i % 3 == 0 else None} for i, (n_, pu, a, b, t, am, pd, m) in enumerate(RT)]
+sql.append('-- studio rent-outs: paid and unpaid, one day and several days, with and without a time')
+sql.append(ins('rentouts', list(rrows[0].keys()), rrows))
+ledger_rent = [{'entry_date': D(a), 'kind': 'in', 'category': 'Studio rent-outs', 'description': f'Rent-out: {pu}', 'amount_paise': am, 'gst_paise': 0, 'method': m, 'party': n_, 'source': 'rentout', 'source_id': did(0x13, i + 1)}
+               for i, (n_, pu, a, b, t, am, pd, m) in enumerate(RT) if pd]
+
 # ---------- accounts ----------
 MAN = [('in', 'Custom invitations', 'Demo: Name cards paid in cash', 450000, 0, 'cash', 'Walk-in customer', -33), ('in', 'Collaborations', 'Demo: Brand collaboration fee', 2500000, 381356, 'bank', 'Demo Sweets Co.', -18),
        ('in', 'Other income', 'Demo: Sold old easels', 300000, 0, 'upi', 'Neighbour', -9), ('out', 'Materials and supplies', 'Demo: Paper and ink stock', 1250000, 190678, 'bank', 'Demo Art Supplies', -27),
@@ -291,7 +288,7 @@ MAN = [('in', 'Custom invitations', 'Demo: Name cards paid in cash', 450000, 0, 
        ('out', 'Marketing', 'Demo: Instagram ads', 200000, 30508, 'card', 'Meta', -8), ('out', 'Software and subscriptions', 'Demo: Website hosting', 150000, 22881, 'card', 'Hosting company', -6),
        ('out', 'Equipment', 'Demo: New light box', 450000, 68644, 'upi', 'Demo Electronics', -4), ('out', 'Utilities', 'Demo: Studio electricity', 320000, 0, 'bank', 'TNEB', -2),
        ('out', 'Travel', 'Demo: Cab to Bengaluru venue', 250000, 0, 'upi', 'Cab', -20), ('out', 'Taxes and fees', 'Demo: Professional tax', 125000, 0, 'bank', 'Corporation', -40)]
-ledger = [{'entry_date': D(ago), 'kind': k, 'category': c, 'description': ds, 'amount_paise': a, 'gst_paise': g, 'method': m, 'party': p, 'source': 'manual', 'source_id': None} for (k, c, ds, a, g, m, p, ago) in MAN] + ledger_inv
+ledger = [{'entry_date': D(ago), 'kind': k, 'category': c, 'description': ds, 'amount_paise': a, 'gst_paise': g, 'method': m, 'party': p, 'source': 'manual', 'source_id': None} for (k, c, ds, a, g, m, p, ago) in MAN] + ledger_inv + ledger_rent
 for j, r in enumerate(ledger): r['id'] = did(0x11, j + 1)
 sql.append('-- accounts: money in and out by hand in every main category, plus the invoice payments and the refund above')
 sql.append(ins('ledger_entries', ['id', 'entry_date', 'kind', 'category', 'description', 'amount_paise', 'gst_paise', 'method', 'party', 'source', 'source_id'], ledger))
@@ -319,8 +316,7 @@ select ('dededede-0011-4000-8000-' || lpad((3000 + row_number() over ())::text, 
 select t.name as "table", t.n as "dummy rows" from (values
   ('workshops', (select count(*) from workshops where id::text like 'dededede-%')), ('products', (select count(*) from products where id::text like 'dededede-%')),
   ('class_types', (select count(*) from class_types where id::text like 'dededede-%')), ('class_levels', (select count(*) from class_levels where id::text like 'dededede-%')),
-  ('class_batches', (select count(*) from class_batches where id::text like 'dededede-%')), ('class_sessions', (select count(*) from class_sessions where id::text like 'dededede-%')),
-  ('class_attendance', (select count(*) from class_attendance a join class_sessions s on s.id = a.session_id where s.id::text like 'dededede-%')),
+  ('rentouts', (select count(*) from rentouts where id::text like 'dededede-%')), ('class_sessions', (select count(*) from class_sessions where id::text like 'dededede-%')),
   ('class_enrolments', (select count(*) from class_enrolments where id::text like 'dededede-%')), ('bookings', (select count(*) from bookings where id::text like 'dededede-%')),
   ('workshop_waitlist', (select count(*) from workshop_waitlist where id::text like 'dededede-%')), ('customers', (select count(*) from customers where id::text like 'dededede-%')),
   ('orders', (select count(*) from orders where id::text like 'dededede-%')), ('order_items', (select count(*) from order_items where id::text like 'dededede-%')),

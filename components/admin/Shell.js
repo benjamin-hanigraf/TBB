@@ -33,6 +33,16 @@ export default function AdminShell({ children }) {
 function Inner({ children }) {
   const path = usePathname(); const [state, setState] = useState('loading'); const [unread, setUnread] = useState(0);
   useEffect(() => { if (state === 'ok') unreadCount().then(setUnread).catch(() => {}); }, [state, path]);
+  // Behave like an app: no pinch zoom (iPhones ignore the viewport rule, so the gesture itself is stopped), no long-press menus, no photo dragging.
+  // Input boxes keep their normal behaviour so typing, selecting and pasting still work.
+  useEffect(() => {
+    const stop = (e) => e.preventDefault(); const inField = (e) => !!e.target?.closest?.('input,textarea,select,[contenteditable="true"]');
+    const menu = (e) => { if (!inField(e)) e.preventDefault(); }; const drag = (e) => { if (e.target?.tagName === 'IMG') e.preventDefault(); };
+    const touch = (e) => { if (e.touches && e.touches.length > 1) e.preventDefault(); }; const wheel = (e) => { if (e.ctrlKey) e.preventDefault(); };   // trackpad pinch arrives as ctrl + wheel
+    const ev = ['gesturestart', 'gesturechange', 'gestureend']; ev.forEach((n) => document.addEventListener(n, stop));
+    document.addEventListener('contextmenu', menu); document.addEventListener('dragstart', drag); document.addEventListener('touchmove', touch, { passive: false }); document.addEventListener('wheel', wheel, { passive: false });
+    return () => { ev.forEach((n) => document.removeEventListener(n, stop)); document.removeEventListener('contextmenu', menu); document.removeEventListener('dragstart', drag); document.removeEventListener('touchmove', touch); document.removeEventListener('wheel', wheel); };
+  }, []);
   useEffect(() => { window.__adminReady = true; const t = setTimeout(() => setState((s) => (s === 'loading' ? 'error' : s)), 10000); return () => clearTimeout(t); }, []);
   useEffect(() => { const h = (e) => { e.preventDefault(); window.__bip = e; }; window.addEventListener('beforeinstallprompt', h); return () => window.removeEventListener('beforeinstallprompt', h); }, []);
   useEffect(() => { if ('serviceWorker' in navigator) navigator.serviceWorker.register('/manager/sw.js', { scope: '/manager' }).catch(() => {}); }, []);

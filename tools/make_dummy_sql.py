@@ -29,7 +29,7 @@ def ins(table, cols, rows):
 
 sql = ["""-- ============ DUMMY TEST DATA (made by tools/make_dummy_sql.py, do not edit by hand) ============
 -- Fills every table with at least 10 varied rows so every screen of the website and the Manager app can be tried.
--- Run AFTER schema.sql, seed.sql and v2.sql to v9.sql. Run it once; to take everything out again run supabase/dummy-remove.sql.
+-- Run AFTER schema.sql, seed.sql and v2.sql to v10.sql. Run it once; to take everything out again run supabase/dummy-remove.sql.
 -- Every dummy row has an id starting with dededede- and every dummy person uses an @example.com email.
 -- Dummy workshops, products and classes are named "Demo ..." and DO show on the public website while they are in the database.
 -- Website receipt numbers are not used up: dummy orders, bookings and enrolments use numbers 9001 and up.
@@ -103,8 +103,13 @@ B = [(1, 'Demo: Cursive L1, Tue Thu (running)', -21, [2, 4], '4:30 to 5:30 pm', 
      (6, 'Demo: Italic Fridays', -35, [5], '4 to 5 pm', 8, 8, True), (7, 'Demo: Kids Art Sundays', -28, [0], '10 to 11 am', 12, 15, True),
      (8, 'Demo: Watercolour Wednesdays', 3, [3], '6 to 7:30 pm', 8, None, True), (10, 'Demo: Sketching weekends', -7, [0, 6], '7 to 9 am', 4, 12, True),
      (1, 'Demo: Cursive L1, holiday batch', 30, [1, 2, 3, 4, 5], '10 to 11 am', 8, 12, True), (9, 'Demo: Gothic (hidden level)', -40, [2], '7 to 8 pm', 8, 6, False)]
-rows = [{'id': did(4, i + 1), 'class_id': did(3, lv), 'name': nm, 'starts_on': D(st), 'days': ds, 'time_text': tm, 'sessions': n, 'capacity': cap, 'active': a} for i, (lv, nm, st, ds, tm, n, cap, a) in enumerate(B)]
-sql.append('-- class batches: running, finished, starting soon, weekday and weekend, with and without a seat limit')
+rows = [{'id': did(4, i + 1), 'class_id': did(3, lv), 'name': nm, 'starts_on': D(st), 'days': ds, 'time_text': tm, 'sessions': n, 'capacity': cap, 'active': a, 'solo': False} for i, (lv, nm, st, ds, tm, n, cap, a) in enumerate(B)]
+# one-on-one students: a private schedule each (no weekly days; every class has its own date and time, added below)
+SOLO = [(13, 3, 'Fatima Sheikh', [(-20, '11 am'), (-13, '11 am'), (-6, '4 pm'), (2, '11 am'), (9, '11 am'), (16, '5:30 pm')]),
+        (14, 5, 'Priya Sundaram', [(-9, '7 pm'), (-2, '7 pm'), (0, '6 pm'), (5, '7 pm')]),
+        (15, 1, 'Anika', [(-3, '4:30 pm'), (4, '4:30 pm'), (11, '10 am')])]
+rows += [{'id': did(4, b), 'class_id': did(3, lv), 'name': who, 'starts_on': D(dates[0][0]), 'days': [], 'time_text': None, 'sessions': LEVEL[did(3, lv)][5], 'capacity': 1, 'active': True, 'solo': True} for b, lv, who, dates in SOLO]
+sql.append('-- class batches: running, finished, starting soon, weekday and weekend, with and without a seat limit; plus three one-on-one schedules')
 sql.append(ins('class_batches', list(rows[0].keys()), rows))
 sql.append("""-- class sessions: one dated class for each lesson of each dummy batch, on the batch's days. Past ones are marked done.
 insert into class_sessions (id, batch_id, no, on_date, status)
@@ -113,6 +118,8 @@ from (select b.id batch_id, g.d::date d, row_number() over (partition by b.id or
       from class_batches b cross join generate_series(b.starts_on, b.starts_on + 400, interval '1 day') g(d)
       where b.id::text like 'dededede-%' and extract(dow from g.d)::int = any(b.days)) x
 where x.no <= x.sessions;
+-- one-on-one classes: chosen dates, each with its own time
+""" + ins('class_sessions', ['id', 'batch_id', 'no', 'on_date', 'time_text', 'status'], [{'id': did(5, 5000 + b * 10 + k), 'batch_id': did(4, b), 'no': k + 1, 'on_date': D(d), 'time_text': t, 'status': 'done' if d < 0 else 'scheduled'} for b, lv, who, dates in SOLO for k, (d, t) in enumerate(dates)]) + """
 -- one class cancelled and one moved to another day, to see how they look
 update class_sessions set status = 'cancelled', note = 'Teacher unwell (dummy)' where batch_id = 'dededede-0004-4000-8000-000000000001' and no = (select min(no) from class_sessions where batch_id = 'dededede-0004-4000-8000-000000000001' and status = 'scheduled');
 update class_sessions set moved_from = on_date, on_date = on_date + 1, note = 'Moved for a holiday (dummy)' where batch_id = 'dededede-0004-4000-8000-000000000006' and no = (select max(no) from class_sessions where batch_id = 'dededede-0004-4000-8000-000000000006');""")
@@ -167,7 +174,8 @@ sql.append(ins('workshop_waitlist', list(rows[0].keys()), rows))
 EN = [(1, 1, 'child', 'Aadhya', 7, 0, 'paid', 'website'), (1, 1, 'child', 'Ishaan', 9, 1, 'paid', 'manual'), (1, 1, 'child', 'Kavya', 6, 2, 'paid', 'website'), (1, 1, 'adult', None, None, 3, 'paid', 'manual'),
       (1, 2, 'child', 'Vihaan', 11, 4, 'pending', 'website'), (2, 3, 'child', 'Diya', 12, 5, 'paid', 'website'), (3, 4, 'adult', None, None, 6, 'paid', 'website'), (3, 4, 'adult', None, None, 7, 'paid', 'manual'),
       (5, 6, 'adult', None, None, 8, 'paid', 'website'), (5, 6, 'adult', None, None, 9, 'refunded', 'website'), (6, 7, 'child', 'Advik', 15, 10, 'paid', 'manual'), (7, 8, 'child', 'Myra', 5, 11, 'paid', 'website'),
-      (7, 8, 'child', 'Reyansh', 8, 12, 'cancelled', 'manual'), (8, 9, 'adult', None, None, 13, 'pending', 'manual'), (10, 10, 'adult', None, None, 0, 'paid', 'manual'), (1, None, 'child', 'Saanvi', 10, 2, 'transferred', 'website')]
+      (7, 8, 'child', 'Reyansh', 8, 12, 'cancelled', 'manual'), (8, 9, 'adult', None, None, 13, 'pending', 'manual'), (10, 10, 'adult', None, None, 0, 'paid', 'manual'), (1, None, 'child', 'Saanvi', 10, 2, 'transferred', 'website'),
+      (3, 13, 'adult', None, None, 4, 'paid', 'manual'), (5, 14, 'adult', None, None, 6, 'paid', 'website'), (1, 15, 'child', 'Anika', 8, 9, 'paid', 'manual')]   # last three: one-on-one
 rows = []
 for i, (lv, bt, grp, kid, age, pi, st, ch) in enumerate(EN):
     l = LEVEL[did(3, lv)]; amt = l[4]; g = round(amt * 0.18) if l[7] == 'add' else round(amt - amt / 1.18) if l[7] == 'included' else 0
@@ -231,7 +239,7 @@ TD = [('Demo: Order more sumi ink', 2, False), ('Demo: Reply to wedding enquiry'
 sql.append('-- to-dos: overdue, due today, upcoming, no date, done')
 sql.append(ins('todos', ['id', 'title', 'note', 'due_on', 'done', 'done_at'], [{'id': did(0xe, i + 1), 'title': t, 'note': 'Dummy to-do' if i % 3 == 0 else None, 'due_on': D(d) if d is not None else None, 'done': dn, 'done_at': TS(-1, '18:00') if dn else None} for i, (t, d, dn) in enumerate(TD)]))
 
-# ---------- invoices (15), quotations and credit notes, and payments ----------
+# ---------- invoices (15) and quotations, and payments ----------
 def calc(items, discount, gst_on):  # same maths as lib/invoiceCalc.js
     lines = [dict(i, net=round(i['qty'] * i['unit_paise'])) for i in items]; sub = sum(l['net'] for l in lines); disc = min(max(discount, 0), sub); left = disc
     for k, l in enumerate(lines):
@@ -254,8 +262,8 @@ INV = [  # (type, no, customer, items, discount, gst, status, issue, due, agains
     ('quotation', 'DEMO-Q/2026-27/002', 10, [it('Brand collaboration: Diwali packaging', 1, 6000000, 18)], 0, True, 'accepted', -20, 10, None, [], None),
     ('quotation', 'DEMO-Q/2026-27/003', 11, [it('Kids camp for 40 children', 40, 250000)], 1000000, False, 'draft', 0, 30, None, [], None),
     ('quotation', 'DEMO-Q/2026-27/004', 12, [it('Wall art', 1, 1800000)], 0, False, 'cancelled', -50, -20, None, [], 'Client went with another artist.'),
-    ('credit_note', 'DEMO-CN/2026-27/001', 7, [it('Two damaged hampers', 2, 45000, 12)], 0, True, 'paid', -10, None, 'DEMO/2026-27/008', [], 'Refunded by card.'),
-    ('credit_note', 'DEMO-CN/2026-27/002', 0, [it('Ten invitations not delivered', 10, 4000, 12)], 0, True, 'sent', -2, None, 'DEMO/2026-27/001', [], 'To be adjusted on the next order.')]
+    ('invoice', 'DEMO/2026-27/010', 7, [it('Calligraphy name tags', 60, 3000, 12, '4911')], 0, True, 'paid', -9, -2, None, [('rest', -8, 'upi')], None),
+    ('invoice', 'DEMO/2026-27/011', 0, [it('Seating chart lettering', 1, 400000)], 0, False, 'sent', -2, 12, None, [], 'Half now, half on delivery.')]
 irows, prows, ledger_inv = [], [], []; pn = 0
 for i, (ty, no, pi, items, disc, gst_on, st, issue, due, against, pays, notes) in enumerate(INV):
     sub, d, gst, total = calc(items, disc, gst_on); iid = did(0xf, i + 1); paid_sum = 0; last = None
@@ -270,7 +278,7 @@ for i, (ty, no, pi, items, disc, gst_on, st, issue, due, against, pays, notes) i
                   'customer_address': f'{10 + pi}, Test Street\n{city} - {pin}\n{state}', 'customer_gstin': '33ABCDE1234F1Z5' if gst_on and i % 2 == 0 else None, 'items': Json(items), 'discount_paise': d, 'gst_enabled': gst_on, 'gst_rate': 18,
                   'subtotal_paise': sub, 'gst_paise': gst, 'total_paise': total, 'notes': notes, 'status': st, 'paid_on': D(last[0]) if st == 'paid' and last else D(issue) if refund else None,
                   'payment_method': last[1] if st == 'paid' and last else 'card' if refund else None, 'last_reminder_at': TS(-3, '10:00') if no.endswith('003') and ty == 'invoice' else None})
-sql.append('-- invoices: paid, part paid, paid in three parts, overdue, draft, cancelled, with and without GST and discount; quotations (sent, accepted, draft, cancelled); credit notes (refunded and not)')
+sql.append('-- invoices: paid, part paid, paid in three parts, overdue, draft, cancelled, with and without GST and discount; quotations (sent, accepted, draft, cancelled)')
 sql.append(ins('invoices', list(irows[0].keys()), irows))
 sql.append('-- payments received against those invoices (full and part payments)')
 sql.append(ins('invoice_payments', list(prows[0].keys()), prows))

@@ -1,13 +1,13 @@
 'use client';
 import { useState } from 'react';
-import { useLoad, sb, must, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, useAction, Confirm, fmtDT, fmtD } from './kit';
+import { useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, useAction, Confirm, fmtDT, fmtD } from './kit';
 // Everything people send through the website forms: contact messages, custom invitation requests, service requests, collaboration offers and job applications.
 // Opening a message marks it read. "Dealt with" is separate, so a message you opened but have not answered yet is not lost.
 const KIND = { contact: 'Message', invitation: 'Invitation request', service: 'Service request', collaboration: 'Collaboration', hiring: 'Job application' };
 const isRead = (e) => (e.read_at !== undefined ? !!e.read_at : !!e.handled);     // before database update v9 there is no read_at
 export default function Inbox() {
   const [open, setOpen] = useState(null); const [show, setShow] = useState('open'); const [kind, setKind] = useState('all');
-  const { data, error, reload } = useLoad(async () => must(await sb().from('enquiries').select('*').order('created_at', { ascending: false }).limit(500)));
+  const { data, error, reload } = useLoad(async () => must(await every(() => sb().from('enquiries').select('*').order('created_at', { ascending: false }).order('id'))));
   if (error) return <Page title="Inbox"><Err e={error} /></Page>; if (!data) return <Page title="Inbox"><Spin /></Page>;
   const unread = data.filter((e) => !isRead(e)).length; const kinds = Object.keys(KIND).filter((k) => data.some((e) => e.kind === k));
   const rows = data.filter((e) => (show === 'all' || !e.handled) && (kind === 'all' || e.kind === kind));

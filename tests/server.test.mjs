@@ -115,7 +115,7 @@ const order = { id: '11111111-1111-1111-1111-111111111111', status: 'delivered',
 
 test('refund sent back by hand: recorded with the chosen method, stock returned, once only', async () => {
   const db = fakeDb(order);
-  const [r] = await F.refundItems({ kind: 'order', ids: [order.id], how: 'sent', method: 'bank', notify: false });
+  const [r] = await F.refundItems({ kind: 'order', ids: [order.id], how: 'sent', method: 'bank', notify: false, restock: true });
   assert.equal(r.ok, true); assert.equal(db.status(), 'refunded');
   assert.equal(db.ledger.length, 1); assert.equal(db.ledger[0].method, 'bank', 'the method chosen, not the payment provider'); assert.equal(db.ledger[0].amount_paise, 90000); assert.equal(db.ledger[0].kind, 'out');
   assert.ok(db.calls.includes('POST rpc/order_stock_internal'), 'stock is given back');
@@ -133,4 +133,9 @@ test('online refund: only for online payments; if the provider says no, nothing 
   db = fakeDb({ ...order, razorpay_payment_id: 'pay_9' });
   const [done] = await F.refundItems({ kind: 'order', ids: [order.id], how: 'online', notify: false });
   assert.equal(done.ok, true); assert.equal(db.ledger[0].method, 'razorpay'); delete process.env.RAZORPAY_KEY_ID;
+});
+test('order refund leaves stock alone unless the owner says the items are back', async () => {
+  const db = fakeDb(order);
+  const [r] = await F.refundItems({ kind: 'order', ids: [order.id], how: 'sent', method: 'upi', notify: false, restock: false });
+  assert.equal(r.ok, true); assert.ok(!db.calls.includes('POST rpc/order_stock_internal'), 'defective or unreturned items are not put back');
 });

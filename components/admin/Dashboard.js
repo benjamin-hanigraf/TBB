@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import Icon from '@/components/Icons';
-import { useLoad, sb, must, Page, Card, Stat, Badge, Empty, Spin, Err, fmtD, fmtDT } from './kit';
+import { useLoad, sb, must, every, Page, Card, Stat, Badge, Empty, Spin, Err, fmtD, fmtDT } from './kit';
 import { summarise, fyOf, todayISO, money } from '@/lib/accounting';
 
 const istDay = (s) => new Date(new Date(s).getTime() + 5.5 * 3600e3).toISOString().slice(0, 10);
@@ -12,7 +12,7 @@ export default function Dashboard() {
   const { data: d, error } = useLoad(async () => {
     const c = sb(); const today = todayISO(); const fy = fyOf(today);
     const [ledger, toPack, inbox, ws, recentO, recentB, low, recentE, todos, near, sess, late, inv] = await Promise.all([
-      c.from('ledger_entries').select('entry_date,kind,category,amount_paise,gst_paise').gte('entry_date', `${fy.slice(0, 4)}-04-01`).limit(5000),
+      every(() => c.from('ledger_entries').select('entry_date,kind,category,amount_paise,gst_paise').gte('entry_date', `${fy.slice(0, 4)}-04-01`).order('id')),
       c.from('orders').select('id', { count: 'exact', head: true }).in('status', ['paid', 'packed']),          // same as "To pack" on the Orders page
       c.from('enquiries').select('id', { count: 'exact', head: true }).is('read_at', null),
       c.from('workshops').select('id,title,starts_at,capacity,status').gte('starts_at', new Date().toISOString()).neq('status', 'draft').order('starts_at').limit(3),
@@ -22,7 +22,7 @@ export default function Dashboard() {
       c.from('class_enrolments').select('id,name,amount_paise,paid_at,class_levels(title,level)').not('paid_at', 'is', null).order('paid_at', { ascending: false }).limit(5),
       c.from('todos').select('id,title,due_on').eq('done', false).lte('due_on', today).order('due_on'),
       c.from('workshops').select('id,title,kind,starts_at,ends_at,status').neq('status', 'cancelled').gte('starts_at', new Date(Date.now() - 60 * 864e5).toISOString()).lte('starts_at', new Date(Date.now() + 2 * 864e5).toISOString()),
-      c.from('class_sessions').select('id,on_date,status,class_batches(name,time_text,class_levels(title,level))').eq('on_date', today).neq('status', 'cancelled'),
+      c.from('class_sessions').select('*,class_batches(*,class_levels(title,level))').eq('on_date', today).neq('status', 'cancelled'),
       c.from('class_sessions').select('id', { count: 'exact', head: true }).lt('on_date', today).eq('status', 'scheduled'),
       c.from('invoices').select('id,total_paise,due_date,status,doc_type,invoice_payments(amount_paise)').eq('doc_type', 'invoice').in('status', ['draft', 'sent']).lt('due_date', today)]);
     const unread = inbox.error ? await c.from('enquiries').select('id', { count: 'exact', head: true }).eq('handled', false) : inbox;   // before database update v9
@@ -33,7 +33,7 @@ export default function Dashboard() {
     // Today: workshops on today (a course counts on every day it runs), classes on today, to-dos due today
     const day = [
       ...soft(near).filter((x) => { const s = istDay(x.starts_at), e = x.kind === 'course' && x.ends_at ? istDay(x.ends_at) : s; return s <= today && today <= e; }).map((x) => ({ key: `w${x.id}`, t: x.title, s: `${istDay(x.starts_at) === today ? istTime(x.starts_at) : 'Course day'}${x.status === 'draft' ? ' · draft' : ''}`, kind: 'Workshop', href: '/manager/programs' })),
-      ...soft(sess).map((x) => { const b = x.class_batches || {}; const l = b.class_levels || {}; return { key: `c${x.id}`, t: `${l.title || 'Class'}${l.level ? `, ${l.level}` : ''}`, s: [b.time_text, b.name].filter(Boolean).join(' · '), kind: 'Class', href: '/manager/programs?tab=classes' }; }),
+      ...soft(sess).map((x) => { const b = x.class_batches || {}; const l = b.class_levels || {}; const lv = `${l.title || 'Class'}${l.level ? `, ${l.level}` : ''}`; return { key: `c${x.id}`, t: b.solo ? `${b.name} · ${lv}` : lv, s: [x.time_text || b.time_text, b.solo ? '' : b.name].filter(Boolean).join(' · '), kind: 'Class', href: '/manager/programs?tab=classes' }; }),
       ...td.filter((x) => x.due_on === today).map((x) => ({ key: `t${x.id}`, t: x.title, s: '', kind: 'To-do', href: '/manager/planner' }))];
     // Needs attention: only things that are late or running out
     const owed = soft(inv).map((i) => i.total_paise - (i.invoice_payments || []).reduce((s, p) => s + p.amount_paise, 0)).filter((x) => x > 0);

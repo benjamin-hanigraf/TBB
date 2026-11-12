@@ -15,14 +15,14 @@ async function save(key, value, pub) { must(await sb().from('settings').upsert({
 function Main({ rows }) {
   const b = get(rows, 'business', {}); const g = get(rows, 'gst', { enabled: false, gstin: '', rate_percent: 18 }); const inv = get(rows, 'invoice', { prefix: 'TBB/YYYY-YY', start: 1, terms: '' }); const s = get(rows, 'shipping', { flat_paise: 6000, free_above_paise: 200000 }); const gw = get(rows, 'gateway', { fee_percent: 2 }); const [run, busy] = useAction();
   const f = useForm({ name: b.name || 'Thin Black Brush', phone: b.phone || '', phone2: b.phone2 || '', map: b.map || '', email: b.email || '', address: b.address || ADDRESS_TEXT, instagram: b.instagram || '', facebook: b.facebook || '', whatsapp: b.whatsapp || '', upi: b.upi || '',
-    enabled: !!g.enabled, gstin: g.gstin || '', prefix: inv.prefix || 'TBB/YYYY-YY', start: String(inv.start || 1), terms: inv.terms || '', qprefix: inv.quotation_prefix || 'TBB-Q/YYYY-YY', cprefix: inv.credit_prefix || 'TBB-CN/YYYY-YY', fee: String(gw.fee_percent ?? 2), flat: String((s.flat_paise || 0) / 100), free: String((s.free_above_paise || 0) / 100) });
+    enabled: !!g.enabled, gstin: g.gstin || '', prefix: inv.prefix || 'TBB/YYYY-YY', start: String(inv.start || 1), terms: inv.terms || '', qprefix: inv.quotation_prefix || 'TBB-Q/YYYY-YY', fee: String(gw.fee_percent ?? 2), flat: String((s.flat_paise || 0) / 100), free: String((s.free_above_paise || 0) / 100) });
   const submit = (e) => { e.preventDefault(); run(async () => {
     const v = f.v; if (v.enabled && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(v.gstin)) throw new Error('Please enter a valid 15-character GSTIN, or turn GST off.');
     const start = Math.max(1, parseInt(v.start || '1', 10) || 1); const fee = Number(v.fee);
     if (!(fee >= 0 && fee <= 10)) throw new Error('Please enter the gateway fee as a percentage between 0 and 10.');
     await save('business', { name: v.name, phone: v.phone, phone2: v.phone2, map: v.map, email: v.email, address: v.address, instagram: v.instagram, facebook: v.facebook, whatsapp: v.whatsapp, upi: v.upi }, true);
     await save('gst', { enabled: v.enabled, gstin: v.gstin, rate_percent: g.rate_percent || 18 }, false);
-    await save('invoice', { ...inv, prefix: v.prefix || 'TBB/YYYY-YY', start, terms: v.terms, quotation_prefix: v.qprefix || 'TBB-Q/YYYY-YY', credit_prefix: v.cprefix || 'TBB-CN/YYYY-YY' }, false);
+    await save('invoice', { ...inv, prefix: v.prefix || 'TBB/YYYY-YY', start, terms: v.terms, quotation_prefix: v.qprefix || 'TBB-Q/YYYY-YY' }, false);
     if (start !== Number(inv.start || 1)) must(await sb().rpc('set_invoice_start', { n: start }));   // website receipts and invoices share one number series
     await save('gateway', { fee_percent: fee }, false);
     await save('shipping', { flat_paise: rupeesToPaise(v.flat), free_above_paise: rupeesToPaise(v.free) }, true);
@@ -38,7 +38,7 @@ function Main({ rows }) {
     <Card title="Invoices and GST"><div className="ad-form">
       <F form={f} k="prefix" label="Default invoice number prefix" rule="code" hint="YYYY-YY becomes the financial year, e.g. TBB/2026-27/001" />
       <F form={f} k="start" label="Start numbering from" rule="digits" inputMode="numeric" hint="Website receipts and your invoices share one series. The next one gets this number if it is higher than the last one used" />
-      <F form={f} k="qprefix" label="Quotation number prefix" rule="code" /><F form={f} k="cprefix" label="Credit note number prefix" rule="code" />
+      <F form={f} k="qprefix" label="Quotation number prefix" rule="code" />
       <div className="full"><F form={f} k="terms" label="Note at the bottom of invoices" rule="sentence" /></div>
       <div className="full"><F form={f} k="enabled" label="My business is registered for GST" type="check" /></div>
       {f.v.enabled && <F form={f} k="gstin" label="GSTIN" rule="code" required maxLength={15} />}</div></Card>

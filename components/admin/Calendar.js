@@ -2,7 +2,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/Icons';
-import { useLoad, sb, must, Card, Empty, Spin, Err, Badge, Modal, Btn, F, useForm, useAction, Confirm, dmyToISO, isoToDMY } from './kit';
+import { useLoad, sb, must, every, Card, Empty, Spin, Err, Badge, Modal, Btn, F, useForm, useAction, Confirm, dmyToISO, isoToDMY } from './kit';
 import { todayISO } from '@/lib/accounting';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -20,7 +20,8 @@ export function buildEvents({ workshops = [], sessions = [], todos = [], events 
     if (w.status === 'cancelled') continue; const s = istDate(w.starts_at); const e = w.kind === 'course' && w.ends_at ? istDate(w.ends_at) : s;
     for (let d = s, n = 0; d <= e && n < 120; d = addDays(d, 1), n++) ev.push({ date: d, title: w.title, kind: 'workshop', time: d === s ? istTime(w.starts_at) : '', note: w.venue_name || '', draft: w.status === 'draft', href: '/manager/programs' });
   }
-  for (const s of sessions) { if (s.status === 'cancelled') continue; const b = s.class_batches; const lv = b?.class_levels; ev.push({ date: s.on_date, title: `${lv?.title || 'Class'}${lv?.level ? `, ${lv.level}` : ''}`, kind: 'class', time: b?.time_text || '', note: `Class ${s.no} of ${b?.sessions || '?'}${s.status === 'done' ? ' · done' : ''}${s.moved_from ? ' · moved' : ''}`, href: '/manager/programs?tab=classes' }); }
+  for (const s of sessions) { if (s.status === 'cancelled') continue; const b = s.class_batches; const lv = b?.class_levels; const level = `${lv?.title || 'Class'}${lv?.level ? `, ${lv.level}` : ''}`;   // one-on-one classes show the student's name
+    ev.push({ date: s.on_date, title: b?.solo ? `${b.name} · ${level}` : level, kind: 'class', time: s.time_text || b?.time_text || '', note: `Class ${s.no}${b?.solo ? '' : ` of ${b?.sessions || '?'}`}${s.status === 'done' ? ' · done' : ''}${s.moved_from ? ' · moved' : ''}`, href: '/manager/programs?tab=classes' }); }
   for (const t of todos) if (t.due_on && !t.done) ev.push({ date: t.due_on, title: t.title, kind: 'todo', time: '', note: t.note || '', href: '#todo' });
   for (const e of events) { const end = e.end_date && e.end_date > e.on_date ? e.end_date : e.on_date; for (let d = e.on_date, n = 0; d <= end && n < 60; d = addDays(d, 1), n++) ev.push({ date: d, title: e.title, kind: 'event', time: d === e.on_date ? e.time_text || '' : '', note: e.note || '', event: e }); }
   return ev.sort((a, b) => a.date.localeCompare(b.date) || a.kind.localeCompare(b.kind) || a.title.localeCompare(b.title));
@@ -30,10 +31,10 @@ export default function CalendarPanel({ version = 0 }) {
   const today = todayISO(); const [ym, setYm] = useState(today.slice(0, 7)); const [sel, setSel] = useState(today); const [edit, setEdit] = useState(null);
   const { data, error, reload } = useLoad(async () => {
     const c = sb(); const [w, s, t, e] = await Promise.all([
-      c.from('workshops').select('id,title,kind,starts_at,ends_at,venue_name,status').order('starts_at'),
-      c.from('class_sessions').select('id,no,on_date,status,moved_from,class_batches(name,time_text,sessions,class_levels(title,level))').order('on_date').limit(3000),
-      c.from('todos').select('id,title,note,due_on,done').eq('done', false).not('due_on', 'is', null),
-      c.from('events').select('*').order('on_date')]);
+      every(() => c.from('workshops').select('id,title,kind,starts_at,ends_at,venue_name,status').order('starts_at').order('id')),
+      every(() => c.from('class_sessions').select('*,class_batches(*,class_levels(title,level))').order('on_date').order('id')),
+      every(() => c.from('todos').select('id,title,note,due_on,done').eq('done', false).not('due_on', 'is', null).order('id')),
+      every(() => c.from('events').select('*').order('on_date').order('id'))]);
     // Show whatever loaded. A missing table (database update not run yet) should not blank the whole calendar.
     const missing = []; const ok = (r, name) => { if (!r.error) return r.data || []; missing.push(name); console.error('calendar', name, r.error); return []; };
     return { workshops: ok(w, 'workshops'), sessions: ok(s, 'class sessions'), todos: ok(t, 'to-dos'), events: ok(e, 'events'), missing };

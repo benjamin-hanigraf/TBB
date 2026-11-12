@@ -1,6 +1,6 @@
 -- ============ DUMMY TEST DATA (made by tools/make_dummy_sql.py, do not edit by hand) ============
 -- Fills every table with at least 10 varied rows so every screen of the website and the Manager app can be tried.
--- Run AFTER schema.sql, seed.sql and v2.sql to v9.sql. Run it once; to take everything out again run supabase/dummy-remove.sql.
+-- Run AFTER schema.sql, seed.sql and v2.sql to v10.sql. Run it once; to take everything out again run supabase/dummy-remove.sql.
 -- Every dummy row has an id starting with dededede- and every dummy person uses an @example.com email.
 -- Dummy workshops, products and classes are named "Demo ..." and DO show on the public website while they are in the database.
 -- Website receipt numbers are not used up: dummy orders, bookings and enrolments use numbers 9001 and up.
@@ -92,21 +92,24 @@ insert into class_levels (id, slug, track, title, level, description, covers, pr
 ('dededede-0003-4000-8000-000000000009', 'demo-gothic-1', 'Demo: Gothic', 'Gothic Script', 'Level 1', 'A dummy class level for testing enrolments, batches and attendance.', array['Posture and grip','Basic strokes','Letters and joins'], 750000, 8, false, 108, array[2], '7 to 8 pm', 'none'),
 ('dededede-0003-4000-8000-000000000010', 'demo-sketching-1', 'Demo: Sketching', 'Urban Sketching', 'Open level', 'A dummy class level for testing enrolments, batches and attendance.', array['Posture and grip','Basic strokes','Letters and joins'], 450000, 4, true, 109, array[0,6], '7 to 9 am', 'add');
 
--- class batches: running, finished, starting soon, weekday and weekend, with and without a seat limit
+-- class batches: running, finished, starting soon, weekday and weekend, with and without a seat limit; plus three one-on-one schedules
 
-insert into class_batches (id, class_id, name, starts_on, days, time_text, sessions, capacity, active) values
-('dededede-0004-4000-8000-000000000001', 'dededede-0003-4000-8000-000000000001', 'Demo: Cursive L1, Tue Thu (running)', (current_date + -21), array[2,4], '4:30 to 5:30 pm', 8, 10, true),
-('dededede-0004-4000-8000-000000000002', 'dededede-0003-4000-8000-000000000001', 'Demo: Cursive L1, next batch', (current_date + 14), array[2,4], '4:30 to 5:30 pm', 8, 10, true),
-('dededede-0004-4000-8000-000000000003', 'dededede-0003-4000-8000-000000000002', 'Demo: Cursive L2, finished', (current_date + -70), array[2,4], '5:30 to 6:30 pm', 8, 8, false),
-('dededede-0004-4000-8000-000000000004', 'dededede-0003-4000-8000-000000000003', 'Demo: Brush Beginner, Saturdays', (current_date + -14), array[6], '11 am to 12:30 pm', 6, 8, true),
-('dededede-0004-4000-8000-000000000005', 'dededede-0003-4000-8000-000000000004', 'Demo: Brush Intermediate', (current_date + 7), array[6], '2 to 3:30 pm', 6, 6, true),
-('dededede-0004-4000-8000-000000000006', 'dededede-0003-4000-8000-000000000005', 'Demo: Copperplate Mon Wed', (current_date + -10), array[1,3], '7 to 8 pm', 10, 6, true),
-('dededede-0004-4000-8000-000000000007', 'dededede-0003-4000-8000-000000000006', 'Demo: Italic Fridays', (current_date + -35), array[5], '4 to 5 pm', 8, 8, true),
-('dededede-0004-4000-8000-000000000008', 'dededede-0003-4000-8000-000000000007', 'Demo: Kids Art Sundays', (current_date + -28), array[0], '10 to 11 am', 12, 15, true),
-('dededede-0004-4000-8000-000000000009', 'dededede-0003-4000-8000-000000000008', 'Demo: Watercolour Wednesdays', (current_date + 3), array[3], '6 to 7:30 pm', 8, null, true),
-('dededede-0004-4000-8000-000000000010', 'dededede-0003-4000-8000-000000000010', 'Demo: Sketching weekends', (current_date + -7), array[0,6], '7 to 9 am', 4, 12, true),
-('dededede-0004-4000-8000-000000000011', 'dededede-0003-4000-8000-000000000001', 'Demo: Cursive L1, holiday batch', (current_date + 30), array[1,2,3,4,5], '10 to 11 am', 8, 12, true),
-('dededede-0004-4000-8000-000000000012', 'dededede-0003-4000-8000-000000000009', 'Demo: Gothic (hidden level)', (current_date + -40), array[2], '7 to 8 pm', 8, 6, false);
+insert into class_batches (id, class_id, name, starts_on, days, time_text, sessions, capacity, active, solo) values
+('dededede-0004-4000-8000-000000000001', 'dededede-0003-4000-8000-000000000001', 'Demo: Cursive L1, Tue Thu (running)', (current_date + -21), array[2,4], '4:30 to 5:30 pm', 8, 10, true, false),
+('dededede-0004-4000-8000-000000000002', 'dededede-0003-4000-8000-000000000001', 'Demo: Cursive L1, next batch', (current_date + 14), array[2,4], '4:30 to 5:30 pm', 8, 10, true, false),
+('dededede-0004-4000-8000-000000000003', 'dededede-0003-4000-8000-000000000002', 'Demo: Cursive L2, finished', (current_date + -70), array[2,4], '5:30 to 6:30 pm', 8, 8, false, false),
+('dededede-0004-4000-8000-000000000004', 'dededede-0003-4000-8000-000000000003', 'Demo: Brush Beginner, Saturdays', (current_date + -14), array[6], '11 am to 12:30 pm', 6, 8, true, false),
+('dededede-0004-4000-8000-000000000005', 'dededede-0003-4000-8000-000000000004', 'Demo: Brush Intermediate', (current_date + 7), array[6], '2 to 3:30 pm', 6, 6, true, false),
+('dededede-0004-4000-8000-000000000006', 'dededede-0003-4000-8000-000000000005', 'Demo: Copperplate Mon Wed', (current_date + -10), array[1,3], '7 to 8 pm', 10, 6, true, false),
+('dededede-0004-4000-8000-000000000007', 'dededede-0003-4000-8000-000000000006', 'Demo: Italic Fridays', (current_date + -35), array[5], '4 to 5 pm', 8, 8, true, false),
+('dededede-0004-4000-8000-000000000008', 'dededede-0003-4000-8000-000000000007', 'Demo: Kids Art Sundays', (current_date + -28), array[0], '10 to 11 am', 12, 15, true, false),
+('dededede-0004-4000-8000-000000000009', 'dededede-0003-4000-8000-000000000008', 'Demo: Watercolour Wednesdays', (current_date + 3), array[3], '6 to 7:30 pm', 8, null, true, false),
+('dededede-0004-4000-8000-000000000010', 'dededede-0003-4000-8000-000000000010', 'Demo: Sketching weekends', (current_date + -7), array[0,6], '7 to 9 am', 4, 12, true, false),
+('dededede-0004-4000-8000-000000000011', 'dededede-0003-4000-8000-000000000001', 'Demo: Cursive L1, holiday batch', (current_date + 30), array[1,2,3,4,5], '10 to 11 am', 8, 12, true, false),
+('dededede-0004-4000-8000-000000000012', 'dededede-0003-4000-8000-000000000009', 'Demo: Gothic (hidden level)', (current_date + -40), array[2], '7 to 8 pm', 8, 6, false, false),
+('dededede-0004-4000-8000-000000000013', 'dededede-0003-4000-8000-000000000003', 'Fatima Sheikh', (current_date + -20), '{}', null, 6, 1, true, true),
+('dededede-0004-4000-8000-000000000014', 'dededede-0003-4000-8000-000000000005', 'Priya Sundaram', (current_date + -9), '{}', null, 10, 1, true, true),
+('dededede-0004-4000-8000-000000000015', 'dededede-0003-4000-8000-000000000001', 'Anika', (current_date + -3), '{}', null, 8, 1, true, true);
 
 -- class sessions: one dated class for each lesson of each dummy batch, on the batch's days. Past ones are marked done.
 insert into class_sessions (id, batch_id, no, on_date, status)
@@ -115,6 +118,21 @@ from (select b.id batch_id, g.d::date d, row_number() over (partition by b.id or
       from class_batches b cross join generate_series(b.starts_on, b.starts_on + 400, interval '1 day') g(d)
       where b.id::text like 'dededede-%' and extract(dow from g.d)::int = any(b.days)) x
 where x.no <= x.sessions;
+-- one-on-one classes: chosen dates, each with its own time
+insert into class_sessions (id, batch_id, no, on_date, time_text, status) values
+('dededede-0005-4000-8000-000000005130', 'dededede-0004-4000-8000-000000000013', 1, (current_date + -20), '11 am', 'done'),
+('dededede-0005-4000-8000-000000005131', 'dededede-0004-4000-8000-000000000013', 2, (current_date + -13), '11 am', 'done'),
+('dededede-0005-4000-8000-000000005132', 'dededede-0004-4000-8000-000000000013', 3, (current_date + -6), '4 pm', 'done'),
+('dededede-0005-4000-8000-000000005133', 'dededede-0004-4000-8000-000000000013', 4, (current_date + 2), '11 am', 'scheduled'),
+('dededede-0005-4000-8000-000000005134', 'dededede-0004-4000-8000-000000000013', 5, (current_date + 9), '11 am', 'scheduled'),
+('dededede-0005-4000-8000-000000005135', 'dededede-0004-4000-8000-000000000013', 6, (current_date + 16), '5:30 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000005140', 'dededede-0004-4000-8000-000000000014', 1, (current_date + -9), '7 pm', 'done'),
+('dededede-0005-4000-8000-000000005141', 'dededede-0004-4000-8000-000000000014', 2, (current_date + -2), '7 pm', 'done'),
+('dededede-0005-4000-8000-000000005142', 'dededede-0004-4000-8000-000000000014', 3, (current_date + 0), '6 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000005143', 'dededede-0004-4000-8000-000000000014', 4, (current_date + 5), '7 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000005150', 'dededede-0004-4000-8000-000000000015', 1, (current_date + -3), '4:30 pm', 'done'),
+('dededede-0005-4000-8000-000000005151', 'dededede-0004-4000-8000-000000000015', 2, (current_date + 4), '4:30 pm', 'scheduled'),
+('dededede-0005-4000-8000-000000005152', 'dededede-0004-4000-8000-000000000015', 3, (current_date + 11), '10 am', 'scheduled');
 -- one class cancelled and one moved to another day, to see how they look
 update class_sessions set status = 'cancelled', note = 'Teacher unwell (dummy)' where batch_id = 'dededede-0004-4000-8000-000000000001' and no = (select min(no) from class_sessions where batch_id = 'dededede-0004-4000-8000-000000000001' and status = 'scheduled');
 update class_sessions set moved_from = on_date, on_date = on_date + 1, note = 'Moved for a holiday (dummy)' where batch_id = 'dededede-0004-4000-8000-000000000006' and no = (select max(no) from class_sessions where batch_id = 'dededede-0004-4000-8000-000000000006');
@@ -191,7 +209,10 @@ insert into class_enrolments (id, class_id, batch_id, student_name, student_grou
 ('dededede-0006-4000-8000-000000000013', 'dededede-0003-4000-8000-000000000007', 'dededede-0004-4000-8000-000000000008', 'Reyansh', 'child', 8, 'Rahul Das', 'rahul.das@example.com', '+91 98765 00013', 400000, 0, 'cancelled', 'manual', null, null, null, 9113, null, ((current_date + -13) + time '18:00') at time zone 'Asia/Kolkata', null),
 ('dededede-0006-4000-8000-000000000014', 'dededede-0003-4000-8000-000000000008', 'dededede-0004-4000-8000-000000000009', 'Sneha Pillai', 'adult', null, 'Sneha Pillai', 'sneha.p@example.com', '+91 98765 00014', 800000, 122034, 'pending', 'manual', null, null, null, 9114, null, ((current_date + -12) + time '18:00') at time zone 'Asia/Kolkata', null),
 ('dededede-0006-4000-8000-000000000015', 'dededede-0003-4000-8000-000000000010', 'dededede-0004-4000-8000-000000000010', 'Anita Rao', 'adult', null, 'Anita Rao', 'anita.rao@example.com', '+91 98765 00001', 531000, 81000, 'paid', 'manual', 'bank', null, null, 9115, null, ((current_date + -11) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -11) + time '18:10') at time zone 'Asia/Kolkata'),
-('dededede-0006-4000-8000-000000000016', 'dededede-0003-4000-8000-000000000001', null, 'Saanvi', 'child', 10, 'Meera Krishnan', 'meera.k@example.com', '+91 98765 00003', 500000, 0, 'transferred', 'website', 'razorpay', 'order_demo_en016', 'pay_demo_en016', 9116, null, ((current_date + -10) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -10) + time '18:10') at time zone 'Asia/Kolkata');
+('dededede-0006-4000-8000-000000000016', 'dededede-0003-4000-8000-000000000001', null, 'Saanvi', 'child', 10, 'Meera Krishnan', 'meera.k@example.com', '+91 98765 00003', 500000, 0, 'transferred', 'website', 'razorpay', 'order_demo_en016', 'pay_demo_en016', 9116, null, ((current_date + -10) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -10) + time '18:10') at time zone 'Asia/Kolkata'),
+('dededede-0006-4000-8000-000000000017', 'dededede-0003-4000-8000-000000000003', 'dededede-0004-4000-8000-000000000013', 'Fatima Sheikh', 'adult', null, 'Fatima Sheikh', 'fatima.s@example.com', '+91 98765 00005', 650000, 99153, 'paid', 'manual', 'cash', null, null, 9117, null, ((current_date + -9) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -9) + time '18:10') at time zone 'Asia/Kolkata'),
+('dededede-0006-4000-8000-000000000018', 'dededede-0003-4000-8000-000000000005', 'dededede-0004-4000-8000-000000000014', 'Priya Sundaram', 'adult', null, 'Priya Sundaram', 'priya.s@example.com', '+91 98765 00007', 1062000, 162000, 'paid', 'website', 'razorpay', 'order_demo_en018', 'pay_demo_en018', 9118, null, ((current_date + -8) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -8) + time '18:10') at time zone 'Asia/Kolkata'),
+('dededede-0006-4000-8000-000000000019', 'dededede-0003-4000-8000-000000000001', 'dededede-0004-4000-8000-000000000015', 'Anika', 'child', 8, 'Sanjay Gupta', 'sanjay.g@example.com', '+91 98765 00010', 500000, 0, 'paid', 'manual', 'upi', null, null, 9119, null, ((current_date + -7) + time '18:00') at time zone 'Asia/Kolkata', ((current_date + -7) + time '18:10') at time zone 'Asia/Kolkata');
 
 -- attendance: for every class already held, each paid student in that batch is marked present or absent
 insert into class_attendance (session_id, enrolment_id, present)
@@ -285,7 +306,7 @@ insert into todos (id, title, note, due_on, done, done_at) values
 ('dededede-000e-4000-8000-000000000011', 'Demo: Book venue in Bengaluru', null, (current_date + 14), false, null),
 ('dededede-000e-4000-8000-000000000012', 'Demo: Clean brushes', null, (current_date + -10), true, ((current_date + -1) + time '18:00') at time zone 'Asia/Kolkata');
 
--- invoices: paid, part paid, paid in three parts, overdue, draft, cancelled, with and without GST and discount; quotations (sent, accepted, draft, cancelled); credit notes (refunded and not)
+-- invoices: paid, part paid, paid in three parts, overdue, draft, cancelled, with and without GST and discount; quotations (sent, accepted, draft, cancelled)
 
 insert into invoices (id, doc_type, invoice_no, against_no, issue_date, due_date, customer_name, customer_email, customer_phone, customer_address, customer_gstin, items, discount_paise, gst_enabled, gst_rate, subtotal_paise, gst_paise, total_paise, notes, status, paid_on, payment_method, last_reminder_at) values
 ('dededede-000f-4000-8000-000000000001', 'invoice', 'DEMO/2026-27/001', null, (current_date + -30), (current_date + -15), 'Anita Rao', 'anita.rao@example.com', '+91 98765 00001', '10, Test Street
@@ -327,12 +348,12 @@ Maharashtra', null, '[{"desc": "Kids camp for 40 children", "qty": 40, "unit_pai
 ('dededede-000f-4000-8000-000000000013', 'quotation', 'DEMO-Q/2026-27/004', null, (current_date + -50), (current_date + -20), 'Rahul Das', 'rahul.das@example.com', '+91 98765 00013', '22, Test Street
 Kolkata - 700019
 West Bengal', null, '[{"desc": "Wall art", "qty": 1, "unit_paise": 1800000, "gst_rate": 18, "hsn": ""}]'::jsonb, 0, false, 18, 1800000, 0, 1800000, 'Client went with another artist.', 'cancelled', null, null, null),
-('dededede-000f-4000-8000-000000000014', 'credit_note', 'DEMO-CN/2026-27/001', 'DEMO/2026-27/008', (current_date + -10), null, 'Karthik Raman', 'karthik.r@example.com', '+91 98765 00008', '17, Test Street
+('dededede-000f-4000-8000-000000000014', 'invoice', 'DEMO/2026-27/010', null, (current_date + -9), (current_date + -2), 'Karthik Raman', 'karthik.r@example.com', '+91 98765 00008', '17, Test Street
 Coimbatore - 641002
-Tamil Nadu', null, '[{"desc": "Two damaged hampers", "qty": 2, "unit_paise": 45000, "gst_rate": 12, "hsn": ""}]'::jsonb, 0, true, 18, 90000, 10800, 100800, 'Refunded by card.', 'paid', (current_date + -10), 'card', null),
-('dededede-000f-4000-8000-000000000015', 'credit_note', 'DEMO-CN/2026-27/002', 'DEMO/2026-27/001', (current_date + -2), null, 'Anita Rao', 'anita.rao@example.com', '+91 98765 00001', '10, Test Street
+Tamil Nadu', null, '[{"desc": "Calligraphy name tags", "qty": 60, "unit_paise": 3000, "gst_rate": 12, "hsn": "4911"}]'::jsonb, 0, true, 18, 180000, 21600, 201600, null, 'paid', (current_date + -8), 'upi', null),
+('dededede-000f-4000-8000-000000000015', 'invoice', 'DEMO/2026-27/011', null, (current_date + -2), (current_date + 12), 'Anita Rao', 'anita.rao@example.com', '+91 98765 00001', '10, Test Street
 Chennai - 600024
-Tamil Nadu', '33ABCDE1234F1Z5', '[{"desc": "Ten invitations not delivered", "qty": 10, "unit_paise": 4000, "gst_rate": 12, "hsn": ""}]'::jsonb, 0, true, 18, 40000, 4800, 44800, 'To be adjusted on the next order.', 'sent', null, null, null);
+Tamil Nadu', null, '[{"desc": "Seating chart lettering", "qty": 1, "unit_paise": 400000, "gst_rate": 18, "hsn": ""}]'::jsonb, 0, false, 18, 400000, 0, 400000, 'Half now, half on delivery.', 'sent', null, null, null);
 
 -- payments received against those invoices (full and part payments)
 
@@ -347,7 +368,8 @@ insert into invoice_payments (id, invoice_id, amount_paise, paid_on, method, not
 ('dededede-0010-4000-8000-000000000008', 'dededede-000f-4000-8000-000000000007', 500000, (current_date + -2), 'cash', null),
 ('dededede-0010-4000-8000-000000000009', 'dededede-000f-4000-8000-000000000007', 500000, (current_date + -1), 'upi', null),
 ('dededede-0010-4000-8000-000000000010', 'dededede-000f-4000-8000-000000000008', 1792000, (current_date + -14), 'card', null),
-('dededede-0010-4000-8000-000000000011', 'dededede-000f-4000-8000-000000000009', 100000, (current_date + -2), 'upi', null);
+('dededede-0010-4000-8000-000000000011', 'dededede-000f-4000-8000-000000000009', 100000, (current_date + -2), 'upi', null),
+('dededede-0010-4000-8000-000000000012', 'dededede-000f-4000-8000-000000000014', 201600, (current_date + -8), 'upi', null);
 
 -- accounts: money in and out by hand in every main category, plus the invoice payments and the refund above
 
@@ -377,7 +399,7 @@ insert into ledger_entries (id, entry_date, kind, category, description, amount_
 ('dededede-0011-4000-8000-000000000023', (current_date + -1), 'in', 'Services', 'Invoice DEMO/2026-27/007 (part payment)', 500000, 76271, 'upi', 'Priya Sundaram', 'invoice', 'dededede-0010-4000-8000-000000000009'),
 ('dededede-0011-4000-8000-000000000024', (current_date + -14), 'in', 'Services', 'Invoice DEMO/2026-27/008', 1792000, 192000, 'card', 'Karthik Raman', 'invoice', 'dededede-0010-4000-8000-000000000010'),
 ('dededede-0011-4000-8000-000000000025', (current_date + -2), 'in', 'Services', 'Invoice DEMO/2026-27/009 (part payment)', 100000, 0, 'upi', 'Divya Menon', 'invoice', 'dededede-0010-4000-8000-000000000011'),
-('dededede-0011-4000-8000-000000000026', (current_date + -10), 'out', 'Refunds', 'Credit note DEMO-CN/2026-27/001 against DEMO/2026-27/008', 100800, 10800, 'card', 'Karthik Raman', 'invoice', 'dededede-000f-4000-8000-000000000014');
+('dededede-0011-4000-8000-000000000026', (current_date + -8), 'in', 'Services', 'Invoice DEMO/2026-27/010', 201600, 21600, 'upi', 'Karthik Raman', 'invoice', 'dededede-0010-4000-8000-000000000012');
 
 -- accounts: money in for every paid dummy order, booking and enrolment (as the website does), Razorpay fees for online ones, and refunds
 insert into ledger_entries (id, entry_date, kind, category, description, amount_paise, gst_paise, method, party, source, source_id)

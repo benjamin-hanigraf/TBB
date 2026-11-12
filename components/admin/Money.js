@@ -2,14 +2,14 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Icon from '@/components/Icons';
-import { useLoad, useToast, sb, must, Page, Card, Stat, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, dmyToISO, isoToDMY, fmtD, download } from './kit';
+import { useLoad, useToast, sb, must, every, Page, Card, Stat, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, dmyToISO, isoToDMY, fmtD, download } from './kit';
 import { syncPaymentsToLedger } from '@/lib/ledgerSync';
 import { IN_CATEGORIES, OUT_CATEGORIES, METHODS, summarise, fyChoices, fyOf, inFY, fyRange, todayISO, money, monthLabel, rupeesToPaise, gstInside, toCSV } from '@/lib/accounting';
 
 export default function Money() {
   const sp = useSearchParams(); const toast = useToast(); const [fy, setFy] = useState(fyOf(todayISO())); const [view, setView] = useState('list'); const [kind, setKind] = useState('all'); const [q, setQ] = useState(''); const [edit, setEdit] = useState(null);
   const { data, error, reload } = useLoad(async () => {
-    const c = sb(); const [e, s] = await Promise.all([c.from('ledger_entries').select('*').order('entry_date', { ascending: false }).order('created_at', { ascending: false }).limit(5000), c.from('settings').select('value').eq('key', 'gst').maybeSingle()]);
+    const c = sb(); const [e, s] = await Promise.all([every(() => c.from('ledger_entries').select('*').order('entry_date', { ascending: false }).order('created_at', { ascending: false }).order('id')), c.from('settings').select('value').eq('key', 'gst').maybeSingle()]);
     return { entries: must(e), gst: s.data?.value || { enabled: false, rate_percent: 18 } };
   });
   useEffect(() => { let on = true; syncPaymentsToLedger(sb()).then((n) => { if (on && n > 0) { toast(`${n} payment${n > 1 ? 's' : ''} added to your accounts`); reload(); } }).catch((e) => console.error('sync', e)); return () => { on = false; }; /* eslint-disable-next-line */ }, []);

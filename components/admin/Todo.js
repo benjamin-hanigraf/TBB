@@ -1,12 +1,12 @@
 'use client';
 import { useState } from 'react';
-import { useLoad, sb, must, Page, Card, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, dmyToISO, isoToDMY, fmtD } from './kit';
+import { useLoad, sb, must, every, Page, Card, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, dmyToISO, isoToDMY, fmtD } from './kit';
 import { todayISO } from '@/lib/accounting';
 
 const Wrap = ({ embedded, title, children }) => (embedded ? <div id="todo" className="ad-embed"><h2 className="ad-embed-h">{title}</h2>{children}</div> : <Page title={title}>{children}</Page>);
 export default function Todo({ embedded = false, onChanged }) {
   const [edit, setEdit] = useState(null); const [showDone, setShowDone] = useState(false); const [run, busy] = useAction(); const add = useForm({ title: '', due: '' });
-  const { data, error, reload } = useLoad(async () => must(await sb().from('todos').select('*').order('due_on', { nullsFirst: false }).order('created_at', { ascending: false }).limit(1000)));
+  const { data, error, reload } = useLoad(async () => must(await every(() => sb().from('todos').select('*').order('due_on', { nullsFirst: false }).order('created_at', { ascending: false }).order('id'))));
   if (error) return <Wrap embedded={embedded} title="To-do"><Err e={error} /></Wrap>; if (!data) return <Wrap embedded={embedded} title="To-do"><Spin /></Wrap>;
   const today = todayISO(); const open = data.filter((t) => !t.done), done = data.filter((t) => t.done).sort((a, b) => (b.done_at || '').localeCompare(a.done_at || ''));
   const groups = [['Overdue', open.filter((t) => t.due_on && t.due_on < today)], ['Today', open.filter((t) => t.due_on === today)], ['Coming up', open.filter((t) => t.due_on && t.due_on > today)], ['Anytime', open.filter((t) => !t.due_on)]];

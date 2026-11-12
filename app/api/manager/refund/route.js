@@ -12,6 +12,6 @@ export async function POST(req) {
   let b; try { b = await readJson(req, 8000); } catch (e) { return json({ error: 'bad_request' }, e.status || 400); }
   const ids = Array.isArray(b.ids) ? [...new Set(b.ids.filter((x) => UUID.test(x)))].slice(0, 100) : []; const how = b.how === 'online' ? 'online' : b.how === 'sent' ? 'sent' : null;
   if (!KINDS[b.kind] || !ids.length || !how) return json({ error: 'bad_request' }, 400);
-  const results = await refundItems({ ...b, ids, how });
+  const results = await refundItems({ ...b, ids, how, restock: b.restock === true });
   return json({ ok: true, results });
 }

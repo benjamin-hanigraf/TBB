@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { useLoad, sb, must, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, fmtD, download, STATUS_TONE } from './kit';
+import { useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, fmtD, download, STATUS_TONE } from './kit';
 import ImportCsv from './ImportCsv';
 import { digits10, findDuplicates, mergeCustomers, MergeModal } from './pickers';
 import { money, toCSV } from '@/lib/accounting';
@@ -10,14 +10,14 @@ const SRC = { website: 'Website', wix: 'Wix', manual: 'Added by hand', import: '
 export default function Customers() {
   const [q, setQ] = useState(''); const [open, setOpen] = useState(null); const [imp, setImp] = useState(false); const [merge, setMerge] = useState(false);
   const { data, error, reload } = useLoad(async () => {
-    const c = sb(); const [cu, sum] = await Promise.all([c.from('customers').select('*').order('created_at', { ascending: false }).limit(5000), c.rpc('customer_summary')]);
+    const c = sb(); const [cu, sum] = await Promise.all([every(() => c.from('customers').select('*').order('created_at', { ascending: false }).order('id')), every(() => c.rpc('customer_summary').order('customer_id'))]);
     const customers = must(cu);
     if (!sum.error) {        // totals counted in the database, matched by email or phone
       const by = new Map((sum.data || []).map((x) => [x.customer_id, x]));
       return { rows: customers.map((r) => { const x = by.get(r.id) || {}; return { ...r, n: { orders: x.orders || 0, bookings: x.bookings || 0, classes: x.classes || 0 }, spent: Number(x.spent_paise || 0), last: x.last_at || '' }; }) };
     }
     // database update not run yet: count here, matched by email only (the older way)
-    const [o, b, en] = await Promise.all([c.from('orders').select('email,total_paise,created_at').in('status', PAID).limit(5000), c.from('bookings').select('email,amount_paise,created_at').eq('status', 'paid').limit(5000), c.from('class_enrolments').select('email,amount_paise,created_at').eq('status', 'paid').limit(5000)]);
+    const [o, b, en] = await Promise.all([every(() => c.from('orders').select('email,total_paise,created_at').in('status', PAID).order('id')), every(() => c.from('bookings').select('email,amount_paise,created_at').eq('status', 'paid').order('id')), every(() => c.from('class_enrolments').select('email,amount_paise,created_at').eq('status', 'paid').order('id'))]);
     const by = new Map(); const add = (x, k, amt) => { const e = (x.email || '').toLowerCase(); if (!e) return; const s = by.get(e) || { n: { orders: 0, bookings: 0, classes: 0 }, spent: 0, last: '' }; s.n[k]++; s.spent += amt; if (x.created_at > s.last) s.last = x.created_at; by.set(e, s); };
     must(o).forEach((x) => add(x, 'orders', x.total_paise)); must(b).forEach((x) => add(x, 'bookings', x.amount_paise)); must(en).forEach((x) => add(x, 'classes', x.amount_paise));
     return { rows: customers.map((r) => ({ ...r, ...(by.get((r.email || '').toLowerCase()) || { n: { orders: 0, bookings: 0, classes: 0 }, spent: 0, last: '' }) })) };

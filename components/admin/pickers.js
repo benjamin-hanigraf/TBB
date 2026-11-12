@@ -1,17 +1,17 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { sb, must, useLoad, Modal, Btn, useAction } from './kit';
+import { sb, must, every, useLoad, Modal, Btn, useAction } from './kit';
 import { RULES } from '@/lib/format';
 
 export const digits10 = (s) => String(s || '').replace(/\D/g, '').slice(-10);
 export const FIELDS = ['name', 'email', 'phone', 'address_line1', 'address_line2', 'city', 'state', 'pincode'];
 
-export const useCustomers = () => useLoad(async () => must(await sb().from('customers').select('id,name,email,phone,address_line1,address_line2,city,state,pincode,created_at').order('name').limit(5000)));
+export const useCustomers = () => useLoad(async () => must(await every(() => sb().from('customers').select('id,name,email,phone,address_line1,address_line2,city,state,pincode,created_at').order('name').order('id'))));
 
 /** Finds this person by email or phone and fills any empty details; adds them as a new customer if they are not in the list yet. */
 export async function ensureCustomer(c, source = 'manual') {
   const name = RULES.name.done(c.name || ''); const email = RULES.email.done(c.email || '') || null; const ph = digits10(c.phone); if (!name && !email && ph.length < 10) return null;
-  const all = must(await sb().from('customers').select('*').limit(5000));
+  const all = must(await every(() => sb().from('customers').select('*').order('id')));
   const found = all.find((x) => email && x.email === email) || all.find((x) => ph.length === 10 && digits10(x.phone) === ph);
   const extra = Object.fromEntries(FIELDS.slice(3).map((k) => [k, c[k] || null]));
   if (found) { const patch = {}; for (const k of [...FIELDS.slice(1), ...FIELDS.slice(3)]) { const v = k === 'email' ? email : k === 'phone' ? c.phone : extra[k]; if (v && !found[k]) patch[k] = v; } if (Object.keys(patch).length) must(await sb().from('customers').update(patch).eq('id', found.id)); return found; }

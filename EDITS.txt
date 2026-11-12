@@ -64,3 +64,10 @@ Open question
 - Invoices: keep invoices, quotations, part payments and GST rates. Remove credit notes.
 - 1000-row cap: make every Manager list read all rows (accounts, customers, classes, attendance, participants, invoices...)
 - Reminder: code deploys to Vercel by itself; each new supabase/vN.sql must be run by hand in Supabase
+- Done: refund/cancel of an order asks "Put the items back in stock?" (Yes / No: damaged, faulty or not returned)
+- Done: one-on-one classes. Classes > Students > "Classes" button per student: add dates with times, Attended / Missed, Move, Cancel, Delete, send dates on WhatsApp. Shows in Calendar and Home with the student's name. Group batches still available.
+- Done: credit notes removed (invoices, quotations, part payments, GST rates kept)
+- Done: every Manager list reads all rows (no 1000 limit)
+- New database update needed: supabase/v10.sql (run after v9)
+- Tip: when copying SQL from GitHub use "Copy raw file"; line 1 must start with "-- ====". Copying the page gave a "Claude Code" syntax error.
+- Status: this batch done and tested, on branch claude/zealous-turing-jqe6sd

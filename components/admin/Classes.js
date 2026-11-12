@@ -1,8 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Icon from '@/components/Icons';
-import { useLoad, sb, must, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, Sortable, slugify, download, useToast, fmtD } from './kit';
+import { useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, Sortable, slugify, download, useToast, fmtD } from './kit';
 import { BatchesModal } from './BatchTools';
+import { OneOnOneModal } from './OneOnOne';
 import { GST_MODES } from '@/lib/gst';
 import { AddEnrol, EnrolModal } from './ManualEntry';
 import { money, rupeesToPaise, toCSV } from '@/lib/accounting';
@@ -12,7 +13,7 @@ const lines = (s) => String(s || '').split('\n').map((x) => x.trim()).filter(Boo
 export default function Classes() {
   const toast = useToast(); const [edit, setEdit] = useState(null); const [people, setPeople] = useState(null); const [batches, setBatches] = useState(null);
   const { data, error, reload } = useLoad(async () => {
-    const c = sb(); const [l, e, t] = await Promise.all([c.from('class_levels').select('*').order('sort_order'), c.from('class_enrolments').select('class_id,batch_id').eq('status', 'paid'), c.from('class_types').select('*').order('sort_order')]);
+    const c = sb(); const [l, e, t] = await Promise.all([c.from('class_levels').select('*').order('sort_order'), every(() => c.from('class_enrolments').select('class_id,batch_id').eq('status', 'paid').order('id')), c.from('class_types').select('*').order('sort_order')]);
     const n = {}, loose = {}; must(e).forEach((x) => { n[x.class_id] = (n[x.class_id] || 0) + 1; if (!x.batch_id) loose[x.class_id] = (loose[x.class_id] || 0) + 1; }); return { levels: must(l), n, loose, types: must(t) };
   });
   useEffect(() => { let id = null; try { id = new URLSearchParams(window.location.search).get('people'); } catch {} const l = id && data?.levels.find((x) => x.id === id); if (l) setPeople(l); }, [data]);   // a link from Accounts opens that level's students
@@ -23,8 +24,8 @@ export default function Classes() {
     <Card tight>{data.levels.length ? <Sortable className="cls-list" items={data.levels} onReorder={reorder} render={(c, grip) => (
       <div className={`cls-box t${tone(c.track)}`}><span {...grip}><Icon n="grip" size={18} /></span>
         <button type="button" className="main cls-main" onClick={() => setEdit(c)}><b>{c.title}, {c.level}</b><small>{c.track} · {c.sessions} classes · {data.n[c.id] || 0} enrolled</small></button>
-        <div className="end"><b>{money(c.price_paise)}</b>{!c.active && <Badge>Hidden</Badge>}{data.loose[c.id] > 0 && <Badge tone="warn">{data.loose[c.id]} to place</Badge>}<Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setBatches(c)}>Batches</Btn><Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setPeople(c)}>Students</Btn></div></div>)} /> : <Empty>No levels yet.</Empty>}</Card>
-    {data.levels.length > 1 && <p className="ad-help" style={{ textAlign: 'center' }}>Drag the handle to change the order on the website. "To place" means students who paid but are not in a batch yet: open Batches to place them.</p>}
+        <div className="end"><b>{money(c.price_paise)}</b>{!c.active && <Badge>Hidden</Badge>}{data.loose[c.id] > 0 && <Badge tone="warn">{data.loose[c.id]} to schedule</Badge>}<Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setBatches(c)}>Batches</Btn><Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setPeople(c)}>Students</Btn></div></div>)} /> : <Empty>No levels yet.</Empty>}</Card>
+    {data.levels.length > 1 && <p className="ad-help" style={{ textAlign: 'center' }}>Drag the handle to change the order on the website. "To schedule" means students who paid but have no classes yet: open Students, then Classes.</p>}
     {edit && <Form c={edit} types={data.types} count={data.levels.length} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); reload(); }} />}
     {batches && <BatchesModal level={batches} onClose={() => setBatches(null)} onChanged={reload} />}
     {people && <Participants level={people} onClose={() => setPeople(null)} onChanged={reload} />}
@@ -63,15 +64,18 @@ function Form({ c, types, count, onClose, onSaved }) {
 }
 
 function Participants({ level, onClose, onChanged }) {
-  const [add, setAdd] = useState(false); const [one, setOne] = useState(null);
-  const { data, error, reload } = useLoad(async () => { const r = must(await sb().from('class_enrolments').select('*,class_levels(title,level),class_batches(name,starts_on)').eq('class_id', level.id).in('status', ['paid', 'pending', 'transferred']).order('created_at')); const ids = r.map((x) => x.batch_id).filter(Boolean); if (!ids.length) return { rows: r, sessions: [], att: [] }; const sess = must(await sb().from('class_sessions').select('id,batch_id,status').in('batch_id', [...new Set(ids)])); const att = sess.length ? must(await sb().from('class_attendance').select('*').in('session_id', sess.map((x) => x.id))) : []; return { rows: r, sessions: sess, att }; }, [level.id]);
+  const [add, setAdd] = useState(false); const [one, setOne] = useState(null); const [sched, setSched] = useState(null);
+  const { data, error, reload } = useLoad(async () => { const r = must(await every(() => sb().from('class_enrolments').select('*,class_levels(title,level),class_batches(name,starts_on)').eq('class_id', level.id).in('status', ['paid', 'pending', 'transferred']).order('created_at').order('id'))); const ids = r.map((x) => x.batch_id).filter(Boolean); if (!ids.length) return { rows: r, sessions: [], att: [] }; // read by class level (not by a long list of ids), page by page
+    const sess = must(await every(() => sb().from('class_sessions').select('id,batch_id,status,class_batches!inner(class_id)').eq('class_batches.class_id', level.id).order('id')));
+    const att = sess.length ? must(await every(() => sb().from('class_attendance').select('session_id,enrolment_id,present,class_enrolments!inner(class_id)').eq('class_enrolments.class_id', level.id).order('session_id').order('enrolment_id'))) : []; return { rows: r, sessions: sess, att }; }, [level.id]);
   const rows = (data?.rows || []).filter((x) => x.status !== 'pending' || x.channel === 'manual'); const prog = (x) => (x.batch_id ? progress(data.sessions.filter((q) => q.batch_id === x.batch_id), data.att, x.id) : null); const changed = () => { reload(); onChanged(); };
   return (<Modal title={`Participants · ${level.title}, ${level.level}`} onClose={onClose} wide>
     {error && <Err e={error} />}{!data && !error && <Spin />}
-    {data && <>{rows.length ? <div className="ad-list">{rows.map((x) => <button key={x.id} className="ad-row" onClick={() => setOne(x)}><div className="main"><b>{x.student_name}</b><small>{x.student_group === 'child' ? `Child, age ${x.student_age} · parent ${x.name}` : 'Adult'} · {x.phone}</small><small>{x.class_batches ? `${x.class_batches.name || `Batch from ${fmtD(x.class_batches.starts_on)}`}${prog(x) ? ` · attended ${prog(x).attended} of ${prog(x).held} held (${prog(x).total} in the course)` : ''}` : 'Not in a batch yet'}</small></div><div className="end"><b>{money(x.amount_paise)}</b><Badge tone={x.status === 'paid' ? 'ok' : x.status === 'pending' ? 'warn' : ''}>{x.status === 'pending' ? 'not paid' : x.status}</Badge></div></button>)}</div> : <Empty>No participants yet.</Empty>}
+    {data && <>{rows.length ? <div className="ad-list">{rows.map((x) => <div key={x.id} className="ad-row" style={{ cursor: 'default' }}><button type="button" className="main cls-main" onClick={() => setOne(x)}><b>{x.student_name}</b><small>{x.student_group === 'child' ? `Child, age ${x.student_age} · parent ${x.name}` : 'Adult'} · {x.phone}</small><small>{x.class_batches ? `${x.class_batches.name || `Batch from ${fmtD(x.class_batches.starts_on)}`}${prog(x) ? ` · attended ${prog(x).attended} of ${prog(x).held} held (${prog(x).total} in the course)` : ''}` : 'Not in a batch yet'}</small></button><div className="end">{['paid', 'transferred'].includes(x.status) && <Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setSched(x)}>Classes</Btn>}<b>{money(x.amount_paise)}</b><Badge tone={x.status === 'paid' ? 'ok' : x.status === 'pending' ? 'warn' : ''}>{x.status === 'pending' ? 'not paid' : x.status}</Badge></div></div>)}</div> : <Empty>No participants yet.</Empty>}
       <div className="ad-actions full"><Btn icon="plus" onClick={() => setAdd(true)}>Add enrolment</Btn>
         {rows.length > 0 && <Btn variant="ghost" icon="fileout" onClick={() => download(`${level.slug}-participants.csv`, toCSV(rows, [{ label: 'Participant', key: 'student_name' }, { label: 'Group', key: 'student_group' }, { label: 'Age', key: 'student_age' }, { label: 'Contact name', key: 'name' }, { label: 'Email', key: 'email' }, { label: 'Phone', key: 'phone' }, { label: 'Status', key: 'status' }, { label: 'Paid', get: (x) => x.amount_paise / 100 }]))}>Export</Btn>}</div></>}
     {add && <AddEnrol level={level} onClose={() => setAdd(false)} onSaved={() => { setAdd(false); changed(); }} />}
     {one && <EnrolModal e={one} onClose={() => setOne(null)} onSaved={() => { setOne(null); changed(); }} />}
+    {sched && <OneOnOneModal e={sched} level={level} onClose={() => setSched(null)} onChanged={changed} />}
   </Modal>);
 }

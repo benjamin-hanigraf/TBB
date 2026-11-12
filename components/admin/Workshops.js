@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useLoad, sb, must, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, F, PhotoField, useForm, useAction, Confirm, fmtD, fmtDT, dmyToISO, isoToDMY, slugify, STATUS_TONE, download } from './kit';
+import { useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, F, PhotoField, useForm, useAction, Confirm, fmtD, fmtDT, dmyToISO, isoToDMY, slugify, STATUS_TONE, download } from './kit';
 import { MessageModal, RefundModal, Waitlist } from './WorkshopTools';
 import { GST_MODES } from '@/lib/gst';
 import { AddSignup, BookingModal } from './ManualEntry';
@@ -24,7 +24,7 @@ function fromIST(date, h, m, ap) {
 export default function Workshops() {
   const sp = useSearchParams(); const [edit, setEdit] = useState(null); const [att, setAtt] = useState(null);
   const { data, error, reload } = useLoad(async () => {
-    const c = sb(); const [ws, b] = await Promise.all([c.from('workshops').select('*').order('starts_at', { ascending: false }), c.from('bookings').select('workshop_id,seats,status').eq('status', 'paid')]);
+    const c = sb(); const [ws, b] = await Promise.all([every(() => c.from('workshops').select('*').order('starts_at', { ascending: false }).order('id')), every(() => c.from('bookings').select('workshop_id,seats,status').eq('status', 'paid').order('id'))]);
     const taken = {}; must(b).forEach((x) => (taken[x.workshop_id] = (taken[x.workshop_id] || 0) + x.seats)); return { ws: must(ws), taken };
   });
   useEffect(() => { if (sp.get('new')) setEdit({}); }, [sp]);

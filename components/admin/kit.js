@@ -6,6 +6,12 @@ import Icon from '@/components/Icons';
 
 export const sb = () => adminClient();
 export const must = (r) => { if (r.error) throw r.error; return r.data; };
+/** Reads every row, 1000 at a time (Supabase returns at most 1000 rows per request). make() must build the query fresh each time.
+ *  Gives back the same { data, error } shape as a normal query, so it works with must(). Add an order so pages do not overlap. */
+export async function every(make) {
+  const out = [];
+  for (let from = 0; ; from += 1000) { const r = await make().range(from, from + 999); if (r.error) return { data: null, error: r.error }; const d = r.data || []; out.push(...d); if (d.length < 1000) return { data: out, error: null }; }
+}
 
 /** Loads data and lets you reload it. fn must return a promise. The last result is kept in memory, so going back to a page shows it at once while fresh data loads. */
 const CACHE = new Map();

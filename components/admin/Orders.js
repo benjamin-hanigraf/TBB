@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useLoad, sb, must, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, useToast, fmtDT, fmtD, STATUS_TONE, download } from './kit';
+import { useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, useToast, fmtDT, fmtD, STATUS_TONE, download } from './kit';
 import { money, toCSV } from '@/lib/accounting';
 import { syncPaymentsToLedger } from '@/lib/ledgerSync';
 import { RefundDialog } from './Refund';
@@ -17,7 +17,7 @@ export default function Orders() {
   const [open, setOpen] = useState(null); const [q, setQ] = useState(''); const [adding, setAdding] = useState(false); const [showOld, setShowOld] = useState(false);
   const { data, error, reload } = useLoad(async () => {
     const c = sb(); const [o, p] = await Promise.all([
-      c.from('orders').select('*,order_items(*)').or('status.neq.pending,channel.eq.manual').order('created_at', { ascending: false }).limit(300),
+      every(() => c.from('orders').select('*,order_items(*)').or('status.neq.pending,channel.eq.manual').order('created_at', { ascending: false }).order('id')),
       c.from('products').select('id,slug,title,price_paise,stock,gst_mode').order('title')]);
     return { orders: must(o), products: must(p) };
   });
@@ -42,13 +42,14 @@ export default function Orders() {
 }
 
 function OrderModal({ o, onClose, onSaved }) {
-  const f = useForm({ status: o.status, carrier: o.tracking_carrier || '', number: o.tracking_number || '', method: o.payment_method || 'upi', notes: o.notes || '' }); const [run, busy] = useAction(); const toast = useToast();
+  const f = useForm({ status: o.status, carrier: o.tracking_carrier || '', number: o.tracking_number || '', method: o.payment_method || 'upi', notes: o.notes || '', restock: '' }); const [run, busy] = useAction(); const toast = useToast();
   const [refund, setRefund] = useState(false);
   const save = () => run(async () => {
-    const from = o.status, to = f.v.status; const becamePaid = !HOLDS_STOCK.includes(from) && HOLDS_STOCK.includes(to);
+    const from = o.status, to = f.v.status; const becamePaid = !HOLDS_STOCK.includes(from) && HOLDS_STOCK.includes(to); const cancelPaid = HOLDS_STOCK.includes(from) && to === 'cancelled';
+    if (cancelPaid && !f.v.restock) throw new Error('Please choose whether the items go back in stock.');
     must(await sb().from('orders').update({ status: to, tracking_carrier: f.v.carrier || null, tracking_number: f.v.number || null, notes: f.v.notes.trim() || null, ...(becamePaid && !o.paid_at ? { paid_at: new Date().toISOString(), payment_method: f.v.method } : {}) }).eq('id', o.id));
-    // stock follows the order: taken when it is paid, given back when a paid order is cancelled (refunds give it back on the server)
-    if (becamePaid || (HOLDS_STOCK.includes(from) && to === 'cancelled')) { const r = await sb().rpc('admin_order_stock', { p_order: o.id, p_take: becamePaid }); if (r.error) toast('Saved, but stock was not updated: run the latest database update (supabase/v9.sql).', 'err'); }
+    // stock follows the order: taken when it is paid; given back when a paid order is cancelled only if the owner says the items are fine to sell
+    if (becamePaid || (cancelPaid && f.v.restock === 'yes')) { const r = await sb().rpc('admin_order_stock', { p_order: o.id, p_take: becamePaid }); if (r.error) toast('Saved, but stock was not updated: run the latest database update (supabase/v9.sql).', 'err'); }
     if (becamePaid) await syncPaymentsToLedger(sb()); onSaved(); }, 'Order updated');
   const email = () => run(async () => {
     const { data } = await supabase().auth.getSession(); const r = await fetch('/api/manager/email', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ type: 'shipped', order_id: o.id }) });
@@ -64,6 +65,7 @@ function OrderModal({ o, onClose, onSaved }) {
     <div className="ad-form" style={{ marginTop: 12 }}>
       <F form={f} k="status" label="Status" type="select" required options={o.status === 'refunded' ? [['refunded', 'Refunded']] : ORDER_STATUS} />
       {!HOLDS_STOCK.includes(o.status) && !o.paid_at && HOLDS_STOCK.includes(f.v.status) && <F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} />}
+      {HOLDS_STOCK.includes(o.status) && f.v.status === 'cancelled' && <F form={f} k="restock" label="Put the items back in stock?" type="select" required options={[['yes', 'Yes, they are fine to sell'], ['no', 'No (damaged, faulty or not returned)']]} />}
       <F form={f} k="carrier" label="Courier" rule="text" placeholder="e.g. India Post" /><F form={f} k="number" label="Tracking number" rule="code" />
       <div className="full"><F form={f} k="notes" label="Private note" type="textarea" rule="sentence" rows={2} hint="Only you see this, never the customer" /></div>
     </div>

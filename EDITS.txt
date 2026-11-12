@@ -159,3 +159,10 @@ Settings
 - Next: check every screen at phone/tablet/desktop widths (no sideways scroll), final tests, regenerate dummy data checks, update dev branch
 
 Final checks (done): label printer layout checked; no sideways scroll on Manager or website at 320-1440px; unit tests (45), database tests and production build all pass. Small fixes: page titles no longer hidden under header buttons on phones, inbox date shortened, number-format fields required, "PIN - 600024" no longer splits across lines.
+
+Batch: Full scenario audit and iPhone/tablet/desktop overlap sweep (owner request)
+- Build a long list of real-life scenarios (purchases, workshop bookings, cancellations, refunds, stock, calendar shifts, class moves, attendance, transfers) and run them through the app and database; look for loopholes, human-error cases and mismatches between lists, reports and charts; add safeguards and fix what does not change visual design
+- Report shortcomings, failure points and improvements; fix on our own if no visual/structure change
+- Simulate iPhone and other sizes; check every page, menu, form, window and pop-up for overlapping, hidden or overflowing items; fix and re-check
+- Exhaustive user-testing pass; report (do not change) anything that needs visual redesign
+- Report: Manager PWA against Apple's Human Interface Guidelines (what is good, what to change)

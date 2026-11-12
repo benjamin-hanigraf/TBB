@@ -56,3 +56,11 @@ Open question
 - Backup file is JSON with every table (photos not included)
 - New database update needed: supabase/v9.sql (run after v8)
 - Status: all items in this batch done and tested (Nov 2026), on branch claude/zealous-turing-jqe6sd
+
+== Batch: one-on-one classes and follow-ups (approved) ==
+- Refund of an order: ask whether the items go back in stock (they may be defective). Same question when cancelling a paid order.
+- Classes: build a one-on-one flow. Each student gets their own class dates (any date, any time), attendance per class, move or cancel a class. Shows in Calendar and Today.
+- Keep weekly batches available for now (not removed)
+- Invoices: keep invoices, quotations, part payments and GST rates. Remove credit notes.
+- 1000-row cap: make every Manager list read all rows (accounts, customers, classes, attendance, participants, invoices...)
+- Reminder: code deploys to Vercel by itself; each new supabase/vN.sql must be run by hand in Supabase

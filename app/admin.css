@@ -192,3 +192,11 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .ws-text{min-width:0;display:grid;gap:2px}.ws-text b{font-weight:500;font-size:16px;color:#1d1d1f;overflow-wrap:anywhere}.ws-text small{color:#6e6e73;font-size:13px;line-height:1.4}
 .ws-act{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}.ws-act .ad-btn,.ws-act .ad-badge{min-height:34px;display:inline-flex;align-items:center;justify-content:center;padding:0 14px;font-size:13px;border-radius:980px;box-sizing:border-box}
 @media(max-width:640px){.ws-row{grid-template-columns:auto minmax(0,1fr)}.ws-act{grid-column:1/-1;justify-content:flex-start}}
+/* calendar: month and year picker, and the rent-out look */
+.cal-mid{flex:1;display:flex;justify-content:center;align-items:center;gap:2px;min-width:0}
+.cal-title{display:inline-flex;align-items:center;gap:5px;background:none;border:0;font:inherit;font-size:19px;font-weight:600;letter-spacing:-.01em;color:#1d1d1f;cursor:pointer;padding:6px 10px;border-radius:12px;min-height:40px}.cal-title:hover,.cal-title[aria-expanded="true"]{background:#f5f5f7}.cal-title .ic{color:#6e6e73;flex:none}
+.cal-bar{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-bottom:12px}
+.cal-pickwrap{margin:0 0 14px;padding:12px;border-radius:16px;background:#f5f5f7}.cal-pickhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;font-size:14px;font-weight:600}.cal-pickhead .ad-x{background:#fff}
+.cal-pick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.cal-pick button{min-height:44px;border:1px solid #d2d2d7;background:#fff;border-radius:12px;font:inherit;font-size:15px;color:#1d1d1f;cursor:pointer}.cal-pick button.on{background:#000;color:#fff;border-color:#000}
+@media(max-width:420px){.cal-pick{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.chip.rentout{background:#636366;color:#fff}.cal-dots i.rentout{background:#636366;border-radius:2px;width:7px;height:7px}.dotk.rentout{background:#636366;border-radius:2px;width:9px;height:9px}.kindtag.rentout{background:#636366;color:#fff}

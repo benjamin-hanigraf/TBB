@@ -30,10 +30,13 @@ export function OneOnOneModal({ e, level, onClose, onChanged }) {
   const add = (ev) => { ev.preventDefault(); return run(async () => {
     const d = dmyToISO(f.v.date); if (!d) throw new Error('Please enter the date as DD/MM/YYYY.'); const time = (f.v.time || lastTime).trim() || null;
     if (!(await check([{ date: d, slot: parseSlot(time), label: `Class: ${e.student_name}` }]))) return;
+    if (live.length >= total) throw new Error(`All ${total} classes are already scheduled. Cancel one first, or raise the number of classes for this level.`);
     const top = data.reduce((m, s) => Math.max(m, s.no), 0);
     must(await sb().from('class_sessions').insert({ enrolment_id: e.id, no: top + 1, on_date: d, time_text: time }));
     await renumber(e.id); f.reset({ date: '', time }); changed(); }, 'Class added'); };
-  const setStatus = (s, status) => run(async () => { must(await sb().from('class_sessions').update({ status }).eq('id', s.id)); changed(); }, status === 'done' ? 'Marked as attended' : status === 'cancelled' ? 'Class cancelled' : 'Changed back');
+  const setStatus = (s, status) => run(async () => {
+    if (status === 'done' && s.on_date > todayISO()) throw new Error('This class is on a later date. You can mark it as attended once it has happened.');
+    if (status === 'scheduled' && s.status === 'cancelled' && live.length >= total) throw new Error(`All ${total} classes are already scheduled. Cancel or delete another one first.`); must(await sb().from('class_sessions').update({ status }).eq('id', s.id)); changed(); }, status === 'done' ? 'Marked as attended' : status === 'cancelled' ? 'Class cancelled' : 'Changed back');
   const remove = (s) => run(async () => { must(await sb().from('class_sessions').delete().eq('id', s.id)); await renumber(e.id); changed(); }, 'Class deleted');
   const upcoming = live.filter((s) => s.on_date >= today && s.status === 'scheduled');
   const wa = upcoming.length ? waLink(e.phone, `Hi ${String(e.name || '').split(' ')[0]}, here are ${e.student_name === e.name ? 'your' : `${e.student_name}'s`} upcoming ${level.title} classes:\n${upcoming.map((s) => `• ${fmtDay(s.on_date)}${s.time_text ? `, ${s.time_text}` : ''}`).join('\n')}\n\nThin Black Brush`) : null;

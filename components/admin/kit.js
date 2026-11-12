@@ -68,7 +68,7 @@ export function Modal({ title, onClose, children, wide }) {
   useEffect(() => { lockPage(); ref.current?.focus(); return unlockPage; }, []);
   useEffect(() => { const k = (e) => e.key === 'Escape' && onClose(); document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k); }, [onClose]);
   return (<div className="ad-modal-bg" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-    <div className={`ad-modal ${wide ? 'wide' : ''}`} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={ref}>
+    <div className={`ad-modal ${wide ? 'ad-wide' : ''}`} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={ref}>
       <div className="ad-modal-h"><h2>{title}</h2><button className="ad-x" onClick={onClose} aria-label="Close">✕</button></div><div className="ad-modal-b">{children}</div></div></div>);
 }
 export function Confirm({ children, onYes, label, className = '', ...p }) {

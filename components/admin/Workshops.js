@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useLoad, sb, must, every, Page, Card, Fold, Badge, Empty, Spin, Err, Modal, Btn, F, PhotoField, useForm, useAction, Confirm, fmtD, fmtDT, dmyToISO, isoToDMY, slugify } from './kit';
+import { useLoad, sb, must, every, Page, Card, Fold, Badge, Empty, Spin, Err, Modal, Btn, F, PhotoField, useForm, useAction, Confirm, useToast, fmtD, fmtDT, dmyToISO, isoToDMY, slugify } from './kit';
 import { MessageModal, RefundModal, Waitlist, CancelWorkshop } from './WorkshopTools';
 import { useClash } from './Clash';
 import { slotFromStart } from '@/lib/clash';
@@ -51,7 +51,7 @@ export default function Workshops() {
 }
 
 function WorkshopForm({ w, onClose, onSaved, onCopy }) {
-  const t = toISTParts(w.starts_at); const te = toISTParts(w.ends_at); const isNew = !w.id; const [run, busy] = useAction(); const [check, clashDialog] = useClash(); const [cancelling, setCancelling] = useState(false);
+  const t = toISTParts(w.starts_at); const te = toISTParts(w.ends_at); const isNew = !w.id; const [run, busy] = useAction(); const [check, clashDialog] = useClash(); const [cancelling, setCancelling] = useState(false); const toast = useToast();
   const f = useForm({ title: w.title || '', kind: w.kind || 'workshop', summary: w.summary || '', description: w.description || '', venue_name: w.venue_name || '', venue_address: w.venue_address || '', map_link: w.map_link || '',
     date: t.date, endDate: w.kind === 'course' && w.ends_at ? te.date : '', h: t.h, m: t.m, ap: t.ap, price: w.price_paise != null ? String(w.price_paise / 100) : '', friend: w.friend_price_paise ? String(w.friend_price_paise / 100) : '',
     gst_mode: w.gst_mode || 'none', early: w.early_price_paise != null ? String(w.early_price_paise / 100) : '', earlyUntil: isoToDMY(w.early_until), capacity: String(w.capacity || 12),
@@ -61,6 +61,10 @@ function WorkshopForm({ w, onClose, onSaved, onCopy }) {
     const v = f.v; const starts = fromIST(v.date, v.h, v.m, v.ap); if (!starts) throw new Error('Please enter the date as DD/MM/YYYY.');
     let ends = null; if (v.kind === 'course') { const endISO = dmyToISO(v.endDate); if (!endISO) throw new Error('Please enter the end date as DD/MM/YYYY.'); if (endISO < dmyToISO(v.date)) throw new Error('The end date must be on or after the start date.'); ends = new Date(`${endISO}T20:00:00+05:30`).toISOString(); }
     const price = rupeesToPaise(v.price); if (!v.title.trim()) throw new Error('Please add a title.'); if (!(+v.capacity > 0)) throw new Error('Seats must be 1 or more.');
+    if (!isNew) {       // seats cannot be set below what is already sold; people who paid must keep their place
+      const paid = must(await sb().from('bookings').select('seats').eq('workshop_id', w.id).eq('status', 'paid')).reduce((t, x) => t + x.seats, 0);
+      if (+v.capacity < paid) throw new Error(`${paid} seats are already booked, so seats cannot be less than ${paid}.`); }
+    if ((nextStatus || status) === 'published' && new Date(starts) <= new Date()) throw new Error('This date has already passed. A workshop can only be published for a future date and time.');
     if (!!v.early !== !!v.earlyUntil) throw new Error('For an early-bird price, please fill in both the price and the date it ends.');
     let eu = null; if (v.early) { eu = dmyToISO(v.earlyUntil); if (!eu) throw new Error('Please enter the early-bird end date as DD/MM/YYYY.'); if (rupeesToPaise(v.early) >= price) throw new Error('The early-bird price should be lower than the normal price.'); }
     if ((nextStatus || status) !== 'draft') {       // a published workshop must not overlap something else planned (a draft is only a plan)
@@ -71,7 +75,12 @@ function WorkshopForm({ w, onClose, onSaved, onCopy }) {
       price_paise: price, friend_price_paise: v.friend ? rupeesToPaise(v.friend) : null, early_price_paise: v.early ? rupeesToPaise(v.early) : null, early_until: eu, gst_mode: v.gst_mode, capacity: +v.capacity, includes: lines(v.includes), learn: lines(v.learn), note: v.note || null, image_path: v.image[0] || null, status: nextStatus || status };
     if (isNew) { let slug = slugify(v.title); const tryInsert = async (s) => sb().from('workshops').insert({ ...row, slug: s });
       let r = await tryInsert(slug); if (r.error?.code === '23505') r = await tryInsert(`${slug}-${Math.random().toString(36).slice(2, 6)}`); must(r); }
-    else must(await sb().from('workshops').update(row).eq('id', w.id));
+    else {
+      must(await sb().from('workshops').update(row).eq('id', w.id));
+      const moved = new Date(w.starts_at).getTime() !== new Date(starts).getTime() || (w.venue_name || '') !== (row.venue_name || '');
+      if (moved) { const { count } = await sb().from('bookings').select('id', { count: 'exact', head: true }).eq('workshop_id', w.id).eq('status', 'paid');
+        if (count > 0) setTimeout(() => toast(`${count} ${count === 1 ? 'booking' : 'bookings'} paid for this workshop. Tell them about the change: Participants, then Message all.`, 'err'), 1800); }       // a changed date or venue is never silent
+    }
     onSaved();
   }, nextStatus === 'published' ? 'Workshop published' : nextStatus === 'draft' && !isNew ? 'Workshop unpublished' : 'Workshop saved'); };
   const [blocked, setBlocked] = useState(0);

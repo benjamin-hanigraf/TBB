@@ -23,7 +23,7 @@ export default function Orders() {
   const { data, error, reload } = useLoad(async () => {
     const c = sb(); const [o, p, s] = await Promise.all([
       every(() => c.from('orders').select('*,order_items(*)').or('status.neq.pending,channel.eq.manual').order('created_at', { ascending: false }).order('id')),
-      c.from('products').select('id,slug,title,price_paise,stock,gst_mode,active').order('title'), c.from('settings').select('key,value')]);
+      c.from('products').select('id,slug,title,price_paise,stock,gst_mode,active,allow_preorder').order('title'), c.from('settings').select('key,value')]);
     return { orders: must(o), products: must(p), st: Object.fromEntries(must(s).map((r) => [r.key, r.value])) };
   });
   useEffect(() => { const id = param('open'); if (!id || !data) return; const o = data.orders.find((x) => x.id === id); if (o) setOpen(o); else sb().from('orders').select('*,order_items(*)').eq('id', id).maybeSingle().then((r) => r.data && setOpen(r.data)); }, [data]);
@@ -58,6 +58,7 @@ function OrderModal({ o, st, products, onClose, onSaved }) {
     await syncPaymentsToLedger(sb()); onSaved(); }, 'Marked as paid');
   const markShipped = () => run(async () => { must(await sb().from('orders').update({ status: 'shipped', tracking_carrier: f.v.carrier.trim() || null, tracking_number: f.v.number.trim() || null }).eq('id', o.id)); onSaved(); }, 'Marked as shipped');
   const saveTracking = () => run(async () => { must(await sb().from('orders').update({ tracking_carrier: f.v.carrier.trim() || null, tracking_number: f.v.number.trim() || null }).eq('id', o.id)); onSaved(); }, 'Saved');
+  const unship = () => run(async () => { must(await sb().from('orders').update({ status: 'paid' }).eq('id', o.id)); onSaved(); }, 'Moved back to To ship');      // a slip of the finger can be undone
   const cancel = () => run(async () => { must(await sb().from('orders').update({ status: 'cancelled' }).eq('id', o.id)); onSaved(); }, 'Order cancelled');      // only an unpaid order is cancelled this way; a paid one is refunded
   const email = () => run(async () => {
     const { data } = await supabase().auth.getSession(); const r = await fetch('/api/manager/email', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ type: 'shipped', order_id: o.id }) });
@@ -69,6 +70,7 @@ function OrderModal({ o, st, products, onClose, onSaved }) {
       {o.shipping_paise > 0 && <div className="ad-row" style={{ cursor: 'default' }}><span>Shipping</span><b>{money(o.shipping_paise)}</b></div>}<div className="ad-row" style={{ cursor: 'default' }}><b>Total</b><b>{money(o.total_paise)}</b></div></div>
     <p><b>Ship to</b><br />{addr(o.shipping_address)}<br />{o.shipping_address?.phone}</p>
     {o.gift_message && <p><b>Gift message</b><br />{o.gift_message}</p>}
+    {o.notes && <p className={o.notes.includes('ATTENTION') ? 'ad-err' : 'ad-help'} style={{ whiteSpace: 'pre-wrap' }}>{o.notes}</p>}
     {o.razorpay_payment_id && <p className="ad-help">Paid online · payment ID {o.razorpay_payment_id}</p>}
 
     {step === 'pay' && <div className="ad-form" style={{ marginTop: 12 }}><F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} />
@@ -80,6 +82,7 @@ function OrderModal({ o, st, products, onClose, onSaved }) {
       {!paid && !isOff(o) && <Btn onClick={() => setStep('pay')}>Mark as paid</Btn>}
       {toShip(o) && <Btn onClick={() => setStep('ship')}>Mark as shipped</Btn>}
       {shipped && o.tracking_number && <Btn variant="ghost" busy={busy} onClick={email} icon="mail">Email tracking</Btn>}
+      {o.status === 'shipped' && <Confirm onYes={unship}>Undo shipped</Confirm>}
       {paid && <Link className="ad-btn ghost" href={`/manager/labels?order=${o.id}`}>Print label</Link>}
       {paid && <Link className="ad-btn ghost" href={`/invoice/${o.id}`} target="_blank">Receipt</Link>}
       {manual && !isOff(o) && <Btn variant="ghost" onClick={() => setEdit(true)}>Edit</Btn>}

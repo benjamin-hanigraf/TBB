@@ -542,8 +542,8 @@ language sql stable security definer set search_path = public as $$
   with c as (select id, lower(coalesce(email,'')) e, right(regexp_replace(coalesce(phone,''),'\D','','g'),10) ph from customers),
   p as (
     select 'o' k, lower(coalesce(email,'')) e, right(regexp_replace(coalesce(phone,''),'\D','','g'),10) ph, total_paise amt, coalesce(paid_at, created_at) at from orders where status in ('paid','packed','shipped','delivered')
-    union all select 'b', lower(coalesce(email,'')), right(regexp_replace(coalesce(phone,''),'\D','','g'),10), amount_paise, coalesce(paid_at, created_at) from bookings where status = 'paid'
-    union all select 'c', lower(coalesce(email,'')), right(regexp_replace(coalesce(phone,''),'\D','','g'),10), amount_paise, coalesce(paid_at, created_at) from class_enrolments where status = 'paid')
+    union all select 'b', lower(coalesce(email,'')), right(regexp_replace(coalesce(phone,''),'\D','','g'),10), amount_paise, coalesce(paid_at, created_at) from bookings where status in ('paid','transferred')
+    union all select 'c', lower(coalesce(email,'')), right(regexp_replace(coalesce(phone,''),'\D','','g'),10), amount_paise, coalesce(paid_at, created_at) from class_enrolments where status in ('paid','transferred'))
   select c.id, count(*) filter (where p.k = 'o')::int, count(*) filter (where p.k = 'b')::int, count(*) filter (where p.k = 'c')::int, coalesce(sum(p.amt), 0)::bigint, max(p.at)
   from c left join p on (c.e <> '' and p.e = c.e) or (length(c.ph) = 10 and p.ph = c.ph)
   where is_admin() group by c.id

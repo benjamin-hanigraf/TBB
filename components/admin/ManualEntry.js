@@ -35,6 +35,8 @@ export function AddOrder({ products, order, onClose, onSaved }) {
   const save = (e) => { e.preventDefault(); return run(async () => {
     if (!lines.length) throw new Error('Please choose at least one product.'); if (!f.v.name.trim()) throw new Error('Please add the customer name.');
     const paid = f.v.pay === 'paid'; const addr = { recipient: f.v.name, phone: f.v.phone, line1: f.v.line1, line2: f.v.line2, city: f.v.city, state: f.v.state, pincode: f.v.pincode };
+    if (!edit && paid) for (const l of lines) { const want = lines.filter((x) => x.p.id === l.p.id).reduce((t, x) => t + x.qty, 0);       // do not sell more than is on the shelf
+      if (!l.p.allow_preorder && want > l.p.stock) throw new Error(`Only ${l.p.stock} of "${l.p.title}" in stock. Add stock first, or save the order as not paid yet.`); }
     const itemRows = lines.map((l) => ({ product_id: l.p.id, title: l.p.title, unit_paise: l.unit, qty: l.qty, gst_paise: l.p.gst_mode === 'none' ? 0 : l.g.gst }));
     const body = { name: f.v.name, email: f.v.email || '', phone: f.v.phone || '', address: addr, subtotal_paise: subtotal, shipping_paise: ship, total_paise: total, items: itemRows };
     // Saved in one step in the database: the order, its items, the stock and the accounts entry go in together, or nothing does.
@@ -100,17 +102,25 @@ function useStatusSave({ table, row, f, label, extra = {}, onSaved }) {
   const [run, busy] = useAction();
   const save = () => run(async () => {
     const becamePaid = row.status === 'pending' && ['paid', 'transferred'].includes(f.v.status);
+    if (table === 'bookings' && becamePaid) {   // confirming must not overfill the workshop
+      const w = must(await sb().from('workshops').select('capacity').eq('id', row.workshop_id).single()); const taken = must(await sb().from('bookings').select('seats').eq('workshop_id', row.workshop_id).eq('status', 'paid')).reduce((t, x) => t + x.seats, 0);
+      if (taken + row.seats > w.capacity) throw new Error(`Only ${Math.max(0, w.capacity - taken)} seat(s) are left, so this cannot be confirmed.`); }
     must(await sb().from(table).update({ status: f.v.status, ...extra, ...(becamePaid ? { paid_at: nowISO(), payment_method: f.v.method } : {}) }).eq('id', row.id));
     if (becamePaid) await syncPaymentsToLedger(sb()); onSaved(); }, label);
   return [save, busy];
 }
-const statusOptions = (cur, transferredLabel) => (cur === 'refunded' ? [['refunded', 'Refunded']] : [['pending', 'Not paid yet'], ['paid', 'Confirmed'], ...(transferredLabel || cur === 'transferred' ? [['transferred', transferredLabel || 'Transferred']] : []), ['cancelled', 'Cancelled']]);
+// A paid sign-up can only be refunded (never just switched to "Cancelled"), otherwise the money in the accounts would stay with nothing against it.
+const statusOptions = (cur, transferredLabel) => (cur === 'refunded' ? [['refunded', 'Refunded']]
+  : ['paid', 'transferred'].includes(cur) ? [['paid', 'Confirmed'], ...(transferredLabel || cur === 'transferred' ? [['transferred', transferredLabel || 'Transferred']] : [])]
+  : cur === 'cancelled' ? [['cancelled', 'Cancelled'], ['pending', 'Not paid yet']]
+  : [['pending', 'Not paid yet'], ['paid', 'Confirmed'], ...(transferredLabel ? [['transferred', transferredLabel]] : []), ['cancelled', 'Cancelled']]);
 const refundable = (r) => ['paid', 'transferred'].includes(r.status);
 export function BookingModal({ b, onClose, onSaved }) {
   const f = useForm({ status: b.status, method: b.payment_method || 'upi' }); const [refund, setRefund] = useState(false); const [transfer, setTransfer] = useState(false);
   const [save, busy] = useStatusSave({ table: 'bookings', row: b, f, label: 'Sign-up updated', onSaved }); const wa = waLink(b.phone);
   return (<Modal title={b.name} onClose={onClose}>
     <p style={{ marginTop: 0 }}><b>{b.workshops?.title}</b><br />{b.seats} {b.seats > 1 ? 'seats' : 'seat'} · {money(b.amount_paise)}<br /><span className="ad-help">{b.email} · {b.phone}</span></p>
+    {b.notes && <p className={b.notes.includes('ATTENTION') ? 'ad-err' : 'ad-help'} style={{ whiteSpace: 'pre-wrap' }}>{b.notes}</p>}
     <p className="ad-help">Booked {fmtDT(b.created_at)}{b.channel === 'manual' ? ' · added manually' : ''}{b.razorpay_payment_id ? ` · Payment ID ${b.razorpay_payment_id}` : ''}</p>
     <div className="ad-form"><F form={f} k="status" label="Status" type="select" required options={statusOptions(b.status)} />
       {b.status === 'pending' && ['paid', 'transferred'].includes(f.v.status) && <F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} />}</div>
@@ -142,6 +152,7 @@ export function EnrolModal({ e, onClose, onSaved }) {
   const [save, busy] = useStatusSave({ table: 'class_enrolments', row: e, f, label: 'Enrolment updated', onSaved }); const wa = waLink(e.phone);
   return (<Modal title={e.student_name} onClose={onClose}>
     <p style={{ marginTop: 0 }}><b>{e.class_levels?.title}, {e.class_levels?.level}</b><br />{e.student_group === 'child' ? `Child, age ${e.student_age}` : 'Adult'} · {money(e.amount_paise)}</p>
+    {e.notes && <p className={e.notes.includes('ATTENTION') ? 'ad-err' : 'ad-help'} style={{ whiteSpace: 'pre-wrap' }}>{e.notes}</p>}
     <p className="ad-help">{e.student_group === 'child' ? `Parent or guardian: ${e.name} · ` : ''}{e.email} · {e.phone}<br />{fmtDT(e.created_at)}{e.channel === 'manual' ? ' · added manually' : ''}{e.razorpay_payment_id ? ` · Payment ID ${e.razorpay_payment_id}` : ''}</p>
     <div className="ad-form"><F form={f} k="status" label="Status" type="select" required options={statusOptions(e.status, 'Transferred')} />
       {e.status === 'pending' && ['paid', 'transferred'].includes(f.v.status) && <F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} />}

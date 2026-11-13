@@ -41,7 +41,7 @@ do $$ begin
   assert (select count(*) from workshops) = 1, 'anon should see only the published workshop (draft hidden)';
   assert (select count(*) from products) = 5, 'anon sees active products';
   assert (select count(*) from workshops_public) = 1, 'public workshop view works';
-  assert (select count(*) from settings) = 2, 'anon sees only public settings (not GST/invoice)';
+  assert (select count(*) from settings) = 3, 'anon sees only public settings (business, shipping and shop notes; not GST/invoice)';
   assert (select count(*) from settings where key='gst') = 0, 'GST settings must stay private';
   assert (select count(*) from site_images) = 4, 'photos are public';
   assert pg_temp.count_of('bookings') = 0 and pg_temp.count_of('orders') = 0 and pg_temp.count_of('profiles') = 0

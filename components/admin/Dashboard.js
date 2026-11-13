@@ -61,7 +61,7 @@ export default function Dashboard() {
     : d.inbox > 0 ? <Link href="/manager/inbox"><Stat label="New messages" value={d.inbox} sub="Tap to read" /></Link> : <Link href="/manager/orders"><Stat label="Orders to ship" value={0} sub="All caught up" /></Link>;
   return (<Page title="Hello Rahi">
     {defPin && <Link href="/manager/settings" className="ad-err" style={{ display: 'block', background: '#fff3d6', color: '#7a4b00' }}>You are still using the starting PIN (0000). Tap here to change it.</Link>}
-    <div className="ad-grid">
+    <div className="ad-grid four">
       {first}
       <Link href="/manager/invoices?show=unpaid"><Stat label="Receivables" value={moneyR(d.owed)} sub={d.owedN ? `From ${d.owedN} ${d.owedN === 1 ? 'invoice' : 'invoices'}` : 'Nothing owed'} /></Link>
       <Link href="/manager/money"><Stat label="Income this month" value={moneyR(d.month.moneyIn)} sub={`Expense: ${moneyR(d.month.moneyOut)}`} /></Link>

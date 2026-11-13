@@ -510,13 +510,8 @@ begin
     values (oid, nullif(it->>'product_id','')::uuid, it->>'title', (it->>'unit_paise')::int, (it->>'qty')::int, coalesce((it->>'gst_paise')::int, 0));
     gst := gst + coalesce((it->>'gst_paise')::int, 0);
   end loop;
-  if paid then
-    perform order_stock_internal(oid, true);
-    if total > 0 then
-      insert into ledger_entries (entry_date, kind, category, description, amount_paise, gst_paise, method, party, source, source_id)
-      values ((now() at time zone 'Asia/Kolkata')::date, 'in', 'Store sales', 'Order added manually', total, gst, coalesce(p->>'method','other'), p->>'name', 'order', oid) on conflict do nothing;
-    end if;
-  end if;
+  if paid then perform order_stock_internal(oid, true); end if;
+  perform ledger_sync_item('order', oid);                  -- the accounts entry is made by the one common function
   return oid;
 end $$;
 
@@ -538,14 +533,169 @@ begin
     values (oid, nullif(it->>'product_id','')::uuid, it->>'title', (it->>'unit_paise')::int, (it->>'qty')::int, coalesce((it->>'gst_paise')::int, 0));
     gst := gst + coalesce((it->>'gst_paise')::int, 0);
   end loop;
-  if had then
-    perform order_stock_internal(oid, true);
-    if total > 0 then
-      update ledger_entries set amount_paise = total, gst_paise = gst, party = p->>'name' where source = 'order' and source_id = oid;
-      if not found then insert into ledger_entries (entry_date, kind, category, description, amount_paise, gst_paise, method, party, source, source_id)
-        values ((now() at time zone 'Asia/Kolkata')::date, 'in', 'Store sales', 'Order added manually', total, gst, coalesce(o.payment_method,'other'), p->>'name', 'order', oid); end if;
-    else delete from ledger_entries where source = 'order' and source_id = oid; end if;
+  if had then perform order_stock_internal(oid, true); end if;
+  perform ledger_sync_item('order', oid);
+end $$;
+
+
+-- ================================================================ THE ACCOUNTS
+-- One rule for money in: every paid order, workshop booking and class enrolment has exactly one income entry, made and kept right by the database itself
+-- whenever the item is saved. "Not paid yet" removes it again. A refund is its own money-out entry (see the refund screen). Whatever the app does, these stay in step.
+create or replace function ledger_sync_item(p_kind text, p_id uuid, p_update boolean default true) returns void
+language plpgsql security definer set search_path = public as $$
+declare cat text; amt integer; g integer; d date; meth text; who text; descr text; keep boolean; gone boolean;
+begin
+  if p_kind = 'order' then
+    select o.total_paise, coalesce((select sum(i.gst_paise) from order_items i where i.order_id = o.id), 0), (coalesce(o.paid_at, o.created_at) at time zone 'Asia/Kolkata')::date,
+           coalesce(nullif(o.payment_method,''), case when o.razorpay_payment_id is not null then 'razorpay' else 'other' end), o.name,
+           'Order ' || coalesce(o.order_no::text, '') || case when o.channel = 'manual' then ' (added manually)' else '' end,
+           o.status in ('paid','packed','shipped','delivered','refunded'), o.status = 'pending'
+      into amt, g, d, meth, who, descr, keep, gone from orders o where o.id = p_id;
+    cat := 'Store sales';
+  elsif p_kind = 'booking' then
+    select b.amount_paise, coalesce(b.gst_paise, 0), (coalesce(b.paid_at, b.created_at) at time zone 'Asia/Kolkata')::date,
+           coalesce(nullif(b.payment_method,''), case when b.razorpay_payment_id is not null then 'razorpay' else 'other' end), b.name,
+           coalesce((select w.title from workshops w where w.id = b.workshop_id), 'Workshop') || ' · ' || b.seats || case when b.seats = 1 then ' seat' else ' seats' end,
+           b.status in ('paid','transferred','refunded'), b.status = 'pending'
+      into amt, g, d, meth, who, descr, keep, gone from bookings b where b.id = p_id;
+    cat := 'Workshops';
+  elsif p_kind = 'enrolment' then
+    select e.amount_paise, coalesce(e.gst_paise, 0), (coalesce(e.paid_at, e.created_at) at time zone 'Asia/Kolkata')::date,
+           coalesce(nullif(e.payment_method,''), case when e.razorpay_payment_id is not null then 'razorpay' else 'other' end), e.name,
+           coalesce((select l.title || ', ' || l.level from class_levels l where l.id = e.class_id), 'Writing class') || ' for ' || e.student_name,
+           e.status in ('paid','transferred','refunded'), e.status = 'pending'
+      into amt, g, d, meth, who, descr, keep, gone from class_enrolments e where e.id = p_id;
+    cat := 'Classes';
+  else return; end if;
+  if keep is null then return; end if;                                                         -- the item does not exist
+  if meth not in ('upi','cash','card','bank','razorpay','other') then meth := 'other'; end if;
+  if keep and amt > 0 then
+    if p_update then
+      insert into ledger_entries (entry_date, kind, category, description, amount_paise, gst_paise, method, party, source, source_id)
+      values (d, 'in', cat, descr, amt, least(g, amt), meth, who, p_kind, p_id)
+      on conflict (source, source_id) where source_id is not null
+      do update set entry_date = excluded.entry_date, amount_paise = excluded.amount_paise, gst_paise = excluded.gst_paise, method = excluded.method, party = excluded.party;
+    else
+      insert into ledger_entries (entry_date, kind, category, description, amount_paise, gst_paise, method, party, source, source_id)
+      values (d, 'in', cat, descr, amt, least(g, amt), meth, who, p_kind, p_id) on conflict do nothing;
+    end if;
+  elsif gone then
+    delete from ledger_entries where source = p_kind and source_id = p_id;                     -- back to "not paid yet": the income goes
   end if;
+end $$;
+
+create or replace function ledger_class(p_kind text, p_status text) returns text language sql immutable as $$
+  select case when p_status = 'pending' then 'unpaid'
+              when p_kind = 'order' and p_status in ('paid','packed','shipped','delivered','refunded') then 'paid'
+              when p_kind <> 'order' and p_status in ('paid','transferred','refunded') then 'paid' else 'other' end $$;
+create or replace function trg_ledger_item() returns trigger language plpgsql security definer set search_path = public as $$
+declare k text := tg_argv[0]; ov jsonb; nv jsonb; amt text := case when tg_argv[0] = 'order' then 'total_paise' else 'amount_paise' end;
+begin
+  if tg_op = 'DELETE' then delete from ledger_entries where source = k and source_id = old.id; return old; end if;
+  if tg_op = 'UPDATE' then      -- act only when paid or not paid changed, or the amount or the payment day did: a hand-edited entry is never overwritten by, say, shipping an order
+    ov := to_jsonb(old); nv := to_jsonb(new);
+    if ledger_class(k, ov->>'status') = ledger_class(k, nv->>'status') and ov->>amt is not distinct from nv->>amt and ov->>'paid_at' is not distinct from nv->>'paid_at' and ov->>'gst_paise' is not distinct from nv->>'gst_paise' then return new; end if;
+  end if;
+  perform ledger_sync_item(k, new.id); return new;
+end $$;
+
+-- An entry for a payment cannot be deleted by hand while that payment is still there; the way to take it out is to mark the order, booking or class "not paid yet" (or remove the payment).
+create or replace function ledger_guard_delete() returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if old.source = 'order' and exists (select 1 from orders o where o.id = old.source_id and ledger_class('order', o.status) = 'paid') then raise exception 'This entry is the payment for an order. To take it out, mark that order as not paid.'; end if;
+  if old.source = 'booking' and exists (select 1 from bookings b where b.id = old.source_id and ledger_class('booking', b.status) = 'paid') then raise exception 'This entry is the payment for a workshop booking. To take it out, mark that booking as not paid.'; end if;
+  if old.source = 'enrolment' and exists (select 1 from class_enrolments e where e.id = old.source_id and ledger_class('enrolment', e.status) = 'paid') then raise exception 'This entry is the payment for a class. To take it out, mark that class as not paid.'; end if;
+  return old;
+end $$;
+drop trigger if exists ledger_entries_guard on ledger_entries;
+create trigger ledger_entries_guard before delete on ledger_entries for each row execute function ledger_guard_delete();
+
+drop trigger if exists orders_ledger on orders;
+create trigger orders_ledger after insert or update of status, total_paise, paid_at, payment_method, name on orders for each row execute function trg_ledger_item('order');
+drop trigger if exists orders_ledger_del on orders;
+create trigger orders_ledger_del after delete on orders for each row execute function trg_ledger_item('order');
+drop trigger if exists bookings_ledger on bookings;
+create trigger bookings_ledger after insert or update of status, amount_paise, gst_paise, paid_at, payment_method, name, seats on bookings for each row execute function trg_ledger_item('booking');
+drop trigger if exists bookings_ledger_del on bookings;
+create trigger bookings_ledger_del after delete on bookings for each row execute function trg_ledger_item('booking');
+drop trigger if exists enrolments_ledger on class_enrolments;
+create trigger enrolments_ledger after insert or update of status, amount_paise, gst_paise, paid_at, payment_method, name, student_name on class_enrolments for each row execute function trg_ledger_item('enrolment');
+drop trigger if exists enrolments_ledger_del on class_enrolments;
+create trigger enrolments_ledger_del after delete on class_enrolments for each row execute function trg_ledger_item('enrolment');
+-- a payment, a rent-out payment or an invoice that is deleted takes its accounts entry with it
+create or replace function trg_ledger_gone() returns trigger language plpgsql security definer set search_path = public as $$
+begin delete from ledger_entries where source = tg_argv[0] and source_id = old.id; return old; end $$;
+drop trigger if exists invoice_payments_ledger_del on invoice_payments;
+create trigger invoice_payments_ledger_del after delete on invoice_payments for each row execute function trg_ledger_gone('invoice');
+drop trigger if exists rentout_payments_ledger_del on rentout_payments;
+create trigger rentout_payments_ledger_del after delete on rentout_payments for each row execute function trg_ledger_gone('rentout');
+drop trigger if exists invoices_ledger_del on invoices;
+create trigger invoices_ledger_del after delete on invoices for each row execute function trg_ledger_gone('invoice');
+drop trigger if exists rentouts_ledger_del on rentouts;
+create trigger rentouts_ledger_del after delete on rentouts for each row execute function trg_ledger_gone('rentout');
+
+-- The check: every way the accounts can disagree with the orders, bookings, classes, invoices and rent-outs. fix: add = can be added automatically, update = amount can be corrected, remove = entry has nothing behind it, review = look at it yourself.
+create or replace function accounts_check_rows() returns table (kind text, ref uuid, message text, fix text)
+language sql stable security definer set search_path = public as $$
+  with items as (
+    select 'order' k, o.id, o.total_paise amt, o.status in ('paid','packed','shipped','delivered','refunded') paid, o.status = 'refunded' refunded, 'Order ' || coalesce(o.order_no::text,'') || ' (' || o.name || ')' label from orders o
+    union all select 'booking', b.id, b.amount_paise, b.status in ('paid','transferred','refunded'), b.status = 'refunded', 'Workshop booking (' || b.name || ')' from bookings b
+    union all select 'enrolment', e.id, e.amount_paise, e.status in ('paid','transferred','refunded'), e.status = 'refunded', 'Class enrolment (' || e.student_name || ')' from class_enrolments e),
+  inc as (select source, source_id, amount_paise from ledger_entries where kind = 'in' and source in ('order','booking','enrolment')),
+  ref as (select source_id related_id, sum(amount_paise) total from ledger_entries where source = 'refund' group by source_id),
+  ipay as (select p.invoice_id, sum(p.amount_paise) total from invoice_payments p group by p.invoice_id),
+  rpay as (select p.rentout_id, sum(p.amount_paise) total from rentout_payments p group by p.rentout_id)
+  select 'missing', i.id, i.label || ' is paid but has no income entry', 'add' from items i where i.paid and i.amt > 0 and not exists (select 1 from inc where inc.source = i.k and inc.source_id = i.id)
+  union all select 'amount', i.id, i.label || ': the income entry is ' || (inc.amount_paise / 100.0)::text || ' but the amount is ' || (i.amt / 100.0)::text, 'update' from items i join inc on inc.source = i.k and inc.source_id = i.id where i.paid and inc.amount_paise <> i.amt
+  union all select 'orphan', l.id, 'An income entry ("' || coalesce(l.description, l.category) || '") has no paid order, booking or class behind it', 'remove' from ledger_entries l
+    where l.kind = 'in' and l.source in ('order','booking','enrolment') and not exists (select 1 from items i where i.k = l.source and i.id = l.source_id and i.paid)
+  union all select 'refund', i.id, i.label || ' is marked refunded but only ' || (coalesce(r.total,0) / 100.0)::text || ' of ' || (i.amt / 100.0)::text || ' was recorded as refunded', 'review' from items i left join ref r on r.related_id = i.id where i.refunded and coalesce(r.total,0) < i.amt
+  union all select 'refund', i.id, i.label || ': refunds recorded (' || (r.total / 100.0)::text || ') are more than the amount paid (' || (i.amt / 100.0)::text || ')', 'review' from items i join ref r on r.related_id = i.id where r.total > i.amt
+  union all select 'refund', l.id, 'A refund entry ("' || coalesce(l.description, 'Refund') || '") does not belong to any order, booking, class or payment', 'review' from ledger_entries l
+    where l.source = 'refund' and not exists (select 1 from items i where i.id = l.source_id) and not exists (select 1 from invoice_payments p where p.id = l.source_id) and not exists (select 1 from rentout_payments p where p.id = l.source_id)
+  union all select 'invoice', p.id, 'A payment of ' || (p.amount_paise / 100.0)::text || ' on invoice ' || iv.invoice_no || ' is not in the accounts', 'add' from invoice_payments p join invoices iv on iv.id = p.invoice_id
+    where not exists (select 1 from ledger_entries l where l.source = 'invoice' and l.source_id = p.id)
+  union all select 'orphan', l.id, 'An income entry for an invoice ("' || coalesce(l.description, l.category) || '") has no payment behind it', 'remove' from ledger_entries l
+    where l.source = 'invoice' and l.kind = 'in' and not exists (select 1 from invoice_payments p where p.id = l.source_id) and not exists (select 1 from invoices v where v.id = l.source_id)
+  union all select 'invoice', iv.id, 'Invoice ' || iv.invoice_no || ': payments (' || (p.total / 100.0)::text || ') are more than the total (' || (iv.total_paise / 100.0)::text || ')', 'review' from invoices iv join ipay p on p.invoice_id = iv.id where iv.doc_type = 'invoice' and p.total > iv.total_paise
+  union all select 'invoice', iv.id, 'Invoice ' || iv.invoice_no || ' is marked paid but only ' || (coalesce(p.total,0) / 100.0)::text || ' of ' || (iv.total_paise / 100.0)::text || ' was received', 'review' from invoices iv left join ipay p on p.invoice_id = iv.id where iv.doc_type = 'invoice' and iv.status = 'paid' and iv.total_paise > 0 and coalesce(p.total,0) < iv.total_paise
+  union all select 'rentout', p.id, 'A rent-out payment of ' || (p.amount_paise / 100.0)::text || ' is not in the accounts', 'add' from rentout_payments p where not exists (select 1 from ledger_entries l where l.source = 'rentout' and l.source_id = p.id)
+  union all select 'orphan', l.id, 'An income entry for a rent-out ("' || coalesce(l.description, l.category) || '") has no payment behind it', 'remove' from ledger_entries l
+    where l.source = 'rentout' and not exists (select 1 from rentout_payments p where p.id = l.source_id) and not exists (select 1 from rentouts r where r.id = l.source_id)
+  union all select 'rentout', r.id, 'Rent-out for ' || r.name || ': payments (' || (p.total / 100.0)::text || ') are more than the amount (' || (r.amount_paise / 100.0)::text || ')', 'review' from rentouts r join rpay p on p.rentout_id = r.id where r.amount_paise > 0 and p.total > r.amount_paise
+  union all select 'date', l.id, 'An entry ("' || coalesce(l.description, l.category) || '") is dated in the future (' || l.entry_date::text || ')', 'review' from ledger_entries l where l.entry_date > (now() at time zone 'Asia/Kolkata')::date + 1
+  union all select 'gst', l.id, 'An entry ("' || coalesce(l.description, l.category) || '") has more GST than its amount', 'review' from ledger_entries l where l.gst_paise > l.amount_paise
+  union all select 'duplicate', min(l.id::text)::uuid, 'Possible double entry: ' || count(*) || ' manual entries on ' || l.entry_date::text || ' for the same amount, category and name', 'review'
+    from ledger_entries l where l.source = 'manual' group by l.entry_date, l.kind, l.amount_paise, l.category, coalesce(lower(l.party), '') having count(*) > 1
+$$;
+-- Puts right what can be put right safely: adds missing entries, and (when asked) corrects amounts and removes entries that have nothing behind them.
+create or replace function ledger_repair(p_amounts boolean default false, p_orphans boolean default false) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare r record; added int := 0; fixed int := 0; removed int := 0; p record;
+begin
+  for r in select * from accounts_check_rows() where kind = 'missing' loop
+    perform ledger_sync_item((select case when exists (select 1 from orders where id = r.ref) then 'order' when exists (select 1 from bookings where id = r.ref) then 'booking' else 'enrolment' end), r.ref, false); added := added + 1;
+  end loop;
+  for p in select ip.id, ip.amount_paise, ip.paid_on, ip.method, iv.invoice_no, iv.customer_name, iv.total_paise, iv.gst_paise from invoice_payments ip join invoices iv on iv.id = ip.invoice_id
+           where not exists (select 1 from ledger_entries l where l.source = 'invoice' and l.source_id = ip.id) loop
+    insert into ledger_entries (entry_date, kind, category, description, amount_paise, gst_paise, method, party, source, source_id)
+    values (p.paid_on, 'in', 'Services', 'Invoice ' || p.invoice_no, p.amount_paise, case when p.total_paise > 0 then round(p.gst_paise::numeric * p.amount_paise / p.total_paise)::int else 0 end,
+            case when p.method in ('upi','cash','card','bank','razorpay','other') then p.method else 'other' end, p.customer_name, 'invoice', p.id) on conflict do nothing; added := added + 1;
+  end loop;
+  for p in select rp.id, rp.amount_paise, rp.paid_on, rp.method, ro.name, ro.purpose from rentout_payments rp join rentouts ro on ro.id = rp.rentout_id
+           where not exists (select 1 from ledger_entries l where l.source = 'rentout' and l.source_id = rp.id) loop
+    insert into ledger_entries (entry_date, kind, category, description, amount_paise, gst_paise, method, party, source, source_id)
+    values (p.paid_on, 'in', 'Studio rent-outs', 'Rent-out: ' || coalesce(p.purpose, 'studio'), p.amount_paise, 0, case when p.method in ('upi','cash','card','bank','razorpay','other') then p.method else 'other' end, p.name, 'rentout', p.id) on conflict do nothing; added := added + 1;
+  end loop;
+  if p_amounts then
+    for r in select * from accounts_check_rows() where kind = 'amount' loop
+      perform ledger_sync_item((select case when exists (select 1 from orders where id = r.ref) then 'order' when exists (select 1 from bookings where id = r.ref) then 'booking' else 'enrolment' end), r.ref, true); fixed := fixed + 1;
+    end loop;
+  end if;
+  if p_orphans then
+    for r in select * from accounts_check_rows() where kind = 'orphan' loop delete from ledger_entries where id = r.ref; removed := removed + 1; end loop;
+  end if;
+  return jsonb_build_object('added', added, 'fixed', fixed, 'removed', removed);
 end $$;
 
 -- what each customer has bought, counted in the database (matched by email or phone) so the Customers page stays fast
@@ -577,6 +727,9 @@ revoke all on function set_order_start(bigint) from public, anon;
 revoke all on function admin_add_order(jsonb) from public, anon;
 revoke all on function admin_update_order(jsonb) from public, anon;
 revoke all on function customer_summary() from public, anon;
+revoke all on function ledger_repair(boolean, boolean) from public, anon, authenticated;
+revoke all on function ledger_sync_item(text, uuid, boolean) from public, anon, authenticated;
+revoke all on function accounts_check_rows() from public, anon, authenticated;
 grant execute on function admin_order_stock(uuid, boolean), next_invoice_number(), set_invoice_start(bigint), set_order_start(bigint),
   admin_add_order(jsonb), admin_update_order(jsonb), customer_summary() to authenticated;
 
@@ -740,6 +893,9 @@ end $seed$;
 
 -- old versions of this database also had a saved-addresses table; it is not used any more
 drop table if exists addresses cascade;
+
+-- brings the accounts up to date once: only missing entries are added (nothing is changed or removed)
+select ledger_repair(false, false);
 
 commit;
 select 'Database is up to date' as result;

@@ -108,13 +108,13 @@ function useStatusSave({ table, row, f, label, extra = {}, onSaved }) {
     if (table === 'bookings' && becamePaid) {   // confirming must not overfill the workshop
       const w = must(await sb().from('workshops').select('capacity').eq('id', row.workshop_id).single()); const taken = must(await sb().from('bookings').select('seats').eq('workshop_id', row.workshop_id).eq('status', 'paid')).reduce((t, x) => t + x.seats, 0);
       if (taken + row.seats > w.capacity) throw new Error(`Only ${Math.max(0, w.capacity - taken)} seat(s) are left, so this cannot be confirmed.`); }
-    must(await sb().from(table).update({ status: f.v.status, ...extra, ...(becamePaid ? { paid_at: nowISO(), payment_method: f.v.method } : {}) }).eq('id', row.id));
+    must(await sb().from(table).update({ status: f.v.status, ...extra, ...(becamePaid ? { paid_at: nowISO(), payment_method: f.v.method } : {}), ...(['paid', 'transferred'].includes(row.status) && f.v.status === 'pending' ? { paid_at: null, payment_method: null } : {}) }).eq('id', row.id));      // "Not paid yet" clears the payment; the money entry goes with it
     if (becamePaid) await syncPaymentsToLedger(sb()); onSaved(); }, label);
   return [save, busy];
 }
 // A paid sign-up can only be refunded (never just switched to "Cancelled"), otherwise the money in the accounts would stay with nothing against it.
-const statusOptions = (cur, transferredLabel) => (cur === 'refunded' ? [['refunded', 'Refunded']]
-  : ['paid', 'transferred'].includes(cur) ? [['paid', 'Confirmed'], ...(transferredLabel || cur === 'transferred' ? [['transferred', transferredLabel || 'Transferred']] : [])]
+const statusOptions = (cur, transferredLabel, paidOnline) => (cur === 'refunded' ? [['refunded', 'Refunded']]
+  : ['paid', 'transferred'].includes(cur) ? [['paid', 'Confirmed'], ...(transferredLabel || cur === 'transferred' ? [['transferred', transferredLabel || 'Transferred']] : []), ...(paidOnline ? [] : [['pending', 'Not paid yet']])]       // paid by hand can be undone (the money entry goes); paid online can only be refunded
   : cur === 'cancelled' ? [['cancelled', 'Cancelled'], ['pending', 'Not paid yet']]
   : [['pending', 'Not paid yet'], ['paid', 'Confirmed'], ...(transferredLabel ? [['transferred', transferredLabel]] : []), ['cancelled', 'Cancelled']]);
 const refundable = (r) => ['paid', 'transferred'].includes(r.status);
@@ -125,12 +125,12 @@ export function BookingModal({ b, onClose, onSaved }) {
     <p style={{ marginTop: 0 }}><b>{b.workshops?.title}</b><br />{b.seats} {b.seats > 1 ? 'seats' : 'seat'} · {money(b.amount_paise)}<br /><span className="ad-help">{b.email} · {b.phone}</span></p>
     {b.notes && <p className={b.notes.includes('ATTENTION') ? 'ad-err' : 'ad-help'} style={{ whiteSpace: 'pre-wrap' }}>{b.notes}</p>}
     <p className="ad-help">Booked {fmtDT(b.created_at)}{b.channel === 'manual' ? ' · added manually' : ''}{b.razorpay_payment_id ? ` · Payment ID ${b.razorpay_payment_id}` : ''}</p>
-    {editing ? <div className="ad-form"><F form={f} k="status" label="Status" type="select" required options={statusOptions(b.status)} />
+    {editing ? <div className="ad-form"><F form={f} k="status" label="Status" type="select" required options={statusOptions(b.status, undefined, !!b.razorpay_payment_id)} />
       {b.status === 'pending' && ['paid', 'transferred'].includes(f.v.status) && <F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} />}</div>
       : <p style={{ margin: '0 0 8px' }}><Badge tone={STATUS[b.status]?.[1]}>{STATUS[b.status]?.[0] || b.status}</Badge></p>}
     <p className="ad-help">Tickets are non-refundable but can be moved to another date with Transfer. To give money back, use Refund.</p>
     <div className="ad-actions full">{editing ? <><Btn busy={busy} onClick={save} icon="check">Save</Btn><Btn variant="ghost" onClick={() => { setEditing(false); f.set('status', b.status); }}>Cancel</Btn></>
-      : <>{statusOptions(b.status).length > 1 && <Btn variant="ghost" icon="edit" onClick={() => setEditing(true)}>Edit</Btn>}{refundable(b) && <Btn variant="ghost" icon="file" onClick={() => setReceipt(true)}>Receipt</Btn>}{wa && <a className="ad-btn ghost" href={wa} target="_blank" rel="noopener"><Icon n="whatsapp" size={16} /><span>WhatsApp</span></a>}{b.status === 'paid' && <Btn variant="ghost" icon="send" onClick={() => setTransfer(true)}>Transfer</Btn>}{refundable(b) && <Btn variant="ghost" icon="wallet" onClick={() => setRefund(true)}>Refund</Btn>}</>}</div>
+      : <>{statusOptions(b.status, undefined, !!b.razorpay_payment_id).length > 1 && <Btn variant="ghost" icon="edit" onClick={() => setEditing(true)}>Edit</Btn>}{refundable(b) && <Btn variant="ghost" icon="file" onClick={() => setReceipt(true)}>Receipt</Btn>}{wa && <a className="ad-btn ghost" href={wa} target="_blank" rel="noopener"><Icon n="whatsapp" size={16} /><span>WhatsApp</span></a>}{b.status === 'paid' && <Btn variant="ghost" icon="send" onClick={() => setTransfer(true)}>Transfer</Btn>}{refundable(b) && <Btn variant="ghost" icon="wallet" onClick={() => setRefund(true)}>Refund</Btn>}</>}</div>
     {receipt && <ReceiptModal id={b.id} onClose={() => setReceipt(false)} />}
     {refund && <RefundDialog kind="booking" rows={[b]} title={`Refund · ${b.name}`} onClose={() => setRefund(false)} onDone={onSaved} />}
     {transfer && <TransferDialog b={b} onClose={() => setTransfer(false)} onDone={onSaved} />}</Modal>);
@@ -160,11 +160,11 @@ export function EnrolModal({ e, onClose, onSaved }) {
     <p style={{ marginTop: 0 }}><b>{e.class_levels?.title}, {e.class_levels?.level}</b><br />{e.student_group === 'child' ? `Child, age ${e.student_age}` : 'Adult'} · {money(e.amount_paise)}</p>
     {e.notes && <p className={e.notes.includes('ATTENTION') ? 'ad-err' : 'ad-help'} style={{ whiteSpace: 'pre-wrap' }}>{e.notes}</p>}
     <p className="ad-help">{e.student_group === 'child' ? `Parent or guardian: ${e.name} · ` : ''}{e.email} · {e.phone}<br />{fmtDT(e.created_at)}{e.channel === 'manual' ? ' · added manually' : ''}{e.razorpay_payment_id ? ` · Payment ID ${e.razorpay_payment_id}` : ''}</p>
-    {editing ? <div className="ad-form"><F form={f} k="status" label="Status" type="select" required options={statusOptions(e.status, 'Transferred')} />
+    {editing ? <div className="ad-form"><F form={f} k="status" label="Status" type="select" required options={statusOptions(e.status, 'Transferred', !!e.razorpay_payment_id)} />
       {e.status === 'pending' && ['paid', 'transferred'].includes(f.v.status) && <F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} />}
     </div> : <p style={{ margin: '0 0 8px' }}><Badge tone={STATUS[e.status]?.[1]}>{STATUS[e.status]?.[0] || e.status}</Badge></p>}
     <div className="ad-actions full">{editing ? <><Btn busy={busy} onClick={save} icon="check">Save</Btn><Btn variant="ghost" onClick={() => { setEditing(false); f.set('status', e.status); }}>Cancel</Btn></>
-      : <>{statusOptions(e.status, 'Transferred').length > 1 && <Btn variant="ghost" icon="edit" onClick={() => setEditing(true)}>Edit</Btn>}{refundable(e) && <Btn variant="ghost" icon="file" onClick={() => setReceipt(true)}>Receipt</Btn>}{wa && <a className="ad-btn ghost" href={wa} target="_blank" rel="noopener"><Icon n="whatsapp" size={16} /><span>WhatsApp</span></a>}{refundable(e) && <Btn variant="ghost" icon="wallet" onClick={() => setRefund(true)}>Refund</Btn>}</>}</div>
+      : <>{statusOptions(e.status, 'Transferred', !!e.razorpay_payment_id).length > 1 && <Btn variant="ghost" icon="edit" onClick={() => setEditing(true)}>Edit</Btn>}{refundable(e) && <Btn variant="ghost" icon="file" onClick={() => setReceipt(true)}>Receipt</Btn>}{wa && <a className="ad-btn ghost" href={wa} target="_blank" rel="noopener"><Icon n="whatsapp" size={16} /><span>WhatsApp</span></a>}{refundable(e) && <Btn variant="ghost" icon="wallet" onClick={() => setRefund(true)}>Refund</Btn>}</>}</div>
     {receipt && <ReceiptModal id={e.id} onClose={() => setReceipt(false)} />}
     {refund && <RefundDialog kind="enrolment" rows={[e]} title={`Refund · ${e.student_name}`} onClose={() => setRefund(false)} onDone={onSaved} />}</Modal>);
 }

@@ -296,3 +296,10 @@ html,body{overscroll-behavior-x:none}
 /* every page title sits at the same place and size, whether or not the page has buttons beside it */
 .ad-head{min-height:48px;align-items:center;margin-bottom:20px}.ad-head h1{font-size:clamp(26px,4vw,34px);line-height:1.15;margin:0;letter-spacing:-.02em;font-weight:600}
 .ad-head{align-items:flex-start;min-height:0}.ad-head h1{min-height:48px;display:flex;align-items:center}.ad-head .ad-back{margin-top:6px}.ad-act{align-items:center;min-height:48px}
+
+.choice-list{display:grid;gap:10px;margin:14px 0 6px}.choice{display:flex;gap:14px;align-items:center;text-align:left;background:#fff;border:1px solid #d2d2d7;border-radius:16px;padding:14px 16px;font:inherit;color:inherit;cursor:pointer}.choice:hover{background:#f5f5f7}.choice[disabled]{opacity:.5}
+.choice b{display:block;font-weight:600;font-size:16px}.choice small{display:block;color:#6e6e73;font-size:13px;line-height:1.4;margin-top:2px}
+/* Home's four cards: all four in one row, or two and two, never three and one */
+.ad-grid.four{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(min-width:700px) and (max-width:900px){.ad-grid.four{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(min-width:1100px){.ad-grid.four{grid-template-columns:repeat(4,minmax(0,1fr))}}

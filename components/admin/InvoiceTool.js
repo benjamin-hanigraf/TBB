@@ -89,7 +89,7 @@ export default function InvoiceTool() {
 
 function Editor({ inv, data, onBack, onOpen }) {
   useBack(onBack);
-  const isNew = !inv.id; const [editing, setEditing] = useState(!inv.id); const snap = useRef(null); const sheetBox = useRef(); const [pdf, setPdf] = useState(false); const st = data.st; const gstSet = st.gst || {}; const [run, busy] = useAction(); const { data: customers, reload: reloadCustomers } = useCustomers();
+  const isNew = !inv.id; const [editing, setEditing] = useState(!inv.id); const snap = useRef(null); const sheetBox = useRef(); const [pdf, setPdf] = useState(false); const [cancel, setCancel] = useState(false); const st = data.st; const gstSet = st.gst || {}; const [run, busy] = useAction(); const { data: customers, reload: reloadCustomers } = useCustomers();
   const [payments, setPayments] = useState(() => data.payments.filter((p) => p.invoice_id === inv.id)); const [payForm, setPayForm] = useState(false);
   const f = useForm({ type: typeOf(inv), name: inv.customer_name || '', email: inv.customer_email || '', phone: inv.customer_phone || '', address: inv.customer_address || '', gstin: inv.customer_gstin || '', date: isoToDMY(inv.issue_date || todayISO()), due: isoToDMY(inv.due_date),
     no: inv.invoice_no || '', discount: inv.discount_paise ? String(inv.discount_paise / 100) : '', gst: isNew && !inv.items ? !!gstSet.enabled : !!inv.gst_enabled, notes: inv.notes || '', state: inv.status || 'draft',
@@ -132,6 +132,7 @@ function Editor({ inv, data, onBack, onOpen }) {
   }
   const email = (saved, kind = 'invoice') => { const to = RULES.email.done(f.v.email); if (!to) throw new Error('Please add the customer email first.'); return managerPost({ type: kind, invoice_id: saved.id, to }); };
   const del = () => run(async () => {
+    if (payments.length) throw new Error('This invoice has payments. Use Cancel invoice, then choose what happens to the money.');
     const ids = [inv.id, ...payments.map((p) => p.id)];
     await sb().from('ledger_entries').delete().eq('source', 'invoice').in('source_id', ids); must(await sb().from('invoices').delete().eq('id', inv.id)); onBack(); }, 'Deleted');
   const removePayment = (p) => run(async () => {
@@ -145,7 +146,7 @@ function Editor({ inv, data, onBack, onOpen }) {
     const created = must(await sb().from('invoices').insert({ ...rest, doc_type: 'invoice', invoice_no: no, against_no: null, issue_date: todayISO(), due_date: null, status: 'draft', notes: [saved.notes, `From quotation ${saved.invoice_no}.`].filter(Boolean).join('\n') }).select().single());
     onOpen(created); }, 'Invoice made from the quotation');
 
-  const STATE_OPTS = type === 'quotation' ? [['draft', 'Draft'], ['sent', 'Sent'], ['accepted', 'Accepted'], ['cancelled', 'Cancelled']] : [['draft', 'Draft'], ['sent', 'Sent'], ['cancelled', 'Cancelled']];
+  const STATE_OPTS = type === 'quotation' ? [['draft', 'Draft'], ['sent', 'Sent'], ['accepted', 'Accepted'], ['cancelled', 'Cancelled']] : [['draft', 'Draft'], ['sent', 'Sent'], ...(f.v.state === 'cancelled' ? [['cancelled', 'Cancelled']] : [])];       // an invoice is cancelled with the Cancel invoice button, which asks about the money
   useEffect(() => { if (!STATE_OPTS.some(([k]) => k === f.v.state) && !(type === 'invoice' && f.v.state === 'paid')) f.set('state', STATE_OPTS[0][0]); /* eslint-disable-next-line */ }, [type]);
   const heading = isNew ? `New ${TYPE_NAME[type].toLowerCase()}` : inv.invoice_no;
 
@@ -158,7 +159,8 @@ function Editor({ inv, data, onBack, onOpen }) {
       <Btn variant="ghost" icon="file" onClick={() => setPdf(true)}>PDF</Btn><Btn variant="ghost" icon="print" onClick={printSheet}>Print</Btn>
       {inv.customer_email && <Btn variant="ghost" busy={busy} icon="mail" onClick={() => run(async () => { await email(inv); }, 'Emailed')}>Email</Btn>}
       {type === 'invoice' && balance > 0 && inv.customer_email && f.v.state !== 'cancelled' && <Btn variant="ghost" busy={busy} icon="mail" onClick={() => run(async () => { await email(inv, 'reminder'); }, 'Reminder sent')}>Send reminder</Btn>}
-      {type === 'quotation' && <Btn variant="ghost" busy={busy} icon="note" onClick={toInvoice}>Turn into invoice</Btn>}</div></div>}
+      {type === 'quotation' && <Btn variant="ghost" busy={busy} icon="note" onClick={toInvoice}>Turn into invoice</Btn>}
+      {type === 'invoice' && inv.id && f.v.state !== 'cancelled' && <Btn variant="ghost" icon="close" onClick={() => setCancel(true)}>Cancel invoice</Btn>}</div></div>}
     <div className="ad-noprint">{editing && <Card><form className="ad-form" onSubmit={(e) => { e.preventDefault(); run(async () => { const sv = await saveCore(); if (isNew) onOpen(sv); setEditing(false); snap.current = null; }, 'Saved'); }}>
       {isNew && <div className="full"><div className="ad-tabsbar" style={{ margin: 0 }}>{TYPES.map(([k, t]) => <button type="button" key={k} className={type === k ? 'on' : ''} onClick={() => f.set('type', k)}>{t}</button>)}</div></div>}
       <CustomerSuggest value={f.v.name} onType={(v) => f.set('name', v)} onPick={pick} onAddNew={addNew} customers={customers} required />
@@ -196,6 +198,7 @@ function Editor({ inv, data, onBack, onOpen }) {
       </Card>)}
     </div>
     <div ref={sheetBox}><FitA4><InvoiceSheet d={doc} /></FitA4></div>
+    {cancel && <CancelInvoice inv={inv} payments={payments} onClose={() => setCancel(false)} onDone={(gone) => { setCancel(false); if (gone) setPayments([]); f.set('state', 'cancelled'); onOpen({ ...inv, status: 'cancelled' }); }} />}
     {pdf && <DocModal title={doc.no} fileName={doc.no} sheets={[doc]} onClose={() => setPdf(false)} />}
     {payForm && <PaymentForm inv={{ ...inv, invoice_no: f.v.no || inv.invoice_no, customer_name: f.v.name }} balance={balance} total={calc.total} gst={calc.gst} onClose={() => setPayForm(false)}
       onSaved={(p, fullyPaid) => { setPayForm(false); setPayments((a) => [...a, p]); if (fullyPaid) f.set('state', 'paid'); }} />}
@@ -217,4 +220,31 @@ function PaymentForm({ inv, balance, total, gst, onClose, onSaved }) {
     <F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} /><F form={f} k="category" label="Counts as income under" type="select" required options={IN_CATEGORIES} />
     <div className="full"><F form={f} k="note" label="Note" rule="sentence" placeholder="e.g. Advance" /></div>
     <div className="ad-actions full"><Btn busy={busy} icon="check">Save payment</Btn></div></form></Modal>);
+}
+
+/** Cancelling an invoice that has been paid: ask what happens to the money. */
+function CancelInvoice({ inv, payments, onClose, onDone }) {
+  const [run, busy] = useAction(); const paid = payments.reduce((t, p) => t + p.amount_paise, 0);
+  const finish = (how) => run(async () => {
+    if (how === 'refund') {            // the money goes back to the customer: one refund entry for each payment, in the accounts
+      for (const p of payments) {
+        const { error } = await sb().from('ledger_entries').insert({ entry_date: todayISO(), kind: 'out', category: 'Refunds', description: `Refund: invoice ${inv.invoice_no}`, amount_paise: p.amount_paise, gst_paise: inv.total_paise ? Math.round((inv.gst_paise || 0) * p.amount_paise / inv.total_paise) : 0, method: ['upi', 'cash', 'card', 'bank', 'razorpay', 'other'].includes(p.method) ? p.method : 'other', party: inv.customer_name, source: 'refund', source_id: p.id });
+        if (error && error.code !== '23505') throw error;
+      }
+    } else if (how === 'remove') {     // the payments were entered by mistake: they and their accounts entries are taken away
+      must(await sb().from('invoice_payments').delete().eq('invoice_id', inv.id));
+    }
+    must(await sb().from('invoices').update({ status: 'cancelled' }).eq('id', inv.id)); onDone(how === 'remove');
+  }, 'Invoice cancelled');
+  return (<Modal title={`Cancel invoice ${inv.invoice_no}`} onClose={onClose}>
+    {payments.length ? <>
+      <p style={{ marginTop: 0 }}><b>{money(paid)}</b> has been received on this invoice. What should happen to that money?</p>
+      <div className="choice-list">
+        <button type="button" className="choice" disabled={busy} onClick={() => finish('refund')}><Icon n="wallet" size={20} /><span><b>Give it back</b><small>Records a refund of {money(paid)} in your accounts.</small></span></button>
+        <button type="button" className="choice" disabled={busy} onClick={() => finish('remove')}><Icon n="trash" size={20} /><span><b>Remove the payment</b><small>It was entered by mistake. It is taken out of your accounts.</small></span></button>
+        <button type="button" className="choice" disabled={busy} onClick={() => finish('keep')}><Icon n="check" size={20} /><span><b>Keep the money</b><small>For example a cancellation fee. It stays in your accounts as income.</small></span></button></div></>
+      : <><p style={{ marginTop: 0 }}>Nothing has been paid on this invoice. It will be marked as cancelled.</p>
+        <div className="ad-actions full"><Btn busy={busy} icon="check" onClick={() => finish('none')}>Cancel invoice</Btn></div></>}
+    <div className="ad-actions full"><Btn variant="ghost" onClick={onClose}>Keep the invoice</Btn></div>
+  </Modal>);
 }

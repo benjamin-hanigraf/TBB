@@ -28,7 +28,7 @@ export default function Money() {
       <input className="ad-search" type="search" placeholder="Search category, name or note" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search entries" />
       <Card tight>{rows.length ? <div className="ad-list">{rows.map((e) => (
         <button key={e.id} className="ad-row" onClick={() => setEdit(e)}><div className="main"><b>{nb(e.category)}</b><Segs items={[fmtD(e.entry_date), e.party, e.description]} /></div>
-          <div className="end"><b style={{ color: e.kind === 'in' ? '#14532d' : '#9b1c1c' }}>{e.kind === 'in' ? '+' : '−'}{money(e.amount_paise)}</b>{e.source !== 'manual' && <Badge>Automatic</Badge>}</div></button>))}</div> : <Empty>No entries in {fy}. Tap "Income" or "Expense" to add one. Online payments are added automatically.</Empty>}</Card></>)
+          <div className="end"><b style={{ color: e.kind === 'in' ? '#14532d' : '#9b1c1c' }}>{e.kind === 'in' ? '+' : '−'}{money(e.amount_paise)}</b></div></button>))}</div> : <Empty>No entries in {fy}. Tap "Income" or "Expense" to add one. Online payments are added automatically.</Empty>}</Card></>)
     : (<Reports sum={sum} gstOn={gstOn} kind={kind} />)}
     {edit && <Entry e={edit} gst={data.gst} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); reload(); }} />}
   </Page>);
@@ -79,7 +79,7 @@ function Entry({ e, gst, onClose, onSaved }) {
   }, 'Saved'); };
   const del = () => run(async () => { must(await sb().from('ledger_entries').delete().eq('id', e.id)); onSaved(); }, 'Deleted');
   return (<Modal title={isNew ? (f.v.kind === 'in' ? 'Income' : 'Expense') : 'Entry'} onClose={onClose}>
-    {auto && <p className="ad-help" style={{ marginTop: 0 }}>This entry was added automatically. Edit it only to correct a mistake.{link && <> <a className="ad-linkbtn" href={link}>See where it came from</a></>}</p>}
+    {link && <p className="ad-help" style={{ marginTop: 0 }}><a className="ad-linkbtn" href={link}>See where it came from</a></p>}
     {!editing && <><dl className="ad-view">{[['Type', e.kind === 'in' ? 'Income (received)' : 'Expense (spent)'], ['Date', fmtD(e.entry_date)], ['Amount', money(e.amount_paise)], ['Category', e.category], [e.kind === 'in' ? 'Received from' : 'Paid to', e.party], ['Paid by', e.method === 'upi' ? 'UPI' : e.method ? e.method[0].toUpperCase() + e.method.slice(1) : ''], ['GST included', e.gst_paise > 0 ? money(e.gst_paise) : ''], ['Note', e.description]].filter(([, v]) => v).map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
       <div className="ad-actions full"><Btn icon="edit" onClick={() => setEditing(true)}>Edit</Btn></div></>}
     {editing && <form onSubmit={save} className="ad-form">

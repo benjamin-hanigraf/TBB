@@ -132,7 +132,6 @@ insert into bookings (id, workshop_id, name, email, phone, seats, amount_paise, 
 ('dededede-0007-4000-8000-000000000015', 'dededede-0001-4000-8000-000000000011', 'Anita Rao', 'anita.rao@example.com', '+91 98765 00001', 3, 720000, 0, 'paid', 'website', 'razorpay', 'order_demo_bk015', 'pay_demo_bk015', 9015, 'Coming with a friend', ((current_date + -6) + time '12:00') at time zone 'Asia/Kolkata', ((current_date + -6) + time '12:05') at time zone 'Asia/Kolkata'),
 ('dededede-0007-4000-8000-000000000016', 'dededede-0001-4000-8000-000000000010', 'Meera Krishnan', 'meera.k@example.com', '+91 98765 00003', 1, 330400, 50400, 'pending', 'manual', null, null, null, 9016, null, ((current_date + -1) + time '12:00') at time zone 'Asia/Kolkata', null);
 
-
 -- class enrolments: children 5 to 15 and adults; paid, unpaid, refunded, cancelled, transferred
 
 insert into class_enrolments (id, class_id, student_name, student_group, student_age, name, email, phone, amount_paise, gst_paise, status, channel, payment_method, razorpay_order_id, razorpay_payment_id, invoice_no, notes, created_at, paid_at) values
@@ -422,20 +421,11 @@ insert into ledger_entries (id, entry_date, kind, category, description, amount_
 ('dededede-0011-4000-8000-000000000031', (current_date + 8), 'in', 'Studio rent-outs', 'Rent-out: Sketching club', 200000, 0, 'upi', 'Fatima Sheikh', 'rentout', 'dededede-0013-4000-8000-000000000007'),
 ('dededede-0011-4000-8000-000000000032', (current_date + 17), 'in', 'Studio rent-outs', 'Rent-out: Mehendi workshop', 600000, 0, 'cash', 'Lakshmi Venkat', 'rentout', 'dededede-0013-4000-8000-000000000009');
 
--- accounts: money in for every paid dummy order, booking and enrolment (as the website does), Razorpay fees for online ones, and refunds
-insert into ledger_entries (id, entry_date, kind, category, description, amount_paise, gst_paise, method, party, source, source_id)
-select ('dededede-0011-4000-8000-' || lpad((1000 + row_number() over ())::text, 12, '0'))::uuid, x.* from (
-  select (coalesce(o.paid_at, o.created_at) at time zone 'Asia/Kolkata')::date, 'in', 'Store sales', 'Online order ' || o.invoice_no, o.total_paise, (select coalesce(sum(gst_paise), 0) from order_items i where i.order_id = o.id)::int, o.payment_method, o.name, 'order', o.id
-    from orders o where o.id::text like 'dededede-%' and o.status in ('paid','packed','shipped','delivered','refunded')
-  union all select (b.paid_at at time zone 'Asia/Kolkata')::date, 'in', 'Workshops', w.title || ' · ' || b.seats || ' seat(s)', b.amount_paise, coalesce(b.gst_paise, 0), b.payment_method, b.name, 'booking', b.id
-    from bookings b join workshops w on w.id = b.workshop_id where b.id::text like 'dededede-%' and b.status in ('paid','refunded','transferred') and b.amount_paise > 0
-  union all select (e.paid_at at time zone 'Asia/Kolkata')::date, 'in', 'Classes', l.title || ', ' || l.level || ' for ' || e.student_name, e.amount_paise, coalesce(e.gst_paise, 0), e.payment_method, e.name, 'enrolment', e.id
-    from class_enrolments e join class_levels l on l.id = e.class_id where e.id::text like 'dededede-%' and e.status in ('paid','refunded','transferred')
-) x(entry_date, kind, category, description, amount_paise, gst_paise, method, party, source, source_id);
+-- accounts: the income entries for paid orders, bookings and enrolments are made by the database itself; here come the Razorpay fees for online ones, and refunds
 insert into ledger_entries (id, entry_date, kind, category, description, amount_paise, gst_paise, method, party, source, source_id)
 select ('dededede-0011-4000-8000-' || lpad((2000 + row_number() over ())::text, 12, '0'))::uuid, l.entry_date, 'out', 'Payment gateway fees', 'Razorpay fee (estimated): ' || l.description,
        round(l.amount_paise * 0.02 * 1.18)::int, round(l.amount_paise * 0.02 * 0.18)::int, 'razorpay', 'Razorpay', 'fee', l.source_id
-from ledger_entries l where l.id::text like 'dededede-0011-%' and l.method = 'razorpay' and l.kind = 'in' and l.amount_paise > 0;
+from ledger_entries l where l.source in ('order','booking','enrolment') and l.source_id::text like 'dededede-%' and l.method = 'razorpay' and l.kind = 'in' and l.amount_paise > 0;
 insert into ledger_entries (id, entry_date, kind, category, description, amount_paise, gst_paise, method, party, source, source_id)
 select ('dededede-0011-4000-8000-' || lpad((3000 + row_number() over ())::text, 12, '0'))::uuid, current_date - 1, 'out', 'Refunds', 'Refund: ' || x.what, x.amt, x.gst, 'razorpay', x.who, 'refund', x.id from (
   select o.id, o.total_paise amt, (select coalesce(sum(gst_paise), 0) from order_items i where i.order_id = o.id)::int gst, o.name who, 'order ' || o.invoice_no what from orders o where o.id::text like 'dededede-%' and o.status = 'refunded'

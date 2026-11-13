@@ -125,13 +125,13 @@ footer a:hover{color:#000}footer .flogo{height:38px;width:auto;margin-bottom:14p
 
 .igrid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}.igrid a{display:block;overflow:hidden;border-radius:14px}.igrid img{aspect-ratio:1;object-fit:cover;width:100%;transition:transform .4s}.igrid a:hover img{transform:scale(1.05)}
 @media(max-width:800px){.igrid{grid-template-columns:repeat(3,1fr)}}
-.price{font-size:19px;color:var(--mute);margin-top:6px}
+.price{font-size:19px;color:var(--mute);margin-top:6px;white-space:nowrap}
 .card .price{font-size:15px;margin:0}
 .fine{font-size:13px;color:var(--mute);margin-top:18px;max-width:46ch}
 .center .fine,.head .fine{margin-left:auto;margin-right:auto}
 .dark .lead,.dark .eyebrow{color:#a1a1a6}
 /* no stranded words: balance short text, tidy long paragraphs */
-.small,.price,.card p,.card h3,.facts li,figcaption,.plist li,.eyebrow,.btn span,.tag,.notice,.fine,label span{text-wrap:balance}
+.small,.card p,.card h3,.facts li,figcaption,.plist li,.eyebrow,.btn span,.tag,.notice,.fine,label span{text-wrap:balance}
 p,li,.lead{text-wrap:pretty}.lead,h1,h2,h3{text-wrap:balance}
 .prose p{text-wrap:pretty}
 /* classes */

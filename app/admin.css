@@ -18,8 +18,8 @@ body{background:#f5f5f7}html{overflow-x:hidden}.ad-lock{overflow:hidden}.ad-moda
   .ad-tabs a{display:grid;justify-items:center;gap:2px;padding:6px 2px;font-size:11px;color:#6e6e73;border-radius:12px}.ad-tabs a.on{color:#000;font-weight:600}
 }
 .ad-page{max-width:1000px;margin:0 auto}
-.ad-head{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}.ad-head h1{font-size:clamp(26px,4vw,34px);letter-spacing:-.02em;flex:1 1 auto;min-width:min(max-content,100%)}.ad-act{display:flex;gap:8px;flex-wrap:wrap}
-.ad-fy-sel{height:40px;padding:0 10px;border:1px solid #d2d2d7;border-radius:980px;background:#fff;font:inherit;font-size:14px;color:#1d1d1f;cursor:pointer;white-space:nowrap;flex:none}
+.ad-head{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}.ad-head h1{font-size:clamp(26px,4vw,34px);letter-spacing:-.02em;flex:1 1 auto;min-width:min(max-content,100%)}.ad-act{display:flex;gap:8px;flex-wrap:nowrap;align-items:center}
+.ad-fy-sel{height:44px;padding:0 12px;border:1px solid #d2d2d7;border-radius:980px;background:#fff;font:inherit;font-size:14px;color:#1d1d1f;cursor:pointer;white-space:nowrap;flex:none}
 .ad-back{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#fff}
 .ad-card{background:#fff;border-radius:20px;padding:20px;margin-bottom:16px}.ad-card.tight{padding:6px}
 .ad-card-h{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;min-height:28px}.ad-card-h h2,.ad-fold-h h2{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6e6e73}
@@ -214,7 +214,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .ad-modal-h h2{flex:1 1 auto}.ad-modal-h .ad-x{flex:none;margin-left:12px}
 @media(max-width:560px){.ad-table{font-size:13px}.ad-table th,.ad-table td{padding-left:4px;padding-right:4px}}
 .ad-stat{min-width:0}.ad-stat b,.ad-stat span,.ad-stat em{overflow-wrap:break-word}
-.ad-modal .ad-row>b,.ad-row .end b,.ad-row .end small{white-space:nowrap;flex:none}.ad-modal .ad-row>span{min-width:0}
+.ad-modal .ad-row>b,.ad-row .end b,.ad-row .end small,.ad-row>span:last-child{white-space:nowrap;flex:none}.ad-modal .ad-row>span{min-width:0}
 /* receipt / invoice window: the real A4 pages are drawn off-screen to make the PDF, the PDF is shown in the window */
 .doc-off{position:fixed;left:-10000px;top:0;width:794px;pointer-events:none}.doc-off .inv-sheet{box-shadow:none;margin:0}
 .doc-frame{display:block;width:100%;height:min(68dvh,720px);border:1px solid #e5e5ea;border-radius:14px;background:#f5f5f7}
@@ -279,7 +279,7 @@ button,input,select,textarea{-webkit-tap-highlight-color:transparent}
 .segs .seg+.seg::before{content:"·";margin:0 6px;color:#aeaeb2}
 @media(max-width:640px){.segs,small.segs,.ad-row small.segs,.cls-main small.segs,.ws-text small.segs{column-gap:12px}.segs .seg+.seg::before{content:none;margin:0}}
 .mail-sub.segs{display:flex;overflow:visible;white-space:normal;text-overflow:clip}
-.nw,.cls-n,.cls-n .seg,.ad-row .end small,.ad-row .end b{white-space:nowrap}
+.nw,.cls-n,.cls-n .seg,.ad-row .end small,.ad-row .end b,.ad-stat b{white-space:nowrap}
 .segs.late{color:#9b1c1c}
 .ws-v{display:none}
 

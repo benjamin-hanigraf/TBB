@@ -206,4 +206,5 @@ Batch: PIN screen, swipe-back fix, Home/Money restructure (owner request)
 Batch: Accounts and Invoices overhaul (owner request)
 - Icons: change the Add Income / Add Expense icons; the tray-with-arrow icons become the upload and download icons (download: arrow toward the tray, upload: away from it).
 - Classes: the Students window does not open (fix).
-- Accounts and Invoices: the biggest piece. Entries must be simple to make but cover every possibility (refund, cancel, add, mark paid/unpaid everywhere). Check, verify, simplify and fix the whole accounting system: scenario audit, automatic reconciliation, safeguards, partial refunds, invoice cases, clear rules for automatic entries, report of what was found.
+- Accounts and Invoices: the owner wants to DISCUSS how to handle the accounting first (no changes yet). Goal: simple entries, every possibility covered (refund, cancel, add, mark paid/unpaid), and a way to check, verify, simplify and fix the whole system. A draft of one possible approach is kept aside, not applied.
+- Receivables card on Home must open the Unpaid tab of Invoices (fixed: the page now reads the link being opened).

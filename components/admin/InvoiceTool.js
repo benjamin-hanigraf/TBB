@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { nb, Segs, useBack, useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Btn, F, useForm, useAction, Confirm, Modal, dmyToISO, isoToDMY, fmtD, fmtDT, download } from './kit';
 import { CustomerSuggest, useCustomers, ensureCustomer } from './pickers';
 import { InvoiceSheet, FitA4 } from './InvoiceSheet';
@@ -58,7 +59,8 @@ async function nextNumber(type, issue, list, st) {
 }
 
 export default function InvoiceTool() {
-  const [edit, setEdit] = useState(null); const [q, setQ] = useState(''); const [show, setShow] = useState(() => { const s = param('show'); return SHOW.some(([k]) => k === s) ? s : 'all'; }); const [sort, setSort] = useState('new');
+  const [edit, setEdit] = useState(null); const [q, setQ] = useState(''); const sp = useSearchParams(); const [show, setShow] = useState(() => { const s = sp.get('show'); return SHOW.some(([k]) => k === s) ? s : 'all'; });       // read from the page being opened (a link such as Home's Receivables card picks the Unpaid tab)
+  useEffect(() => { const s = sp.get('show'); if (SHOW.some(([k]) => k === s)) setShow(s); }, [sp]); const [sort, setSort] = useState('new');
   const { data, error, reload } = useLoad(async () => {
     const c = sb(); const [i, s, p] = await Promise.all([every(() => c.from('invoices').select('*').order('created_at', { ascending: false }).order('id')), c.from('settings').select('key,value'), every(() => c.from('invoice_payments').select('*').order('paid_on').order('id'))]);
     return { list: must(i), st: Object.fromEntries(must(s).map((r) => [r.key, r.value])), payments: p.error ? [] : p.data };
@@ -70,7 +72,7 @@ export default function InvoiceTool() {
     const by = { new: (a, b) => b.issue_date.localeCompare(a.issue_date) || b.created_at.localeCompare(a.created_at), old: (a, b) => a.issue_date.localeCompare(b.issue_date), high: (a, b) => b.total_paise - a.total_paise, low: (a, b) => a.total_paise - b.total_paise, name: (a, b) => a.customer_name.localeCompare(b.customer_name) };
     return r.sort(by[sort]);
   }, [data, q, show, sort]);
-  useEffect(() => { const id = param('open'); const i = id && data?.list.find((x) => x.id === id); if (i) setEdit(i); }, [data]);
+  useEffect(() => { const id = sp.get('open'); const i = id && data?.list.find((x) => x.id === id); if (i) setEdit(i); }, [data, sp]);
   if (error) return <Page title="Invoices"><Err e={error} /></Page>; if (!data) return <Page title="Invoices"><Spin /></Page>;
   if (edit) return <Editor inv={edit} data={data} onOpen={setEdit} onBack={() => { setEdit(null); reload(); }} />;
   const owed = data.list.filter((i) => typeOf(i) === 'invoice' && i.status !== 'cancelled').reduce((s, i) => s + balanceOf(i, data.payments).balance, 0);

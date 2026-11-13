@@ -86,7 +86,7 @@ function Participants({ level, autoOpen, onClose, onChanged }) {
   return (<Modal title={`Students · ${level.title} (${level.level})`} onClose={onClose} wide>
     {error && <Err e={error} />}{!data && !error && <Spin />}
     {data && <>{rows.length ? <div className="ad-list">{rows.map((x) => <div key={x.id} className="ad-row" style={{ cursor: 'default' }}>
-      <button type="button" className="main cls-main" onClick={() => setOne(x)}><b>{nb(x.student_name)}</b><Segs items={[x.student_group === 'child' ? `Child, age ${x.student_age}` : 'Adult', x.student_group === 'child' ? `parent ${x.name}` : '', x.phone]} /><Segs items={['paid', 'transferred'].includes(x.status) ? summary(x) : ['Not paid yet']} /></button>
+      <button type="button" className="main cls-main" onClick={() => setOne(x)}><b>{nb(x.student_name)}</b><Segs items={[x.student_group === 'child' ? `Child, age ${x.student_age}` : 'Adult', x.student_group === 'child' ? `parent ${x.name}` : '', x.phone]} /><Segs items={['paid', 'transferred'].includes(x.status) ? [summary(x)] : ['Not paid yet']} /></button>
       <div className="end"><b>{money(x.amount_paise)}</b>{['paid', 'transferred'].includes(x.status) && <Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setSched(x)}>Classes</Btn>}</div></div>)}</div> : <Empty>No students yet.</Empty>}
       <div className="row-actions" style={{ marginTop: 16 }}><Btn icon="plus" onClick={() => setAdd(true)}>Add student</Btn></div></>}
     {add && <AddEnrol level={level} onClose={() => setAdd(false)} onSaved={() => { setAdd(false); changed(); }} />}

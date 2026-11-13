@@ -1,8 +1,11 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Btn, F, useForm, useAction, Confirm, Modal, dmyToISO, isoToDMY, fmtD, fmtDT, download } from './kit';
 import { CustomerSuggest, useCustomers, ensureCustomer } from './pickers';
 import { InvoiceSheet, FitA4 } from './InvoiceSheet';
+import { DocModal } from './DocViewer';
+import { printElement } from '@/lib/printDoc';
+import Icon from '@/components/Icons';
 import { METHOD_OPTIONS } from './ManualEntry';
 import { nextInvoiceNo, fyOf, todayISO, money, rupeesToPaise, toCSV, IN_CATEGORIES } from '@/lib/accounting';
 import { calcInvoice } from '@/lib/invoiceCalc';
@@ -83,7 +86,7 @@ export default function InvoiceTool() {
 }
 
 function Editor({ inv, data, onBack, onOpen }) {
-  const isNew = !inv.id; const st = data.st; const gstSet = st.gst || {}; const [run, busy] = useAction(); const { data: customers, reload: reloadCustomers } = useCustomers();
+  const isNew = !inv.id; const [editing, setEditing] = useState(!inv.id); const snap = useRef(null); const sheetBox = useRef(); const [pdf, setPdf] = useState(false); const st = data.st; const gstSet = st.gst || {}; const [run, busy] = useAction(); const { data: customers, reload: reloadCustomers } = useCustomers();
   const [payments, setPayments] = useState(() => data.payments.filter((p) => p.invoice_id === inv.id)); const [payForm, setPayForm] = useState(false);
   const f = useForm({ type: typeOf(inv), name: inv.customer_name || '', email: inv.customer_email || '', phone: inv.customer_phone || '', address: inv.customer_address || '', gstin: inv.customer_gstin || '', date: isoToDMY(inv.issue_date || todayISO()), due: isoToDMY(inv.due_date),
     no: inv.invoice_no || '', discount: inv.discount_paise ? String(inv.discount_paise / 100) : '', gst: isNew && !inv.items ? !!gstSet.enabled : !!inv.gst_enabled, notes: inv.notes || '', state: inv.status || 'draft',
@@ -143,8 +146,17 @@ function Editor({ inv, data, onBack, onOpen }) {
   useEffect(() => { if (!STATE_OPTS.some(([k]) => k === f.v.state) && !(type === 'invoice' && f.v.state === 'paid')) f.set('state', STATE_OPTS[0][0]); /* eslint-disable-next-line */ }, [type]);
   const heading = isNew ? `New ${TYPE_NAME[type].toLowerCase()}` : inv.invoice_no;
 
-  return (<Page title={heading} action={<Btn variant="ghost" onClick={onBack}>Close</Btn>}>
-    <div className="ad-noprint"><Card><form className="ad-form" onSubmit={(e) => { e.preventDefault(); run(async () => { await saveCore(); onBack(); }, 'Saved'); }}>
+  const startEdit = () => { snap.current = { v: f.v, items }; setEditing(true); };
+  const stopEdit = () => { if (snap.current) { f.reset(snap.current.v); setItems(snap.current.items); } setEditing(false); };
+  const bar = (<>{!editing && <Btn icon="edit" onClick={startEdit}>Edit</Btn>}<Btn variant="ghost" onClick={onBack}>Close</Btn></>);
+  const printSheet = () => printElement(sheetBox.current.querySelector('.inv-sheet'), { title: doc.no });
+  return (<Page title={heading} action={bar}>
+    {!editing && <div className="ad-noprint"><div className="ad-actions" style={{ marginBottom: 14 }}>
+      <Btn variant="ghost" icon="file" onClick={() => setPdf(true)}>PDF</Btn><Btn variant="ghost" icon="print" onClick={printSheet}>Print</Btn>
+      {inv.customer_email && <Btn variant="ghost" busy={busy} icon="mail" onClick={() => run(async () => { await email(inv); }, 'Emailed')}>Email</Btn>}
+      {type === 'invoice' && balance > 0 && inv.customer_email && f.v.state !== 'cancelled' && <Btn variant="ghost" busy={busy} icon="mail" onClick={() => run(async () => { await email(inv, 'reminder'); }, 'Reminder sent')}>Send reminder</Btn>}
+      {type === 'quotation' && <Btn variant="ghost" busy={busy} icon="note" onClick={toInvoice}>Turn into invoice</Btn>}</div></div>}
+    <div className="ad-noprint">{editing && <Card><form className="ad-form" onSubmit={(e) => { e.preventDefault(); run(async () => { const sv = await saveCore(); if (isNew) onOpen(sv); setEditing(false); snap.current = null; }, 'Saved'); }}>
       {isNew && <div className="full"><div className="ad-tabsbar" style={{ margin: 0 }}>{TYPES.map(([k, t]) => <button type="button" key={k} className={type === k ? 'on' : ''} onClick={() => f.set('type', k)}>{t}</button>)}</div></div>}
       <CustomerSuggest value={f.v.name} onType={(v) => f.set('name', v)} onPick={pick} onAddNew={addNew} customers={customers} required />
       <F form={f} k="phone" label="Phone" type="tel" rule="phone" /><F form={f} k="email" label="Email" type="email" rule="email" />
@@ -169,12 +181,10 @@ function Editor({ inv, data, onBack, onOpen }) {
       {f.v.payNow === 'yes' && type === 'invoice' && <><F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} /><F form={f} k="paidOn" label="Paid on" type="date" required /><F form={f} k="category" label="Counts as income under" type="select" required options={IN_CATEGORIES} /></>}
       <div className="full"><F form={f} k="notes" label="Notes" type="textarea" rule="sentence" rows={2} /></div>
       <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn>
+        {!isNew && <Btn type="button" variant="ghost" onClick={stopEdit}>Cancel</Btn>}
         <Btn type="button" variant="ghost" busy={busy} icon="mail" onClick={() => run(async () => { const s = await saveCore(); await email(s); onBack(); }, 'Saved and emailed')}>Email</Btn>
-        {type === 'invoice' && !isNew && balance > 0 && <Btn type="button" variant="ghost" busy={busy} icon="mail" onClick={() => run(async () => { const s = await saveCore(); await email(s, 'reminder'); }, 'Reminder sent')}>Send reminder</Btn>}
-        {type === 'quotation' && !isNew && <Btn type="button" variant="ghost" busy={busy} icon="note" onClick={toInvoice}>Turn into invoice</Btn>}
-        <Btn type="button" variant="ghost" icon="print" onClick={() => window.print()}>Print</Btn>
         {!isNew && <Confirm onYes={del}>Delete</Confirm>}</div>
-      {inv.last_reminder_at && <p className="ad-sub full">Last reminder sent {fmtDT(inv.last_reminder_at)}</p>}</form></Card>
+      {inv.last_reminder_at && <p className="ad-sub full">Last reminder sent {fmtDT(inv.last_reminder_at)}</p>}</form></Card>}
 
       {type === 'invoice' && (<Card title="Payments" action={!isNew && balance > 0 && <Btn variant="ghost" icon="plus" onClick={() => setPayForm(true)}>Add payment</Btn>}>
         {isNew ? <Empty>Choose "Paid in full" above, or save first and add payments here as they come in.</Empty> : <>
@@ -182,7 +192,8 @@ function Editor({ inv, data, onBack, onOpen }) {
           <p className="ad-sub">Total {money(calc.total)} · Paid {money(paidSum)} · <b>{balance > 0 ? `Left to pay ${money(balance)}` : 'Fully paid'}</b></p></>}
       </Card>)}
     </div>
-    <FitA4><InvoiceSheet d={doc} /></FitA4>
+    <div ref={sheetBox}><FitA4><InvoiceSheet d={doc} /></FitA4></div>
+    {pdf && <DocModal title={doc.no} fileName={doc.no} sheets={[doc]} onClose={() => setPdf(false)} />}
     {payForm && <PaymentForm inv={{ ...inv, invoice_no: f.v.no || inv.invoice_no, customer_name: f.v.name }} balance={balance} total={calc.total} gst={calc.gst} onClose={() => setPayForm(false)}
       onSaved={(p, fullyPaid) => { setPayForm(false); setPayments((a) => [...a, p]); if (fullyPaid) f.set('state', 'paid'); }} />}
   </Page>);

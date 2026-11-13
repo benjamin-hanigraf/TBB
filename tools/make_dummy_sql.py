@@ -136,12 +136,6 @@ for i, (wn, pi, seats, st, ch, meth, ago) in enumerate(BK):
 sql.append('-- workshop bookings: paid online and by hand, unpaid, cancelled, refunded, transferred, several seats; "Watercolour Florals" is sold out')
 sql.append(ins('bookings', list(rows[0].keys()), rows))
 
-# ---------- waitlist (10) ----------
-rows = [{'id': did(8, i + 1), 'workshop_id': W[1]['id'] if i < 7 else W[10]['id'], 'name': nm(pi), 'email': em(pi), 'phone': ph(pi) if i % 3 else None, 'seats': [1, 2, 1, 3, 1, 1, 2, 1, 1, 2][i],
-         'notified_at': TS(-1, '09:00') if i in (0, 1, 7) else None, 'created_at': TS(-6 + i % 5, '15:00')} for i, pi in enumerate([7, 8, 9, 10, 11, 12, 13, 1, 3, 5])]
-sql.append('-- waitlist for the sold-out and the almost-full workshops; some already told about a free seat')
-sql.append(ins('workshop_waitlist', list(rows[0].keys()), rows))
-
 # ---------- class enrolments (16) ----------
 EN = [(1, 1, 'child', 'Aadhya', 7, 0, 'paid', 'website'), (1, 1, 'child', 'Ishaan', 9, 1, 'paid', 'manual'), (1, 1, 'child', 'Kavya', 6, 2, 'paid', 'website'), (1, 1, 'adult', None, None, 3, 'paid', 'manual'),
       (1, 2, 'child', 'Vihaan', 11, 4, 'pending', 'website'), (2, 3, 'child', 'Diya', 12, 5, 'paid', 'website'), (3, 4, 'adult', None, None, 6, 'paid', 'website'), (3, 4, 'adult', None, None, 7, 'paid', 'manual'),
@@ -318,7 +312,7 @@ select t.name as "table", t.n as "dummy rows" from (values
   ('class_types', (select count(*) from class_types where id::text like 'dededede-%')), ('class_levels', (select count(*) from class_levels where id::text like 'dededede-%')),
   ('rentouts', (select count(*) from rentouts where id::text like 'dededede-%')), ('class_sessions', (select count(*) from class_sessions where id::text like 'dededede-%')),
   ('class_enrolments', (select count(*) from class_enrolments where id::text like 'dededede-%')), ('bookings', (select count(*) from bookings where id::text like 'dededede-%')),
-  ('workshop_waitlist', (select count(*) from workshop_waitlist where id::text like 'dededede-%')), ('customers', (select count(*) from customers where id::text like 'dededede-%')),
+  ('customers', (select count(*) from customers where id::text like 'dededede-%')),
   ('orders', (select count(*) from orders where id::text like 'dededede-%')), ('order_items', (select count(*) from order_items where id::text like 'dededede-%')),
   ('enquiries', (select count(*) from enquiries where id::text like 'dededede-%')), ('events', (select count(*) from events where id::text like 'dededede-%')),
   ('todos', (select count(*) from todos where id::text like 'dededede-%')), ('invoices', (select count(*) from invoices where id::text like 'dededede-%')),

@@ -132,19 +132,6 @@ insert into bookings (id, workshop_id, name, email, phone, seats, amount_paise, 
 ('dededede-0007-4000-8000-000000000015', 'dededede-0001-4000-8000-000000000011', 'Anita Rao', 'anita.rao@example.com', '+91 98765 00001', 3, 720000, 0, 'paid', 'website', 'razorpay', 'order_demo_bk015', 'pay_demo_bk015', 9015, 'Coming with a friend', ((current_date + -6) + time '12:00') at time zone 'Asia/Kolkata', ((current_date + -6) + time '12:05') at time zone 'Asia/Kolkata'),
 ('dededede-0007-4000-8000-000000000016', 'dededede-0001-4000-8000-000000000010', 'Meera Krishnan', 'meera.k@example.com', '+91 98765 00003', 1, 330400, 50400, 'pending', 'manual', null, null, null, 9016, null, ((current_date + -1) + time '12:00') at time zone 'Asia/Kolkata', null);
 
--- waitlist for the sold-out and the almost-full workshops; some already told about a free seat
-
-insert into workshop_waitlist (id, workshop_id, name, email, phone, seats, notified_at, created_at) values
-('dededede-0008-4000-8000-000000000001', 'dededede-0001-4000-8000-000000000002', 'Karthik Raman', 'karthik.r@example.com', null, 1, ((current_date + -1) + time '09:00') at time zone 'Asia/Kolkata', ((current_date + -6) + time '15:00') at time zone 'Asia/Kolkata'),
-('dededede-0008-4000-8000-000000000002', 'dededede-0001-4000-8000-000000000002', 'Divya Menon', 'divya.menon@example.com', '+91 98765 00009', 2, ((current_date + -1) + time '09:00') at time zone 'Asia/Kolkata', ((current_date + -5) + time '15:00') at time zone 'Asia/Kolkata'),
-('dededede-0008-4000-8000-000000000003', 'dededede-0001-4000-8000-000000000002', 'Sanjay Gupta', 'sanjay.g@example.com', '+91 98765 00010', 1, null, ((current_date + -4) + time '15:00') at time zone 'Asia/Kolkata'),
-('dededede-0008-4000-8000-000000000004', 'dededede-0001-4000-8000-000000000002', 'Lakshmi Venkat', 'lakshmi.v@example.com', null, 3, null, ((current_date + -3) + time '15:00') at time zone 'Asia/Kolkata'),
-('dededede-0008-4000-8000-000000000005', 'dededede-0001-4000-8000-000000000002', 'Neha Joshi', 'neha.joshi@example.com', '+91 98765 00012', 1, null, ((current_date + -2) + time '15:00') at time zone 'Asia/Kolkata'),
-('dededede-0008-4000-8000-000000000006', 'dededede-0001-4000-8000-000000000002', 'Rahul Das', 'rahul.das@example.com', '+91 98765 00013', 1, null, ((current_date + -6) + time '15:00') at time zone 'Asia/Kolkata'),
-('dededede-0008-4000-8000-000000000007', 'dededede-0001-4000-8000-000000000002', 'Sneha Pillai', 'sneha.p@example.com', null, 2, null, ((current_date + -5) + time '15:00') at time zone 'Asia/Kolkata'),
-('dededede-0008-4000-8000-000000000008', 'dededede-0001-4000-8000-000000000011', 'Vikram Iyer', 'vikram.iyer@example.com', '+91 98765 00002', 1, ((current_date + -1) + time '09:00') at time zone 'Asia/Kolkata', ((current_date + -4) + time '15:00') at time zone 'Asia/Kolkata'),
-('dededede-0008-4000-8000-000000000009', 'dededede-0001-4000-8000-000000000011', 'Rohan Mehta', 'rohan.mehta@example.com', '+91 98765 00004', 1, null, ((current_date + -3) + time '15:00') at time zone 'Asia/Kolkata'),
-('dededede-0008-4000-8000-000000000010', 'dededede-0001-4000-8000-000000000011', 'Arjun Nair', 'arjun.nair@example.com', null, 2, null, ((current_date + -2) + time '15:00') at time zone 'Asia/Kolkata');
 
 -- class enrolments: children 5 to 15 and adults; paid, unpaid, refunded, cancelled, transferred
 
@@ -461,7 +448,7 @@ select t.name as "table", t.n as "dummy rows" from (values
   ('class_types', (select count(*) from class_types where id::text like 'dededede-%')), ('class_levels', (select count(*) from class_levels where id::text like 'dededede-%')),
   ('rentouts', (select count(*) from rentouts where id::text like 'dededede-%')), ('class_sessions', (select count(*) from class_sessions where id::text like 'dededede-%')),
   ('class_enrolments', (select count(*) from class_enrolments where id::text like 'dededede-%')), ('bookings', (select count(*) from bookings where id::text like 'dededede-%')),
-  ('workshop_waitlist', (select count(*) from workshop_waitlist where id::text like 'dededede-%')), ('customers', (select count(*) from customers where id::text like 'dededede-%')),
+  ('customers', (select count(*) from customers where id::text like 'dededede-%')),
   ('orders', (select count(*) from orders where id::text like 'dededede-%')), ('order_items', (select count(*) from order_items where id::text like 'dededede-%')),
   ('enquiries', (select count(*) from enquiries where id::text like 'dededede-%')), ('events', (select count(*) from events where id::text like 'dededede-%')),
   ('todos', (select count(*) from todos where id::text like 'dededede-%')), ('invoices', (select count(*) from invoices where id::text like 'dededede-%')),

@@ -125,15 +125,8 @@ alter table bookings add column if not exists gst_paise integer not null default
 create index if not exists bookings_workshop_id_status_idx on bookings (workshop_id, status);
 create index if not exists bookings_status_created on bookings (status, created_at desc);
 
-create table if not exists workshop_waitlist (
-  id uuid primary key default gen_random_uuid(),
-  workshop_id uuid not null references workshops(id) on delete cascade,
-  name text not null, email text not null, phone text,
-  seats integer not null default 1 check (seats between 1 and 10),
-  notified_at timestamptz,
-  created_at timestamptz not null default now()
-);
-create index if not exists waitlist_workshop on workshop_waitlist (workshop_id);
+-- the waiting list feature was removed; its table goes
+drop table if exists workshop_waitlist cascade;
 
 -- ---------------------------------------------------------------- classes (one-on-one: every student has their own class dates)
 create table if not exists class_types (
@@ -368,6 +361,25 @@ create table if not exists rentouts (
 );
 create index if not exists rentouts_date on rentouts (on_date);
 
+-- a rent-out can be paid in parts: each payment is one row here (and one income entry in the accounts)
+do $$
+begin
+  if to_regclass('public.rentout_payments') is null then
+    create table rentout_payments (
+      id uuid primary key default gen_random_uuid(),
+      rentout_id uuid not null references rentouts(id) on delete cascade,
+      amount_paise integer not null check (amount_paise > 0),
+      paid_on date not null default current_date,
+      method text, note text,
+      created_at timestamptz not null default now()
+    );
+    -- once only: a rent-out that was already marked paid becomes one payment (same id, so its accounts entry stays attached to it)
+    insert into rentout_payments (id, rentout_id, amount_paise, paid_on, method)
+      select id, id, amount_paise, coalesce(paid_on, on_date), method from rentouts where paid and amount_paise > 0;
+  end if;
+end $$;
+create index if not exists rentout_payments_rentout on rentout_payments (rentout_id);
+
 -- ---------------------------------------------------------------- the rest
 create table if not exists enquiries (
   id uuid primary key default gen_random_uuid(),
@@ -541,11 +553,14 @@ create or replace function customer_summary() returns table (customer_id uuid, o
 language sql stable security definer set search_path = public as $$
   with c as (select id, lower(coalesce(email,'')) e, right(regexp_replace(coalesce(phone,''),'\D','','g'),10) ph from customers),
   p as (
-    select 'o' k, lower(coalesce(email,'')) e, right(regexp_replace(coalesce(phone,''),'\D','','g'),10) ph, total_paise amt, coalesce(paid_at, created_at) at from orders where status in ('paid','packed','shipped','delivered')
-    union all select 'b', lower(coalesce(email,'')), right(regexp_replace(coalesce(phone,''),'\D','','g'),10), amount_paise, coalesce(paid_at, created_at) from bookings where status in ('paid','transferred')
-    union all select 'c', lower(coalesce(email,'')), right(regexp_replace(coalesce(phone,''),'\D','','g'),10), amount_paise, coalesce(paid_at, created_at) from class_enrolments where status in ('paid','transferred'))
-  select c.id, count(*) filter (where p.k = 'o')::int, count(*) filter (where p.k = 'b')::int, count(*) filter (where p.k = 'c')::int, coalesce(sum(p.amt), 0)::bigint, max(p.at)
-  from c left join p on (c.e <> '' and p.e = c.e) or (length(c.ph) = 10 and p.ph = c.ph)
+    select 'o' k, id pid, lower(coalesce(email,'')) e, right(regexp_replace(coalesce(phone,''),'\D','','g'),10) ph, total_paise amt, coalesce(paid_at, created_at) at from orders where status in ('paid','packed','shipped','delivered')
+    union all select 'b', id, lower(coalesce(email,'')), right(regexp_replace(coalesce(phone,''),'\D','','g'),10), amount_paise, coalesce(paid_at, created_at) from bookings where status in ('paid','transferred')
+    union all select 'c', id, lower(coalesce(email,'')), right(regexp_replace(coalesce(phone,''),'\D','','g'),10), amount_paise, coalesce(paid_at, created_at) from class_enrolments where status in ('paid','transferred')),
+  m as (                                              -- a purchase belongs to a customer with the same email or the same phone (two quick joins instead of one slow either-or join)
+    select c.id cid, p.k, p.pid, p.amt, p.at from c join p on c.e <> '' and p.e = c.e
+    union select c.id, p.k, p.pid, p.amt, p.at from c join p on length(c.ph) = 10 and p.ph = c.ph)
+  select c.id, count(m.pid) filter (where m.k = 'o')::int, count(m.pid) filter (where m.k = 'b')::int, count(m.pid) filter (where m.k = 'c')::int, coalesce(sum(m.amt), 0)::bigint, max(m.at)
+  from c left join m on m.cid = c.id
   where is_admin() group by c.id
 $$;
 
@@ -577,12 +592,12 @@ grant select on workshops_public to anon, authenticated;
 -- ---------------------------------------------------------------- security: who can read and change what
 alter table profiles enable row level security;          alter table customers enable row level security;
 alter table workshops enable row level security;         alter table bookings enable row level security;
-alter table workshop_waitlist enable row level security; alter table class_types enable row level security;
+alter table class_types enable row level security;
 alter table class_levels enable row level security;      alter table class_enrolments enable row level security;
 alter table class_sessions enable row level security;    alter table products enable row level security;
 alter table orders enable row level security;            alter table order_items enable row level security;
 alter table ledger_entries enable row level security;    alter table invoices enable row level security;
-alter table invoice_payments enable row level security;  alter table rentouts enable row level security;
+alter table invoice_payments enable row level security;  alter table rentouts enable row level security;  alter table rentout_payments enable row level security;
 alter table enquiries enable row level security;         alter table events enable row level security;
 alter table todos enable row level security;             alter table site_images enable row level security;
 alter table settings enable row level security;          alter table admin_security enable row level security;   -- admin_security: no policy on purpose
@@ -614,11 +629,11 @@ drop policy if exists "admin manage order items" on order_items; create policy "
 -- everything below is the owner only
 drop policy if exists "admin classes sessions" on class_sessions; drop policy if exists "admin sessions" on class_sessions;
 create policy "admin sessions" on class_sessions for all using (is_admin()) with check (is_admin());
-drop policy if exists "admin waitlist" on workshop_waitlist; create policy "admin waitlist" on workshop_waitlist for all using (is_admin()) with check (is_admin());
 drop policy if exists "admin ledger" on ledger_entries; create policy "admin ledger" on ledger_entries for all using (is_admin()) with check (is_admin());
 drop policy if exists "admin invoices" on invoices; create policy "admin invoices" on invoices for all using (is_admin()) with check (is_admin());
 drop policy if exists "admin invoice payments" on invoice_payments; create policy "admin invoice payments" on invoice_payments for all using (is_admin()) with check (is_admin());
 drop policy if exists "admin rentouts" on rentouts; create policy "admin rentouts" on rentouts for all using (is_admin()) with check (is_admin());
+drop policy if exists "admin rentout payments" on rentout_payments; create policy "admin rentout payments" on rentout_payments for all using (is_admin()) with check (is_admin());
 drop policy if exists "admin enquiries" on enquiries; create policy "admin enquiries" on enquiries for all using (is_admin()) with check (is_admin());
 drop policy if exists "admin events" on events; create policy "admin events" on events for all using (is_admin()) with check (is_admin());
 drop policy if exists "admin todos" on todos; create policy "admin todos" on todos for all using (is_admin()) with check (is_admin());
@@ -647,8 +662,11 @@ insert into settings (key, value, is_public) values
  ('shipping', '{"flat_paise":6000,"free_above_paise":200000}', true),
  ('gateway', '{"fee_percent":2}', false),
  ('order', '{"format":"ORD-####","start":1}', false),
- ('store', '{"shipping_note":"","return_note":""}', false)
+ ('store', '{"shipping_note":"","return_note":"","good_to_know":"Please arrive on time.\nBookings are confirmed on payment.\nTickets are non-refundable, but can be transferred to someone else with prior notice to the TBB team."}', true)
 on conflict (key) do nothing;
+-- the shop and workshop notes are shown on the website, so that setting is public; a missing "good to know" starts with the usual three points
+update settings set is_public = true where key = 'store' and not is_public;
+update settings set value = value || '{"good_to_know":"Please arrive on time.\nBookings are confirmed on payment.\nTickets are non-refundable, but can be transferred to someone else with prior notice to the TBB team."}'::jsonb where key = 'store' and not (value ? 'good_to_know');
 -- the owner PIN used to be kept in settings; it lives in admin_security now
 insert into admin_security (key, value) select 'pin', value from settings where key = 'admin_pin' on conflict (key) do nothing;
 delete from settings where key = 'admin_pin';

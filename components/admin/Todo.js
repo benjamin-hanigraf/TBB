@@ -1,29 +1,40 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useLoad, sb, must, every, Page, Card, Fold, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, dmyToISO, isoToDMY, fmtD } from './kit';
+import { useLoad, sb, must, every, Page, Card, Fold, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, useToast, Confirm, dmyToISO, isoToDMY, fmtD } from './kit';
 import { todayISO } from '@/lib/accounting';
 
-const Wrap = ({ embedded, title, children }) => (embedded ? <div id="todo" className="ad-embed"><h2 className="ad-embed-h">{title}</h2>{children}</div> : <Page title={title}>{children}</Page>);
+const Wrap = ({ embedded, title, action, children }) => (embedded ? <div id="todo" className="ad-embed"><div className="ad-embed-row"><h2 className="ad-embed-h">{title}</h2>{action}</div>{children}</div> : <Page title={title} action={action}>{children}</Page>);
 export default function Todo({ embedded = false, onChanged }) {
-  const [edit, setEdit] = useState(null); const [run, busy] = useAction(); const add = useForm({ title: '', due: '' });
+  const [edit, setEdit] = useState(null); const [run, busy] = useAction(); const toast = useToast(); const add = useForm({ title: '', due: '' }); const [adding, setAdding] = useState(false);
+  const [local, setLocal] = useState({}); const [leaving, setLeaving] = useState({});            // local: ticks shown at once; leaving: rows sliding away
   const { data, error, reload } = useLoad(async () => must(await every(() => sb().from('todos').select('*').order('due_on', { nullsFirst: false }).order('created_at', { ascending: false }).order('id'))));
+  useEffect(() => { setLocal({}); setLeaving({}); }, [data]);                                       // fresh data from the database replaces what was shown meanwhile
   useEffect(() => { let id = null; try { id = new URLSearchParams(window.location.search).get('todo'); } catch {} const t = id && data?.find((x) => x.id === id); if (t) setEdit(t); }, [data]);   // a link from Home opens that task
-  if (error) return <Wrap embedded={embedded} title="To-do"><Err e={error} /></Wrap>; if (!data) return <Wrap embedded={embedded} title="To-do"><Spin /></Wrap>;
-  const today = todayISO(); const open = data.filter((t) => !t.done), done = data.filter((t) => t.done).sort((a, b) => (b.done_at || '').localeCompare(a.done_at || ''));
+  if (error) return <Wrap embedded={embedded} title="Tasks"><Err e={error} /></Wrap>; if (!data) return <Wrap embedded={embedded} title="Tasks"><Spin /></Wrap>;
+  const items = data.map((t) => (t.id in local ? { ...t, done: local[t.id], done_at: local[t.id] ? new Date().toISOString() : null } : t));
+  const today = todayISO(); const open = items.filter((t) => !t.done), done = items.filter((t) => t.done).sort((a, b) => (b.done_at || '').localeCompare(a.done_at || ''));
   // Today holds everything to do now: due today, overdue, and tasks with no date. Only tasks with a later date wait under Coming up.
   const now = open.filter((t) => !t.due_on || t.due_on <= today).sort((a, b) => (a.due_on || '9999').localeCompare(b.due_on || '9999')); const later = open.filter((t) => t.due_on && t.due_on > today);
-  const toggle = (t) => run(async () => { must(await sb().from('todos').update({ done: !t.done, done_at: t.done ? null : new Date().toISOString() }).eq('id', t.id)); reload(); onChanged?.(); });
+  // Ticking: the row slides and fades away, then the task is saved quietly. The page never reloads or jumps, and the Add button is not touched.
+  const toggle = (t) => {
+    if (leaving[t.id]) return; const next = !t.done; setLeaving((l) => ({ ...l, [t.id]: true }));
+    setTimeout(async () => {
+      setLocal((l) => ({ ...l, [t.id]: next })); setLeaving((l) => { const n = { ...l }; delete n[t.id]; return n; });
+      const r = await sb().from('todos').update({ done: next, done_at: next ? new Date().toISOString() : null }).eq('id', t.id);
+      if (r.error) { toast('Could not save. Please try again.', 'err'); setLocal((l) => { const n = { ...l }; delete n[t.id]; return n; }); } else { reload(); onChanged?.(); }
+    }, 260);
+  };
   const create = (e) => { e.preventDefault(); return run(async () => {
     if (!add.v.title.trim()) throw new Error('Please type the task.'); const due = add.v.due ? dmyToISO(add.v.due) : null; if (add.v.due && !due) throw new Error('Please enter the date as DD/MM/YYYY.');
-    must(await sb().from('todos').insert({ title: add.v.title.trim(), due_on: due })); add.reset({ title: '', due: '' }); reload(); onChanged?.(); }); };
-  const row = (t) => (<div key={t.id} className="ad-row todo-row" style={{ cursor: 'default' }}>
-    <input type="checkbox" checked={t.done} onChange={() => toggle(t)} aria-label={t.done ? 'Mark as not done' : 'Mark as done'} />
+    must(await sb().from('todos').insert({ title: add.v.title.trim(), due_on: due })); add.reset({ title: '', due: '' }); setAdding(false); reload(); onChanged?.(); }, 'Task added'); };
+  const row = (t) => (<div key={t.id} className={`ad-row todo-row ${leaving[t.id] ? 'leaving' : ''}`} style={{ cursor: 'default' }}>
+    <input type="checkbox" checked={t.done || !!leaving[t.id]} onChange={() => toggle(t)} aria-label={t.done ? 'Mark as not done' : 'Mark as done'} />
     <button type="button" className="main todo-main" onClick={() => setEdit(t)}><b style={t.done ? { textDecoration: 'line-through', color: '#8e8e93' } : undefined}>{t.title}</b>{(t.due_on || t.note) && <small style={!t.done && t.due_on && t.due_on < today ? { color: '#9b1c1c' } : undefined}>{[t.due_on && (!t.done && t.due_on < today ? `Overdue · ${fmtD(t.due_on)}` : fmtD(t.due_on)), t.note].filter(Boolean).join(' · ')}</small>}</button></div>);
-  return (<Wrap embedded={embedded} title="To-do">
-    <Card><form className="ad-form todo-add" onSubmit={create}>
-      <F form={add} k="title" label="New task" rule="sentence" placeholder="e.g. Order paper for the next workshop" required />
+  return (<Wrap embedded={embedded} title="Tasks" action={<Btn variant="ghost" icon={adding ? 'close' : 'plus'} onClick={() => setAdding((a) => !a)}>{adding ? 'Close' : 'Add'}</Btn>}>
+    {adding && <Card><form className="ad-form todo-add" onSubmit={create}>
+      <F form={add} k="title" label="New task" rule="sentence" placeholder="e.g. Order paper for the next workshop" required autoFocus />
       <F form={add} k="due" label="Due on" type="date" />
-      <div className="ad-actions"><Btn busy={busy} icon="plus">Add</Btn></div></form></Card>
+      <div className="ad-actions"><Btn busy={busy} icon="plus">Add</Btn></div></form></Card>}
     {now.length ? <Card title="Today" tight><div className="ad-list">{now.map(row)}</div></Card> : <Card title="Today"><Empty>Nothing to do right now.</Empty></Card>}
     {later.length > 0 && <Fold title="Coming up"><div className="ad-list">{later.map(row)}</div></Fold>}
     {done.length > 0 && <Fold title="Completed"><div className="ad-list">{done.slice(0, 50).map(row)}</div></Fold>}

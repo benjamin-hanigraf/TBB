@@ -31,18 +31,19 @@ export default function AdminShell({ children }) {
   return <ErrorBoundary><Inner>{children}</Inner></ErrorBoundary>;
 }
 function Inner({ children }) {
-  const path = usePathname(); const [state, setState] = useState('loading'); const [unread, setUnread] = useState(0);
+  const path = usePathname(); const [state, setState] = useState('loading'); const [unread, setUnread] = useState(0); const [why, setWhy] = useState('');
   useEffect(() => { if (state === 'ok') unreadCount().then(setUnread).catch(() => {}); }, [state, path]);
   // Behave like an app: no pinch zoom (iPhones ignore the viewport rule, so the gesture itself is stopped), no long-press menus, no photo dragging.
   // Input boxes keep their normal behaviour so typing, selecting and pasting still work.
   useEffect(() => {
     const stop = (e) => e.preventDefault(); const inField = (e) => !!e.target?.closest?.('input,textarea,select,[contenteditable="true"]');
     const menu = (e) => { if (!inField(e)) e.preventDefault(); }; const drag = (e) => { if (e.target?.tagName === 'IMG') e.preventDefault(); };
-    const touch = (e) => { if (e.touches && e.touches.length > 1) e.preventDefault(); }; const wheel = (e) => { if (e.ctrlKey) e.preventDefault(); };   // trackpad pinch arrives as ctrl + wheel
     const ev = ['gesturestart', 'gesturechange', 'gestureend']; ev.forEach((n) => document.addEventListener(n, stop));
-    document.addEventListener('contextmenu', menu); document.addEventListener('dragstart', drag); document.addEventListener('touchmove', touch, { passive: false }); document.addEventListener('wheel', wheel, { passive: false });
-    return () => { ev.forEach((n) => document.removeEventListener(n, stop)); document.removeEventListener('contextmenu', menu); document.removeEventListener('dragstart', drag); document.removeEventListener('touchmove', touch); document.removeEventListener('wheel', wheel); };
+    document.addEventListener('contextmenu', menu); document.addEventListener('dragstart', drag);       // (no touchmove or wheel listeners: they stop the browser from scrolling smoothly. Pinch is blocked by the page's touch-action rule.)
+    return () => { ev.forEach((n) => document.removeEventListener(n, stop)); document.removeEventListener('contextmenu', menu); document.removeEventListener('dragstart', drag); };
   }, []);
+  useEffect(() => { const free = () => { if (!document.querySelector('.ad-modal-bg')) document.documentElement.classList.remove('ad-lock'); }; free();       // a leftover freeze from a closed pop-up is always lifted
+    document.addEventListener('visibilitychange', free); window.addEventListener('pageshow', free); return () => { document.removeEventListener('visibilitychange', free); window.removeEventListener('pageshow', free); }; }, [path]);
   useEffect(() => { window.__adminReady = true; const t = setTimeout(() => setState((s) => (s === 'loading' ? 'error' : s)), 10000); return () => clearTimeout(t); }, []);
   useEffect(() => { const h = (e) => { e.preventDefault(); window.__bip = e; }; window.addEventListener('beforeinstallprompt', h); return () => window.removeEventListener('beforeinstallprompt', h); }, []);
   useEffect(() => { if ('serviceWorker' in navigator) navigator.serviceWorker.register('/manager/sw.js', { scope: '/manager' }).catch(() => {}); }, []);
@@ -51,25 +52,25 @@ function Inner({ children }) {
     (async () => {
       if (!adminClient()) { setState('nodb'); return; }
       try {
-        const first = await adminClient().auth.getSession();                  // a trusted device with a saved sign-in opens straight away; the check below runs in the background
+        const first = await Promise.race([adminClient().auth.getSession(), new Promise((res) => setTimeout(() => res({ data: {} }), 4000))]);       // Safari can leave this waiting: do not wait for ever                  // a trusted device with a saved sign-in opens straight away; the check below runs in the background
         if (getToken() && first.data.session && on) setState('ok');
         const r = await pinApi({ action: 'status' });                       // is this device already trusted?
         if (!on) return; if (r.status === 503) { setState('pin-setup'); return; }
         setDefFlag(r.defaultPin);
         if (r.trusted) {
-          const { data } = await adminClient().auth.getSession();
+          const { data } = await Promise.race([adminClient().auth.getSession(), new Promise((res) => setTimeout(() => res({ data: {} }), 4000))]);
           if (!data.session) { const s = await pinApi({ action: 'session' }); if (!s.ok) { setToken(''); setState('pin'); return; } await applySession(s.session); }
           if (on) setState('ok'); return;
         }
         setToken(''); clearCache(); await adminClient().auth.signOut({ scope: 'local' }).catch(() => {}); if (on) setState('pin');
-      } catch (e) { console.error(e); if (on) setState('error'); }
+      } catch (e) { console.error(e); if (on) { setWhy(String(e?.message || e).slice(0, 160)); setState('error'); } }
     })();
     return () => { on = false; };
   }, []);
 
   if (state === 'loading') return <div className="ad-center"><Dots /></div>;
   if (state === 'nodb') return <div className="ad-center"><p>The app is not connected to its database yet.</p></div>;
-  if (state === 'error') return <div className="ad-center"><div className="ad-login"><h1>Could not open the app</h1><p>Please check your internet connection and try again.</p><button className="ad-btn" onClick={() => location.reload()}>Try again</button></div></div>;
+  if (state === 'error') return <div className="ad-center"><div className="ad-login"><h1>Could not open the app</h1><p>Please check your internet connection and try again.</p>{why && <p className="ad-help">{why}</p>}<button className="ad-btn" onClick={() => location.reload()}>Try again</button></div></div>;
   if (state === 'pin' || state === 'pin-setup') return <PinGate notConfigured={state === 'pin-setup'} onDone={(def) => { setDefFlag(def); setState('ok'); }} />;
   return (
     <ToastProvider><div className="ad-app">

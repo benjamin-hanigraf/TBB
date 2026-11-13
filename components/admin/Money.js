@@ -7,12 +7,13 @@ import { syncPaymentsToLedger } from '@/lib/ledgerSync';
 import { IN_CATEGORIES, OUT_CATEGORIES, METHODS, summarise, fyChoices, fyOf, inFY, fyRange, todayISO, money, moneyR, monthLabel, rupeesToPaise, gstInside } from '@/lib/accounting';
 
 export default function Money() {
-  const sp = useSearchParams(); const toast = useToast(); const [fy, setFy] = useState(fyOf(todayISO())); const [view, setView] = useState('list'); const [kind, setKind] = useState('all'); const [q, setQ] = useState(''); const [edit, setEdit] = useState(null);
+  const sp = useSearchParams(); const toast = useToast(); const [fy, setFy] = useState(fyOf(todayISO())); const [view, setView] = useState(sp.get('view') === 'report' ? 'report' : 'list'); const [kind, setKind] = useState('all'); const [q, setQ] = useState(''); const [edit, setEdit] = useState(null);
   const { data, error, reload } = useLoad(async () => {
     const c = sb(); const [e, s] = await Promise.all([every(() => c.from('ledger_entries').select('*').order('entry_date', { ascending: false }).order('created_at', { ascending: false }).order('id')), c.from('settings').select('value').eq('key', 'gst').maybeSingle()]);
     return { entries: must(e), gst: s.data?.value || { enabled: false, rate_percent: 18 } };
   });
-  useEffect(() => { let on = true; syncPaymentsToLedger(sb()).then((n) => { if (on && n > 0) { toast(`${n} payment${n > 1 ? 's' : ''} added to your accounts`); reload(); } }).catch((e) => console.error('sync', e)); return () => { on = false; }; /* eslint-disable-next-line */ }, []);
+  useEffect(() => { let on = true; let full = false; try { const last = Number(localStorage.getItem('tbb-sync-full') || 0); if (Date.now() - last > 6 * 3600e3) { full = true; localStorage.setItem('tbb-sync-full', String(Date.now())); } } catch {}   // the whole history is rechecked now and then; the rest of the time only recent payments
+    syncPaymentsToLedger(sb(), { full }).then((n) => { if (on && n > 0) { toast(`${n} payment${n > 1 ? 's' : ''} added to your accounts`); reload(); } }).catch((e) => console.error('sync', e)); return () => { on = false; }; /* eslint-disable-next-line */ }, []);
   useEffect(() => { const n = sp.get('new'); if (n === 'in' || n === 'out') setEdit({ kind: n }); }, [sp]);
   if (error) return <Page title="Accounts"><Err e={error} /></Page>; if (!data) return <Page title="Accounts"><Spin /></Page>;
   const sum = summarise(data.entries, fy); const choices = fyChoices(data.entries); const gstOn = data.gst.enabled;
@@ -65,7 +66,7 @@ async function sourceLink(e) {
   return null;
 }
 function Entry({ e, gst, onClose, onSaved }) {
-  const isNew = !e.id; const auto = e.source && e.source !== 'manual'; const [run, busy] = useAction(); const [link, setLink] = useState(null);
+  const isNew = !e.id; const auto = e.source && e.source !== 'manual'; const [run, busy] = useAction(); const [link, setLink] = useState(null); const [editing, setEditing] = useState(isNew);
   useEffect(() => { if (auto) sourceLink(e).then(setLink).catch(() => {}); /* eslint-disable-next-line */ }, [e.id]);
   const f = useForm({ kind: e.kind || 'in', date: isoToDMY(e.entry_date || todayISO()), amount: e.amount_paise ? String(e.amount_paise / 100) : '', hasGst: e.gst_paise > 0, gstAmt: e.gst_paise ? String(e.gst_paise / 100) : '', category: e.category || '', party: e.party || '', method: e.method || 'upi', description: e.description || '' });
   const cats = f.v.kind === 'in' ? IN_CATEGORIES : OUT_CATEGORIES;
@@ -79,7 +80,9 @@ function Entry({ e, gst, onClose, onSaved }) {
   const del = () => run(async () => { must(await sb().from('ledger_entries').delete().eq('id', e.id)); onSaved(); }, 'Deleted');
   return (<Modal title={isNew ? (f.v.kind === 'in' ? 'Income' : 'Expense') : 'Entry'} onClose={onClose}>
     {auto && <p className="ad-help" style={{ marginTop: 0 }}>This entry was added automatically. Edit it only to correct a mistake.{link && <> <a className="ad-linkbtn" href={link}>See where it came from</a></>}</p>}
-    <form onSubmit={save} className="ad-form">
+    {!editing && <><dl className="ad-view">{[['Type', e.kind === 'in' ? 'Income (received)' : 'Expense (spent)'], ['Date', fmtD(e.entry_date)], ['Amount', money(e.amount_paise)], ['Category', e.category], [e.kind === 'in' ? 'Received from' : 'Paid to', e.party], ['Paid by', e.method === 'upi' ? 'UPI' : e.method ? e.method[0].toUpperCase() + e.method.slice(1) : ''], ['GST included', e.gst_paise > 0 ? money(e.gst_paise) : ''], ['Note', e.description]].filter(([, v]) => v).map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+      <div className="ad-actions full"><Btn icon="edit" onClick={() => setEditing(true)}>Edit</Btn></div></>}
+    {editing && <form onSubmit={save} className="ad-form">
       <F form={f} k="kind" label="Type" type="select" required options={[['in', 'Income (received)'], ['out', 'Expense (spent)']]} />
       <F form={f} k="date" label="Date" type="date" required />
       <F form={f} k="amount" label="Amount (₹)" type="money" rule="money" required />
@@ -88,6 +91,6 @@ function Entry({ e, gst, onClose, onSaved }) {
       <F form={f} k="method" label="Paid by" type="select" required options={METHODS.map((m) => [m, m === 'upi' ? 'UPI' : m[0].toUpperCase() + m.slice(1)])} />
       {gst.enabled && <><div className="full"><F form={f} k="hasGst" label="This amount includes GST" type="check" /></div>{f.v.hasGst && <F form={f} k="gstAmt" label="GST included (₹)" type="money" rule="money" placeholder={suggest()} hint={`Leave empty to use ${gst.rate_percent || 18}% of the amount`} />}</>}
       <div className="full"><F form={f} k="description" label="Note" rule="sentence" /></div>
-      <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn>{!isNew && <Confirm onYes={del}>Delete</Confirm>}</div>
-    </form></Modal>);
+      <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn>{!isNew && <Btn type="button" variant="ghost" onClick={() => { f.reset(); setEditing(false); }}>Cancel</Btn>}{!isNew && <Confirm onYes={del}>Delete</Confirm>}</div>
+    </form>}</Modal>);
 }

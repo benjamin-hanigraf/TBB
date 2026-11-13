@@ -62,7 +62,7 @@ test('accounts sync reads past the 1000-row limit', async () => {
   const L = await import('../lib/ledgerSync.js');
   const orders = Array.from({ length: 2500 }, (_, i) => ({ id: `o${i}`, name: 'N', total_paise: 100, paid_at: '2026-11-01T00:00:00Z', created_at: '2026-11-01T00:00:00Z', invoice_no: i, payment_method: 'upi', order_items: [] }));
   const inserted = [];
-  const table = (rows) => { const q = { select: () => q, in: () => q, eq: () => q, order: () => q, maybeSingle: async () => ({ data: null, error: null }), range: async (a, b) => ({ data: rows.slice(a, b + 1), error: null }) }; return q; };
+  const table = (rows) => { const q = { select: () => q, in: () => q, eq: () => q, gte: () => q, order: () => q, maybeSingle: async () => ({ data: null, error: null }), range: async (a, b) => ({ data: rows.slice(a, b + 1), error: null }) }; return q; };
   const c = { from: (t) => (t === 'ledger_entries' ? { ...table([]), insert: async (r) => { inserted.push(...r); return { error: null }; } } : t === 'orders' ? table(orders) : table([])) };
   const n = await L.syncPaymentsToLedger(c);
   assert.equal(n, 2500, 'every order is read, not only the first 1000'); assert.equal(inserted.length, 2500);

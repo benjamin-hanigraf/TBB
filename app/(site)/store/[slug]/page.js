@@ -20,6 +20,6 @@ export default async function Product({ params }) {
       <p style={{marginTop:20,color:'#424245'}}>{p.text}</p>
       <ul className="facts">{p.details.map(d => <li key={d}><Icon n="check" size={16} /><span>{d}</span></li>)}</ul>
       <div className="row"><AddToCart product={{ slug: p.slug, title: p.title, price: p.price, image: p.images[0], gstMode: p.gstMode, stock: p.stock, preorder: p.preorder }} label={p.preorder ? 'Pre-order' : 'Add to bag'} /><Btn href={business.whatsapp} variant="ghost" icon="chat">WhatsApp</Btn></div>
-      {p.shipping && <p className="fine"><b>Shipping.</b> {p.shipping}</p>}<p className="fine"><b>Returns.</b> {returnPolicy}</p></div>
+      {p.shipping && <p className="fine"><b>Shipping.</b> {p.shipping}</p>}<p className="fine"><b>Returns.</b> {p.returns || returnPolicy}</p></div>
   </div></section></main>);
 }

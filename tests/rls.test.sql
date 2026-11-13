@@ -91,7 +91,7 @@ do $$ begin
   assert pg_temp.denied($q$update admin_security set value='{}'$q$), 'a customer cannot change the PIN';
   assert pg_temp.denied($q$update class_enrolments set status='refunded' where id='ffffffff-0000-0000-0000-000000000001'$q$), 'alice cannot change her enrolment';
   assert pg_temp.denied($q$update class_levels set price_paise = 1$q$), 'alice cannot change class prices';
-  assert pg_temp.count_of('class_sessions') = 0 and pg_temp.count_of('rentouts') = 0 and pg_temp.count_of('events') = 0 and pg_temp.count_of('workshop_waitlist') = 0 and pg_temp.count_of('invoice_payments') = 0 and pg_temp.count_of('todos') = 0, 'alice sees none of the owner-only tables';
+  assert pg_temp.count_of('class_sessions') = 0 and pg_temp.count_of('rentouts') = 0 and pg_temp.count_of('events') = 0 and pg_temp.count_of('invoice_payments') = 0 and pg_temp.count_of('todos') = 0, 'alice sees none of the owner-only tables';
   assert pg_temp.denied($q$select next_invoice_number()$q$), 'alice cannot take an invoice number';
   assert pg_temp.denied($q$select admin_add_order('{}'::jsonb)$q$), 'alice cannot add orders by hand';
   assert pg_temp.denied($q$select * from customer_summary()$q$) or (select count(*) from customer_summary()) = 0, 'alice gets no customer totals';

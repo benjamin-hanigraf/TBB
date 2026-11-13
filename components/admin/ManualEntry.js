@@ -57,19 +57,18 @@ export function AddOrder({ products, order, onClose, onSaved }) {
     <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn><Btn type="button" variant="ghost" onClick={onClose}>Cancel</Btn></div></form></Modal>);
 }
 
-/** Add a sign-up by hand. With prefill (a person from the waitlist) the details and seats start filled in, and that waitlist entry is removed once they are booked. */
-export function AddSignup({ w, taken, prefill, onClose, onSaved }) {
+/** Add a sign-up by hand. */
+export function AddSignup({ w, taken, onClose, onSaved }) {
   const { data: customers } = useCustomers(); const [run, busy] = useAction();
   const unit = w.early_price_paise != null && w.early_until && w.early_until >= todayISO() ? w.early_price_paise : w.price_paise;      // today's price (early-bird while it lasts)
-  const seats0 = String(prefill?.seats || 1);
-  const f = useForm({ name: prefill?.name || '', phone: prefill?.phone || '', email: prefill?.email || '', seats: seats0, amount: String((unit * Number(seats0)) / 100), pay: 'paid', method: 'upi' });
+  const seats0 = '1';
+  const f = useForm({ name: '', phone: '', email: '', seats: seats0, amount: String((unit * Number(seats0)) / 100), pay: 'paid', method: 'upi' });
   const save = (e) => { e.preventDefault(); return run(async () => {
     const seats = Math.max(1, parseInt(f.v.seats || '1', 10)); if (taken + seats > w.capacity) throw new Error(`Only ${Math.max(0, w.capacity - taken)} seat(s) are left.`); if (!f.v.name.trim()) throw new Error('Please add the name.');
     const paid = f.v.pay === 'paid';
     must(await sb().from('bookings').insert({ workshop_id: w.id, name: f.v.name, email: f.v.email || '', phone: f.v.phone || '', seats, amount_paise: rupeesToPaise(f.v.amount), status: paid ? 'paid' : 'pending', channel: 'manual', payment_method: paid ? f.v.method : null, paid_at: paid ? nowISO() : null }));
-    if (prefill?.waitlistId) await sb().from('workshop_waitlist').delete().eq('id', prefill.waitlistId);            // booked now, so no longer waiting
-    await ensureCustomer({ name: f.v.name, email: f.v.email, phone: f.v.phone }); if (paid) await syncPaymentsToLedger(sb()); onSaved(); }, prefill ? 'Booked from the waitlist' : 'Sign-up added'); };
-  return (<Modal title={`${prefill ? 'Book from waitlist' : 'Add sign-up'} · ${w.title}`} onClose={onClose}><form className="ad-form" onSubmit={save}>
+    await ensureCustomer({ name: f.v.name, email: f.v.email, phone: f.v.phone }); if (paid) await syncPaymentsToLedger(sb()); onSaved(); }, 'Sign-up added'); };
+  return (<Modal title={`$Add sign-up · ${w.title}`} onClose={onClose}><form className="ad-form" onSubmit={save}>
     <Person f={f} customers={customers} /><F form={f} k="seats" label="Seats" rule="digits" required inputMode="numeric" /><F form={f} k="amount" label="Total amount (₹)" type="money" rule="money" required hint="Change it if you gave a discount" />
     <PaymentFields f={f} />
     <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn><Btn type="button" variant="ghost" onClick={onClose}>Cancel</Btn></div></form></Modal>);
@@ -96,6 +95,10 @@ export function AddEnrol({ level, onClose, onSaved }) {
 import Link from 'next/link';
 import { fmtDT } from './kit';
 import { RefundDialog } from './Refund';
+import { ReceiptModal } from './DocViewer';
+import Icon from '@/components/Icons';
+import { Badge } from './kit';
+const STATUS = { pending: ['Not paid yet', 'warn'], paid: ['Confirmed', 'ok'], transferred: ['Transferred', 'ok'], cancelled: ['Cancelled', 'bad'], refunded: ['Refunded', ''] };
 const waLink = (p) => { const d = String(p || '').replace(/\D/g, '').slice(-10); return d.length === 10 ? `https://wa.me/91${d}` : null; };
 // Status changes here never refund: refunds go through the Refund button, so the money and the accounts always match.
 function useStatusSave({ table, row, f, label, extra = {}, onSaved }) {
@@ -116,16 +119,19 @@ const statusOptions = (cur, transferredLabel) => (cur === 'refunded' ? [['refund
   : [['pending', 'Not paid yet'], ['paid', 'Confirmed'], ...(transferredLabel ? [['transferred', transferredLabel]] : []), ['cancelled', 'Cancelled']]);
 const refundable = (r) => ['paid', 'transferred'].includes(r.status);
 export function BookingModal({ b, onClose, onSaved }) {
-  const f = useForm({ status: b.status, method: b.payment_method || 'upi' }); const [refund, setRefund] = useState(false); const [transfer, setTransfer] = useState(false);
+  const f = useForm({ status: b.status, method: b.payment_method || 'upi' }); const [refund, setRefund] = useState(false); const [transfer, setTransfer] = useState(false); const [editing, setEditing] = useState(false); const [receipt, setReceipt] = useState(false);
   const [save, busy] = useStatusSave({ table: 'bookings', row: b, f, label: 'Sign-up updated', onSaved }); const wa = waLink(b.phone);
   return (<Modal title={b.name} onClose={onClose}>
     <p style={{ marginTop: 0 }}><b>{b.workshops?.title}</b><br />{b.seats} {b.seats > 1 ? 'seats' : 'seat'} · {money(b.amount_paise)}<br /><span className="ad-help">{b.email} · {b.phone}</span></p>
     {b.notes && <p className={b.notes.includes('ATTENTION') ? 'ad-err' : 'ad-help'} style={{ whiteSpace: 'pre-wrap' }}>{b.notes}</p>}
     <p className="ad-help">Booked {fmtDT(b.created_at)}{b.channel === 'manual' ? ' · added manually' : ''}{b.razorpay_payment_id ? ` · Payment ID ${b.razorpay_payment_id}` : ''}</p>
-    <div className="ad-form"><F form={f} k="status" label="Status" type="select" required options={statusOptions(b.status)} />
+    {editing ? <div className="ad-form"><F form={f} k="status" label="Status" type="select" required options={statusOptions(b.status)} />
       {b.status === 'pending' && ['paid', 'transferred'].includes(f.v.status) && <F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} />}</div>
+      : <p style={{ margin: '0 0 8px' }}><Badge tone={STATUS[b.status]?.[1]}>{STATUS[b.status]?.[0] || b.status}</Badge></p>}
     <p className="ad-help">Tickets are non-refundable but can be moved to another date with Transfer. To give money back, use Refund.</p>
-    <div className="ad-actions full"><Btn busy={busy} onClick={save} icon="check">Save</Btn><Link className="ad-btn ghost" href={`/invoice/${b.id}`} target="_blank">Receipt</Link>{wa && <a className="ad-btn ghost" href={wa} target="_blank" rel="noopener">WhatsApp</a>}{b.status === 'paid' && <Btn variant="ghost" onClick={() => setTransfer(true)}>Transfer</Btn>}{refundable(b) && <Btn variant="ghost" onClick={() => setRefund(true)}>Refund</Btn>}</div>
+    <div className="ad-actions full">{editing ? <><Btn busy={busy} onClick={save} icon="check">Save</Btn><Btn variant="ghost" onClick={() => { setEditing(false); f.set('status', b.status); }}>Cancel</Btn></>
+      : <>{statusOptions(b.status).length > 1 && <Btn variant="ghost" icon="edit" onClick={() => setEditing(true)}>Edit</Btn>}{refundable(b) && <Btn variant="ghost" icon="file" onClick={() => setReceipt(true)}>Receipt</Btn>}{wa && <a className="ad-btn ghost" href={wa} target="_blank" rel="noopener"><Icon n="whatsapp" size={16} /><span>WhatsApp</span></a>}{b.status === 'paid' && <Btn variant="ghost" icon="send" onClick={() => setTransfer(true)}>Transfer</Btn>}{refundable(b) && <Btn variant="ghost" icon="wallet" onClick={() => setRefund(true)}>Refund</Btn>}</>}</div>
+    {receipt && <ReceiptModal id={b.id} onClose={() => setReceipt(false)} />}
     {refund && <RefundDialog kind="booking" rows={[b]} title={`Refund · ${b.name}`} onClose={() => setRefund(false)} onDone={onSaved} />}
     {transfer && <TransferDialog b={b} onClose={() => setTransfer(false)} onDone={onSaved} />}</Modal>);
 }
@@ -148,15 +154,17 @@ function TransferDialog({ b, onClose, onDone }) {
     <div className="ad-actions full"><Btn busy={busy} disabled={!to} icon="check" onClick={go}>Transfer</Btn><Btn variant="ghost" onClick={onClose}>Cancel</Btn></div></Modal>);
 }
 export function EnrolModal({ e, onClose, onSaved }) {
-  const f = useForm({ status: e.status, method: e.payment_method || 'upi' }); const [refund, setRefund] = useState(false);
+  const f = useForm({ status: e.status, method: e.payment_method || 'upi' }); const [refund, setRefund] = useState(false); const [editing, setEditing] = useState(false); const [receipt, setReceipt] = useState(false);
   const [save, busy] = useStatusSave({ table: 'class_enrolments', row: e, f, label: 'Enrolment updated', onSaved }); const wa = waLink(e.phone);
   return (<Modal title={e.student_name} onClose={onClose}>
     <p style={{ marginTop: 0 }}><b>{e.class_levels?.title}, {e.class_levels?.level}</b><br />{e.student_group === 'child' ? `Child, age ${e.student_age}` : 'Adult'} · {money(e.amount_paise)}</p>
     {e.notes && <p className={e.notes.includes('ATTENTION') ? 'ad-err' : 'ad-help'} style={{ whiteSpace: 'pre-wrap' }}>{e.notes}</p>}
     <p className="ad-help">{e.student_group === 'child' ? `Parent or guardian: ${e.name} · ` : ''}{e.email} · {e.phone}<br />{fmtDT(e.created_at)}{e.channel === 'manual' ? ' · added manually' : ''}{e.razorpay_payment_id ? ` · Payment ID ${e.razorpay_payment_id}` : ''}</p>
-    <div className="ad-form"><F form={f} k="status" label="Status" type="select" required options={statusOptions(e.status, 'Transferred')} />
+    {editing ? <div className="ad-form"><F form={f} k="status" label="Status" type="select" required options={statusOptions(e.status, 'Transferred')} />
       {e.status === 'pending' && ['paid', 'transferred'].includes(f.v.status) && <F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} />}
-    </div>
-    <div className="ad-actions full"><Btn busy={busy} onClick={save} icon="check">Save</Btn><Link className="ad-btn ghost" href={`/invoice/${e.id}`} target="_blank">Receipt</Link>{wa && <a className="ad-btn ghost" href={wa} target="_blank" rel="noopener">WhatsApp</a>}{refundable(e) && <Btn variant="ghost" onClick={() => setRefund(true)}>Refund</Btn>}</div>
+    </div> : <p style={{ margin: '0 0 8px' }}><Badge tone={STATUS[e.status]?.[1]}>{STATUS[e.status]?.[0] || e.status}</Badge></p>}
+    <div className="ad-actions full">{editing ? <><Btn busy={busy} onClick={save} icon="check">Save</Btn><Btn variant="ghost" onClick={() => { setEditing(false); f.set('status', e.status); }}>Cancel</Btn></>
+      : <>{statusOptions(e.status, 'Transferred').length > 1 && <Btn variant="ghost" icon="edit" onClick={() => setEditing(true)}>Edit</Btn>}{refundable(e) && <Btn variant="ghost" icon="file" onClick={() => setReceipt(true)}>Receipt</Btn>}{wa && <a className="ad-btn ghost" href={wa} target="_blank" rel="noopener"><Icon n="whatsapp" size={16} /><span>WhatsApp</span></a>}{refundable(e) && <Btn variant="ghost" icon="wallet" onClick={() => setRefund(true)}>Refund</Btn>}</>}</div>
+    {receipt && <ReceiptModal id={e.id} onClose={() => setReceipt(false)} />}
     {refund && <RefundDialog kind="enrolment" rows={[e]} title={`Refund · ${e.student_name}`} onClose={() => setRefund(false)} onDone={onSaved} />}</Modal>);
 }

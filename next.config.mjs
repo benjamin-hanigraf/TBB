@@ -5,7 +5,7 @@ const csp = [
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.razorpay.com",
-  "frame-src https://*.razorpay.com",
+  "frame-src 'self' blob: https://*.razorpay.com",
   "worker-src 'self'", "manifest-src 'self'", "object-src 'none'", "base-uri 'self'", "form-action 'self' https://*.razorpay.com", "frame-ancestors 'none'", 'upgrade-insecure-requests',
 ].join('; ');
 const security = [

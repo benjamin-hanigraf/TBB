@@ -91,7 +91,7 @@ The database itself held up: seats cannot be oversold by two people at once, exp
 - Workshop capacity: when you add a paid sign-up by hand you are protected, but the database does not itself block going over (needed so a real late payment is never rejected). The warnings above cover it.
 - Moving a workshop to a different price: transferring a booking does not adjust the amount if the new workshop costs more or less.
 - Partial refunds are not supported (a refund is the full amount).
-- If a seat frees up (refund / transfer) the waitlist is not told automatically; you see "N seats are free" and use the Book / WhatsApp buttons.
+- The waiting list has been removed completely.
 - Someone can book the same workshop twice (e.g. two friends using one phone). This is allowed on purpose; a duplicate warning would be a new screen.
 - An income entry deleted by hand for an online payment is added back by the safety net the next time Accounts or Orders opens. To remove one for good, refund it.
 - Extreme amounts: a receivable above about one crore rupees makes one Home tile slightly too narrow at 1024 px wide. Normal amounts fit everywhere.

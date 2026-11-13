@@ -1,7 +1,7 @@
 import '../../admin.css';
 import AdminShell from '@/components/admin/Shell';
 export const metadata = {
-  title: { default: 'TBB Manager', template: '%s | TBB Manager' }, manifest: '/manager/manifest.webmanifest', robots: { index: false, follow: false },
+  title: { default: 'TBB Manager', template: '%s | TBB Manager' }, manifest: '/manager/manifest.webmanifest', robots: { index: false, follow: false }, formatDetection: { telephone: false, email: false, address: false, date: false, url: false },
   appleWebApp: { capable: true, title: 'TBB Manager', statusBarStyle: 'black-translucent' }, icons: { apple: '/icons/icon-192.png' },
 };
 // maximumScale 1 and userScalable false: the app does not zoom (like an installed app)

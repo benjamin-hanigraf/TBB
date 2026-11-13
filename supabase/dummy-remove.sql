@@ -1,7 +1,7 @@
 -- ============ REMOVE DUMMY TEST DATA ============
 -- Takes out everything supabase/dummy.sql added (every row whose id starts with dededede-), plus what you made
 -- while testing with it: accounts entries, payments and attendance linked to dummy rows, and customers, orders,
--- bookings, enrolments, waitlist entries and enquiries that use an @example.com email.
+-- bookings, enrolments and enquiries that use an @example.com email.
 -- Real data is not touched. Safe to run more than once. Run it in the Supabase SQL Editor before the site goes live.
 begin;
 
@@ -15,9 +15,8 @@ delete from ledger_entries where id::text like 'dededede-%' or source_id::text l
 -- 2. invoices, quotations and credit notes (their payments go with them)
 delete from invoices where id::text like 'dededede-%' or invoice_no like 'DEMO%';
 
--- 3. orders (their items go with them), bookings, waitlist, enrolments (their attendance goes with them)
+-- 3. orders (their items go with them), bookings, enrolments (their attendance goes with them)
 delete from orders where id::text like 'dededede-%' or email ilike '%@example.com';
-delete from workshop_waitlist where id::text like 'dededede-%' or email ilike '%@example.com' or workshop_id::text like 'dededede-%';
 delete from bookings where id::text like 'dededede-%' or email ilike '%@example.com' or workshop_id::text like 'dededede-%';
 delete from class_enrolments where id::text like 'dededede-%' or email ilike '%@example.com' or class_id::text like 'dededede-%';
 

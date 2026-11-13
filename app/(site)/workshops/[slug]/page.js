@@ -4,7 +4,6 @@ import Btn from '@/components/Btn';
 import Pic from '@/components/Pic';
 import JsonLd from '@/components/JsonLd';
 import BookWorkshop from '@/components/BookWorkshop';
-import WaitlistForm from '@/components/WaitlistForm';
 import Icon from '@/components/Icons';
 import { rupees, isPast, fmtDate } from '@/lib/data';
 import { getBusiness } from '@/lib/db';
@@ -28,14 +27,14 @@ export default async function Workshop({ params }) {
           <li><Icon n="note" /><span>{w.regularPrice ? <><b>{rupees(w.price)}</b> <s className="muted">{rupees(w.regularPrice)}</s></> : rupees(w.price)}{w.gstMode === 'add' ? ' + 18% GST' : w.gstMode === 'included' ? ' incl. GST' : ''} per person, kit included{w.regularPrice ? <><br /><span className="tag">Early bird</span> <span className="early">Save {rupees(w.regularPrice - w.price)} when you book by {fmtDate(w.earlyUntil)}</span></> : null}{w.friendPrice ? <><br /><span className="muted">{rupees(w.friendPrice)} each when you bring a friend</span></> : null}</span></li>
         </ul>
         {closed ? <div className="row"><Btn icon="calendar" disabled>{w.cancelled ? 'Cancelled' : 'Booking closed'}</Btn><Btn href={business.whatsapp} variant="ghost" icon="chat">WhatsApp</Btn></div>
-          : w.seatsLeft === 0 ? <div className="row"><WaitlistForm slug={w.slug} /></div>
+          : w.seatsLeft === 0 ? <div className="row"><Btn icon="calendar" disabled>Sold out</Btn><Btn href={business.whatsapp} variant="ghost" icon="chat">WhatsApp</Btn></div>
           : <><div className="row"><BookWorkshop slug={w.slug} title={w.title} price={w.price} friendPrice={w.friendPrice} gstMode={w.gstMode} seatsLeft={w.seatsLeft} whatsapp={business.whatsapp} /></div></>}
         {closed && <p className="fine">This workshop is over. <Link href="/workshops" style={{textDecoration:'underline'}}>See upcoming workshops</Link>.</p>}
       </div></div></section>
     <section className="section soft"><div className="wrap"><div className="head"><h2>About this workshop</h2>{w.description.map((t, i) => <p key={i} className="lead">{t}</p>)}</div>
       <div className="cols3"><div><h3>You will learn</h3><ul className="plist">{w.learn.map(x => <li key={x}>{x}</li>)}</ul></div>
         <div><h3>Included</h3><ul className="plist">{w.includes.map(x => <li key={x}>{x}</li>)}</ul></div>
-        <div><h3>Good to know</h3><ul className="plist"><li>Please arrive on time.</li><li>Bookings are confirmed on payment.</li><li>Tickets are non-refundable, but can be transferred to someone else with prior notice to the TBB team.</li></ul></div></div>
+        <div><h3>Good to know</h3><ul className="plist">{(w.goodToKnow?.length ? w.goodToKnow : ['Please arrive on time.', 'Bookings are confirmed on payment.', 'Tickets are non-refundable, but can be transferred to someone else with prior notice to the TBB team.']).map((x) => <li key={x}>{x}</li>)}</ul></div></div>
       {w.note && <p className="note-c">{w.note}</p>}
     </div></section></main>);
 }

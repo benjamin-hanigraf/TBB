@@ -1,5 +1,6 @@
 /* TBB Manager (admin app): same white and black look as the website, built phone-first */
-body{background:#f5f5f7;overflow-x:hidden}html{overflow-x:hidden}img,svg,video,canvas{max-width:100%}
+/* html alone clips sideways overflow. A second overflow rule on body would turn body into its own scroll box, which is what made scrolling stick on iPhones. */
+body{background:#f5f5f7}html{overflow-x:hidden}.ad-lock{overflow:hidden}.ad-modal-bg,.ad-modal-b{overscroll-behavior:contain}img,svg,video,canvas{max-width:100%}
 .ad-center{min-height:100dvh;display:grid;place-items:center;padding:calc(24px + env(safe-area-inset-top)) calc(24px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) calc(24px + env(safe-area-inset-left));background:#fff;text-align:center}
 .ad-login{width:100%;max-width:420px}.ad-login img{margin:0 auto 12px;border-radius:18px}.ad-login h1{font-size:30px}.ad-login>p{color:var(--mute);margin:6px 0 4px}
 .ad-app{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:100dvh}
@@ -131,8 +132,8 @@ input[type=checkbox]:focus-visible{outline:2px solid #000;outline-offset:2px}
 .lbl2{height:35mm;display:grid;grid-template-columns:1fr 1fr;border:.3mm solid #000;box-sizing:border-box;overflow:hidden;break-inside:avoid;font-family:var(--sans);font-size:10.5pt;line-height:1.28;color:#000;background:#fff}
 .lbl2+.lbl2{border-top:0}                                  /* stacked labels share one line between them, not two */
 .lbl2 .from,.lbl2 .to{display:flex;flex-direction:column;gap:1.2mm;padding:2.5mm 3mm;min-width:0;overflow-wrap:anywhere}.lbl2 .from{border-right:.3mm solid #000}
-.lbl2 .hd{display:flex;align-items:center;gap:2.5mm}.lbl2 .lg{height:8.5mm;width:auto;flex:none;display:block}
-.lbl2 .tag{align-self:flex-start;flex:none;font-size:6.5pt;font-weight:700;letter-spacing:.14em;line-height:1;padding:.7mm 1.6mm;border:.25mm solid #000;border-radius:1mm}
+.lbl2 .lg{height:8.5mm;width:auto;max-width:100%;flex:none;display:block;align-self:flex-start}
+.lbl2 .tag{align-self:flex-start;flex:none;font-size:7pt;font-weight:700;letter-spacing:.14em;line-height:1;background:none;color:#000;padding:0;border:0;border-radius:0;display:block}
 .lbl2 p{margin:0}.lbl2 b{font-weight:700}
 @media print{@page{size:A4;margin:0}.lbl-pages{width:210mm}.lbl-page{box-shadow:none;break-after:page;page-break-after:always}.lbl-page:last-child{break-after:auto;page-break-after:auto}}
 @media print{
@@ -197,7 +198,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .cal-title{display:inline-flex;align-items:center;gap:5px;background:none;border:0;font:inherit;font-size:19px;font-weight:600;letter-spacing:-.01em;color:#1d1d1f;cursor:pointer;padding:6px 10px;border-radius:12px;min-height:40px}.cal-title:hover,.cal-title[aria-expanded="true"]{background:#f5f5f7}.cal-title .ic{color:#6e6e73;flex:none}
 .cal-bar{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-bottom:12px}
 .cal-pickwrap{margin:0 0 14px;padding:12px;border-radius:16px;background:#f5f5f7}.cal-pickhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;font-size:14px;font-weight:600}.cal-pickhead .ad-x{background:#fff}
-.cal-pick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.cal-pick button{min-height:44px;border:1px solid #d2d2d7;background:#fff;border-radius:12px;font:inherit;font-size:15px;color:#1d1d1f;cursor:pointer}.cal-pick button.on{background:#000;color:#fff;border-color:#000}
+.cal-pick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.cal-pick button{min-height:44px;border:1px solid #d2d2d7;background:#fff;border-radius:12px;font:inherit;font-size:15px;color:#1d1d1f;cursor:pointer}.cal-pick button.on{background:#000;color:#fff;border-color:#000}
 @media(max-width:420px){.cal-pick{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .chip.rentout{background:#636366;color:#fff}.cal-dots i.rentout{background:#636366;border-radius:2px;width:7px;height:7px}.dotk.rentout{background:#636366;border-radius:2px;width:9px;height:9px}.kindtag.rentout{background:#636366;color:#fff}
 /* inbox rows: the message opens on tap; two round toggles (attended, read) sit left of the date */
@@ -205,7 +206,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .mail-open{display:flex;align-items:center;gap:12px;flex:1;min-width:0;background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
 .mail-open .main{min-width:0;flex:1}
 .mail-tools{display:flex;align-items:center;gap:6px;flex:none}
-.mail-tools .ad-x{width:34px;height:34px;background:#f0f0f3;color:#6e6e73}.mail-tools .ad-x.tg.on{background:#000;color:#fff}
+.mail-tools{width:80px;justify-content:flex-end}.mail-tools .ad-x{width:34px;height:34px;background:#f0f0f3;color:#6e6e73}
 .mail-date{color:#6e6e73;font-size:12px;white-space:nowrap;min-width:46px;text-align:right}
 /* long names, emails and links never push a pop-up or a box wider than the screen */
 .ad-modal,.ad-modal-b,.ad-card,.ad-help,.ad-row small,.ws-text small,.cls-main small,.ad-modal-h h2{overflow-wrap:anywhere;min-width:0}
@@ -213,3 +214,49 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 @media(max-width:560px){.ad-table{font-size:13px}.ad-table th,.ad-table td{padding-left:4px;padding-right:4px}}
 .ad-stat{min-width:0}.ad-stat b,.ad-stat span,.ad-stat em{overflow-wrap:break-word}
 .ad-modal .ad-row>b,.ad-row .end b,.ad-row .end small{white-space:nowrap;flex:none}.ad-modal .ad-row>span{min-width:0}
+/* receipt / invoice window: the real A4 pages are drawn off-screen to make the PDF, the PDF is shown in the window */
+.doc-off{position:fixed;left:-10000px;top:0;width:794px;pointer-events:none}.doc-off .inv-sheet{box-shadow:none;margin:0}
+.doc-frame{display:block;width:100%;height:min(68dvh,720px);border:1px solid #e5e5ea;border-radius:14px;background:#f5f5f7}
+/* one colour system: iPhones paint plain buttons, links, phone numbers and dates blue by themselves. Everything inherits the app's own colours instead. */
+:where(.ad-app,.ad-center,.ad-modal-bg,.ad-login) :where(a,button,summary,[role=button]){color:inherit}
+:where(.ad-app,.ad-center,.ad-modal-bg) :where(a){text-decoration:none}
+:where(.ad-app,.ad-center,.ad-modal-bg) :where(input,select,textarea){color:#1d1d1f;-webkit-text-fill-color:currentColor}
+:where(.ad-app,.ad-modal-bg) :where(input,select,textarea,button){accent-color:#000}
+a[x-apple-data-detectors],a[href^="tel"],a[href^="sms"],a[href^="x-apple-data-detectors"]{color:inherit!important;text-decoration:none!important}
+button,input,select,textarea{-webkit-tap-highlight-color:transparent}
+
+/* planner: the month picker is one title, a year stepper and a 3 x 4 grid of months; narrow screens show letters instead of shapes */
+.cal-pickhead{justify-content:center;gap:18px}.cal-pickhead b{min-width:64px;text-align:center;font-size:16px}.cal-pick button.now:not(.on){border-color:#000;font-weight:600}
+.cal-letters{display:none}
+@media(max-width:700px){.cal-dots{display:none!important}.cal-letters{display:flex;flex-wrap:wrap;justify-content:center;gap:0 4px;max-width:100%}.cal-letters i{font-style:normal;font-size:12px;font-weight:700;line-height:1.2}.cal-letters i.a{color:#1d1d1f}.cal-letters i.b{color:#8e8e93}}
+.ad-view{display:grid;gap:14px;margin:0 0 18px}.ad-view>div{display:grid;gap:2px}.ad-view dt{font-size:13px;color:#6e6e73}.ad-view dd{margin:0;font-size:16px;overflow-wrap:anywhere;white-space:pre-wrap}
+@media(min-width:700px){.ad-view{grid-template-columns:1fr 1fr}}
+.pay-add{padding:14px;border:1px solid #ececef;border-radius:16px}
+
+.ad-embed-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:26px 0 12px}.ad-embed-row .ad-embed-h{margin:0}
+.todo-row{transition:opacity .26s ease,transform .26s ease,max-height .3s ease .1s,padding .3s ease .1s;max-height:120px;overflow:hidden}
+.todo-row.leaving{opacity:0;transform:translateX(24px);max-height:0;padding-top:0;padding-bottom:0}
+@media(prefers-reduced-motion:reduce){.todo-row{transition:none}}
+
+/* workshops list: the picture is as tall as all the text beside it; narrow screens put the venue on its own line */
+.ws-row>.ad-thumb{align-self:stretch;width:72px;height:auto;min-height:72px}
+.ws-v{display:inline}
+@media(max-width:640px){.ws-v{display:block}.ws-sep{display:none}}
+/* classes list: tag, amount and Students button sit in fixed columns, so they line up on every item and every screen */
+.cls-box .end{display:grid;grid-template-columns:100px 84px 92px;gap:10px;align-items:center;width:296px;flex:none;justify-content:stretch}
+.cls-tags{display:flex;gap:6px;justify-content:flex-end;flex-wrap:nowrap;min-width:0;white-space:nowrap}.cls-tags .ad-badge{white-space:nowrap;flex:none}.cls-amt{text-align:right;font-weight:500;white-space:nowrap}.cls-box .end .ad-btn{width:100%}
+.cls-box .cls-main b{display:block}.cls-box .cls-main small{display:inline}.cls-box .cls-main small.cls-n::before{content:" · "}
+@media(max-width:600px){.cls-box .end{width:100%;box-sizing:border-box;grid-template-columns:minmax(0,1fr) 78px 96px;gap:8px}.cls-box .cls-main small{display:block}.cls-box .cls-main small.cls-n::before{content:none}}
+
+/* date, email and phone: one line with dots on wide screens, each on its own line on narrow screens */
+.meta-lines span+span::before{content:" · "}
+@media(max-width:640px){.meta-lines span{display:block}.meta-lines span+span::before{content:none}}
+
+.ad-field textarea.grow{overflow:hidden;resize:none}
+.settings-session{margin:8px 0 32px;display:grid;grid-template-columns:1fr 1fr;gap:10px}.settings-session .ad-btn{width:100%}
+@media(min-width:901px){.settings-session{display:none}}
+
+/* a row of buttons that are all the same size and line up; links that are not underlined */
+.ad-actions.eq{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}.ad-actions.eq>.ad-btn{width:100%;min-width:0}
+.plainlink{color:inherit;text-decoration:none}
+@media(max-width:360px){.cls-box .end{grid-template-columns:minmax(0,1fr) 96px}.cls-tags{grid-column:1/-1;justify-content:flex-start}.cls-tags:empty{display:none}.cls-amt{text-align:left}}

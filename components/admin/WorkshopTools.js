@@ -6,7 +6,7 @@ import { RefundDialog } from './Refund';
 import { money } from '@/lib/accounting';
 const wa = (phone, text) => { const d = String(phone || '').replace(/\D/g, '').slice(-10); return d.length === 10 ? `https://wa.me/91${d}?text=${encodeURIComponent(text)}` : null; };
 
-/** Email everyone in a workshop or on a waitlist. If email is not set up yet, WhatsApp links for each person are shown instead. */
+/** Email everyone who paid for a workshop. If email is not set up yet, WhatsApp links for each person are shown instead. */
 export function MessageModal({ audience, id, title, people, onClose }) {
   const [run, busy] = useAction(); const toast = useToast(); const f = useForm({ subject: '', message: '' }); const [res, setRes] = useState(null);
   const send = (e) => { e.preventDefault(); return run(async () => {
@@ -41,21 +41,6 @@ export function RefundModal({ workshop, bookings, onClose, onDone }) {
     <p style={{ margin: '14px 0 0' }}>Refunding <b>{chosen.length}</b> {chosen.length === 1 ? 'person' : 'people'}: <b>{money(total)}</b>.</p>
     <div className="ad-actions full"><Btn busy={busy} disabled={!chosen.length && !cancel} onClick={next}>{chosen.length ? 'Next' : 'Cancel workshop'}</Btn><Btn variant="ghost" onClick={onClose}>Back</Btn></div>
   </Modal>);
-}
-
-/** People waiting for a seat. When seats are free (for example after a cancellation) each person who fits can be booked in one tap. */
-export function Waitlist({ workshop, left = 0, onBook, onMessage }) {
-  const { data, error, reload } = useLoad(async () => must(await sb().from('workshop_waitlist').select('*').eq('workshop_id', workshop.id).order('created_at')), [workshop.id]);
-  const [run] = useAction();
-  if (error) return <Err e={error} />; if (!data) return <Spin />; if (!data.length) return null;
-  const msg = (p) => `Hi ${p.name.split(' ')[0]}, a seat has opened up for ${workshop.title}. Would you like it?`;
-  return (<><p className="ad-section-t" style={{ marginTop: 22 }}>Waitlist ({data.length})</p>
-    {left > 0 && <p className="ad-help" style={{ margin: '8px 0 0' }}>{left} {left === 1 ? 'seat is' : 'seats are'} free. Book someone from the waitlist below.</p>}
-    <div className="ad-list">{data.map((p) => <div key={p.id} className="ad-row" style={{ cursor: 'default' }}><div className="main"><b>{p.name}</b><small>{[p.phone, p.email].filter(Boolean).join(' · ')} · {p.seats} {p.seats > 1 ? 'seats' : 'seat'} · since {fmtD(p.created_at)}{p.notified_at ? ` · contacted ${fmtD(p.notified_at)}` : ''}</small></div>
-      <div className="end row-actions" style={{ display: 'flex', margin: 0 }}>{left >= p.seats && onBook && <Btn className="ad-btn sm" onClick={() => onBook(p)}>Book</Btn>}
-        {wa(p.phone, msg(p)) && <a className="ad-btn ghost sm" target="_blank" rel="noopener" onClick={() => { sb().from('workshop_waitlist').update({ notified_at: new Date().toISOString() }).eq('id', p.id).then(() => reload()); }} href={wa(p.phone, msg(p))}>WhatsApp</a>}
-        <button className="ad-btn ghost sm" onClick={() => run(async () => { must(await sb().from('workshop_waitlist').delete().eq('id', p.id)); reload(); })}>Remove</button></div></div>)}</div>
-    <div className="row-actions" style={{ marginTop: 12 }}><Btn variant="ghost" icon="mail" onClick={() => onMessage(data)}>Email the waitlist</Btn></div></>);
 }
 
 /** Mark a workshop as cancelled (it disappears from the website). If people have paid, offer to refund them first. */

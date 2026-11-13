@@ -1,7 +1,9 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useLoad, sb, must, Page, Card, Badge, Empty, Spin, Err, Btn, F, useForm, useAction } from './kit';
+import { useRef } from 'react';
+import { useLoad, sb, must, Page, Card, Fold, Empty, Spin, Err, Btn, F, useForm, useAction } from './kit';
+import { printElement } from '@/lib/printDoc';
 import { CustomerSuggest, useCustomers, ensureCustomer } from './pickers';
 import { FitA4 } from './InvoiceSheet';
 import { ADDRESS_TEXT } from '@/lib/address';
@@ -13,7 +15,7 @@ const lines = (a) => [[a.line1, a.line2, a.city, a.state, a.pincode ? `PIN\u00A0
 const custAddr = (c) => ({ line1: c.address_line1, line2: c.address_line2, city: c.city, state: c.state, pincode: c.pincode });
 
 export default function Labels() {
-  const sp = useSearchParams(); const [pick, setPick] = useState({}); const [extra, setExtra] = useState([]); const [who, setWho] = useState(''); const [run, busy] = useAction();
+  const sp = useSearchParams(); const [pick, setPick] = useState({}); const [extra, setExtra] = useState([]); const [who, setWho] = useState(''); const [run, busy] = useAction(); const sheet = useRef();
   const { data, error } = useLoad(async () => {
     const c = sb(); const [o, s] = await Promise.all([c.from('orders').select('id,name,phone,shipping_address,status,created_at').in('status', ['paid', 'packed']).order('created_at', { ascending: false }).limit(200), c.from('settings').select('value').eq('key', 'business').maybeSingle()]);
     return { orders: must(o), biz: s.data?.value || {} };
@@ -32,25 +34,25 @@ export default function Labels() {
   const addCustomer = (c) => { setExtra((a) => [...a, { key: `c${c.id}-${a.length}`, to: c.name, phone: c.phone || '', lines: lines(custAddr(c)), from: 'customer' }]); setWho(''); };
   const addManual = (e) => { e.preventDefault(); const v = m.v; setExtra((a) => [...a, { key: crypto.randomUUID(), to: v.recipient, phone: v.phone, lines: lines(v), from: 'manual' }]); };
   const saveCustomer = () => run(async () => { const v = m.v; if (!v.recipient.trim()) throw new Error('Please enter the recipient name first.'); await ensureCustomer({ name: v.recipient, phone: v.phone, address_line1: v.line1, address_line2: v.line2, city: v.city, state: v.state, pincode: v.pincode }); reloadCustomers(); }, 'Added to customers');
-  return (<Page title="Label printer" back="/manager/orders" action={<Btn icon="print" disabled={!labels.length} onClick={() => window.print()}>Print {labels.length || ''}</Btn>}>
+  return (<Page title="Label printer" back="/manager/orders" action={<Btn icon="print" disabled={!labels.length} onClick={() => printElement(sheet.current.querySelector('.lbl-pages'), { title: 'Address labels' })}>Print {labels.length || ''}</Btn>}>
     <div className="ad-noprint">
       <Card title="Orders waiting to be sent">
-        {data.orders.length ? <div className="ad-list">{data.orders.map((o) => (<label key={o.id} className="ad-row" style={{ cursor: 'pointer' }}><span style={{ display: 'flex', gap: 12, alignItems: 'center' }}><input type="checkbox" checked={!!pick[o.id]} onChange={(e) => setPick((p) => ({ ...p, [o.id]: e.target.checked }))} /><span className="main"><b>{o.name}</b><small>{o.shipping_address?.city}, {o.shipping_address?.pincode}</small></span></span><Badge tone={o.status === 'packed' ? 'info' : 'warn'}>{o.status === 'paid' ? 'to pack' : o.status}</Badge></label>))}</div> : <Empty>No orders waiting to be sent.</Empty>}
+        {data.orders.length ? <div className="ad-list">{data.orders.map((o) => (<label key={o.id} className="ad-row" style={{ cursor: 'pointer' }}><span style={{ display: 'flex', gap: 12, alignItems: 'center' }}><input type="checkbox" checked={!!pick[o.id]} onChange={(e) => setPick((p) => ({ ...p, [o.id]: e.target.checked }))} /><span className="main"><b>{o.name}</b><small>{o.shipping_address?.city}, {o.shipping_address?.pincode}</small></span></span></label>))}</div> : <Empty>No orders waiting to be sent.</Empty>}
         <div className="ad-actions"><Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setPick(Object.fromEntries(data.orders.map((o) => [o.id, true])))}>Select all</Btn><Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setPick({})}>Clear</Btn></div></Card>
-      <Card title="Choose a customer"><p className="ad-help" style={{ marginTop: 0 }}>Pick someone whose address is already saved.</p>
+      <Fold title="Choose a customer" tight={false}><p className="ad-help" style={{ marginTop: 0 }}>Pick someone whose address is already saved.</p>
         <CustomerSuggest label="Customer" value={who} onType={setWho} onPick={(c) => (c.address_line1 ? addCustomer(c) : null)} customers={withAddress} />
-        {who && !withAddress.some((c) => c.name.toLowerCase().includes(who.toLowerCase())) && <p className="ad-help">No saved address for that name. Add it below.</p>}</Card>
-      <Card title="Add address manually"><form className="ad-form" onSubmit={addManual}>
+        {who && !withAddress.some((c) => c.name.toLowerCase().includes(who.toLowerCase())) && <p className="ad-help">No saved address for that name. Add it below.</p>}</Fold>
+      <Fold title="Add address manually" tight={false}><form className="ad-form" onSubmit={addManual}>
         <F form={m} k="recipient" label="Recipient" rule="name" required /><F form={m} k="phone" label="Phone" type="tel" rule="phone" required /><div className="full"><F form={m} k="line1" label="Address line 1" rule="text" required /></div><F form={m} k="line2" label="Address line 2" rule="text" />
         <F form={m} k="city" label="City" rule="text" required /><F form={m} k="state" label="State" rule="text" required /><F form={m} k="pincode" label="Pincode" rule="pin" required inputMode="numeric" />
-        <div className="ad-actions full"><Btn icon="plus">Add label</Btn><Btn type="button" variant="ghost" busy={busy} icon="user" onClick={saveCustomer}>Add to customers</Btn></div></form></Card>
+        <div className="ad-actions full"><Btn icon="plus">Add label</Btn><Btn type="button" variant="ghost" busy={busy} icon="user" onClick={saveCustomer}>Add to customers</Btn></div></form></Fold>
       {extra.length > 0 && <Card title={`Added labels (${extra.length})`}><div className="ad-list">{extra.map((l) => <div key={l.key} className="ad-row" style={{ cursor: 'default' }}><span className="main"><b>{l.to}</b><small>{l.lines.join(', ')}</small></span><button className="ad-x" aria-label="Remove" onClick={() => setExtra((a) => a.filter((x) => x.key !== l.key))}>✕</button></div>)}</div></Card>}
       <p className="ad-help">Print on A4, portrait, at 100% (Actual size), in black and white. {labels.length ? `${labels.length} label${labels.length > 1 ? 's' : ''} on ${pages.length} page${pages.length > 1 ? 's' : ''}.` : ''}</p>
     </div>
-    {labels.length ? <FitA4 pages={pages.length}><div className="lbl-pages">{pages.map((rows, pi) => (<div className="lbl-page" key={pi}>{rows.map((l) => (
+    {labels.length ? <div ref={sheet}><FitA4 pages={pages.length}><div className="lbl-pages">{pages.map((rows, pi) => (<div className="lbl-page" key={pi}>{rows.map((l) => (
       <div className="lbl2" key={l.key}>
-        <div className="from"><div className="hd"><span className="tag">FROM</span><img src="/brand/logo-line-light.svg" alt={biz.name || 'Thin Black Brush'} className="lg" /></div><p>{String(biz.address || ADDRESS_TEXT).replace(/\s*\n\s*/g, ' ')}</p></div>
-        <div className="to"><span className="tag">TO</span><b>{l.to}</b>{l.lines.length > 0 && <p>{l.lines.join(', ')}</p>}{l.phone && <p>Ph: {l.phone}</p>}</div></div>))}</div>))}</div></FitA4>
+        <div className="from"><span className="tag">FROM</span><img src="/brand/logo-line-light.svg" alt={biz.name || 'Thin Black Brush'} className="lg" /><p>{String(biz.address || ADDRESS_TEXT).replace(/\s*\n\s*/g, ' ')}</p>{biz.phone && <p>Ph: {biz.phone}</p>}</div>
+        <div className="to"><span className="tag">TO</span><b>{l.to}</b>{l.lines.length > 0 && <p>{l.lines.join(', ')}</p>}{l.phone && <p>Ph: {l.phone}</p>}</div></div>))}</div>))}</div></FitA4></div>
       : <p className="ad-empty ad-noprint">Choose parcels or add an address to see your labels here.</p>}
   </Page>);
 }

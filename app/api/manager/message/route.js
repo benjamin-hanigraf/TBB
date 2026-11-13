@@ -3,7 +3,7 @@ import { sendEmail, emailReady, messageEmail } from '@/lib/server/email';
 import { rateLimit, sameOrigin, readJson, str, isEmail, json } from '@/lib/server/guard';
 export const runtime = 'nodejs';
 const UUID = /^[0-9a-f-]{36}$/i;
-// Owner-only: emails everyone in a workshop or on a workshop waitlist.
+// Owner-only: emails everyone who has paid for a workshop.
 export async function POST(req) {
   if (!sameOrigin(req)) return json({ error: 'forbidden' }, 403);
   if (!rateLimit(req, 'admin-message', 10)) return json({ error: 'slow_down' }, 429);
@@ -15,10 +15,8 @@ export async function POST(req) {
   if (!UUID.test(b.id) || subject.length < 3 || body.length < 5) return json({ error: 'bad_request' }, 400);
   let rows = [];
   if (b.audience === 'workshop') rows = await q(`bookings?workshop_id=eq.${b.id}&status=eq.paid&select=name,email`);
-  else if (b.audience === 'waitlist') rows = await q(`workshop_waitlist?workshop_id=eq.${b.id}&select=name,email`);
   else return json({ error: 'bad_request' }, 400);
   const seen = new Set(); const list = (rows || []).filter((r) => isEmail(String(r.email || '').toLowerCase()) && !seen.has(r.email.toLowerCase()) && seen.add(r.email.toLowerCase())).slice(0, 200);
-  let sent = 0, failed = 0; const ok = []; for (const r of list) { try { await sendEmail(messageEmail({ to: r.email, subject, body, name: r.name })); sent++; ok.push(r.email); } catch { failed++; } }
-  if (b.audience === 'waitlist' && ok.length) { try { await q(`workshop_waitlist?workshop_id=eq.${b.id}&email=in.(${ok.map((e) => `"${e.replace(/["(),]/g, '')}"`).map(encodeURIComponent).join(',')})`, { method: 'PATCH', body: { notified_at: new Date().toISOString() } }); } catch (e) { console.error('waitlist contacted', e.message); } }   // shown as "contacted" in the waitlist
+  let sent = 0, failed = 0; for (const r of list) { try { await sendEmail(messageEmail({ to: r.email, subject, body, name: r.name })); sent++; } catch { failed++; } }
   return json({ ok: true, sent, failed, skipped: (rows || []).length - list.length });
 }

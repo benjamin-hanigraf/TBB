@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Icon from '@/components/Icons';
-import { useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, Sortable, slugify, useToast } from './kit';
+import { useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Modal, ViewModal, Btn, F, useForm, useAction, Confirm, Sortable, slugify, useToast } from './kit';
 import { GST_MODES } from '@/lib/gst';
 import { AddEnrol, EnrolModal } from './ManualEntry';
 import { OneOnOneModal } from './OneOnOne';
@@ -10,7 +10,7 @@ import { fmtDay } from '@/lib/dates';
 const lines = (s) => String(s || '').split('\n').map((x) => x.trim()).filter(Boolean);
 
 export default function Classes() {
-  const toast = useToast(); const [edit, setEdit] = useState(null); const [people, setPeople] = useState(null); const [autoOpen, setAutoOpen] = useState(null);
+  const toast = useToast(); const [edit, setEdit] = useState(null); const [view, setView] = useState(null); const [people, setPeople] = useState(null); const [autoOpen, setAutoOpen] = useState(null);
   const { data, error, reload } = useLoad(async () => {
     const c = sb(); const [l, e, t, s] = await Promise.all([c.from('class_levels').select('*').order('sort_order'), every(() => c.from('class_enrolments').select('id,class_id').in('status', ['paid', 'transferred']).order('id')),
       c.from('class_types').select('*').order('sort_order'), every(() => c.from('class_sessions').select('enrolment_id,status').neq('status', 'cancelled').order('id'))]);
@@ -29,9 +29,11 @@ export default function Classes() {
   return (<Page title="Classes" action={<Btn icon="plus" onClick={() => setEdit({})}>Add level</Btn>}>
     <Card tight>{data.levels.length ? <Sortable className="cls-list" items={data.levels} onReorder={reorder} render={(c, grip) => (
       <div className={`cls-box t${tone(c.track)}`}><span {...grip}><Icon n="grip" size={18} /></span>
-        <button type="button" className="main cls-main" onClick={() => setEdit(c)}><b>{c.title} ({c.level})</b><small>{c.track} · {c.sessions} classes · {data.n[c.id] || 0} {(data.n[c.id] || 0) === 1 ? 'student' : 'students'}</small></button>
-        <div className="end"><b>{money(c.price_paise)}</b>{!c.active && <Badge>Hidden</Badge>}{data.loose[c.id] > 0 && <Badge tone="warn">{data.loose[c.id]} to schedule</Badge>}<Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setPeople(c)}>Students</Btn></div></div>)} /> : <Empty>No levels yet.</Empty>}</Card>
+        <button type="button" className="main cls-main" onClick={() => setView(c)}><b>{c.title} ({c.level})</b><small>{c.track}</small><small className="cls-n">{c.sessions} classes · {data.n[c.id] || 0} {(data.n[c.id] || 0) === 1 ? 'student' : 'students'}</small></button>
+        <div className="end"><span className="cls-tags">{!c.active && <Badge>Hidden</Badge>}{data.loose[c.id] > 0 && <Badge tone="warn">{data.loose[c.id]} to schedule</Badge>}</span><b className="cls-amt">{money(c.price_paise)}</b><Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setPeople(c)}>Students</Btn></div></div>)} /> : <Empty>No levels yet.</Empty>}</Card>
     {data.levels.length > 1 && <p className="ad-help" style={{ textAlign: 'center' }}>Drag the handle to change the order on the website. "To schedule" means students who paid but have no class dates yet: open Students, then Classes.</p>}
+    {view && <ViewModal title={`${view.title} (${view.level})`} onClose={() => setView(null)} onEdit={() => { setEdit(view); setView(null); }}
+      rows={[['Type', view.track], ['Price', `${money(view.price_paise)}${view.gst_mode === 'add' ? ' + GST' : view.gst_mode === 'included' ? ' incl. GST' : ''}`], ['Number of classes', String(view.sessions)], ['On the website', view.active ? 'Shown' : 'Hidden'], ['Description', view.description], ['What it covers', (view.covers || []).join('\n')]]} />}
     {edit && <Form c={edit} types={data.types} count={data.levels.length} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); reload(); }} />}
     {people && <Participants level={people} autoOpen={autoOpen} onClose={() => { setPeople(null); setAutoOpen(null); }} onChanged={reload} />}
   </Page>);

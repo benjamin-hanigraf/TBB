@@ -60,7 +60,7 @@ const LISTS = [
 ];
 
 // Everything in the database as one file (kept private: it has customer details). Photos stay in Supabase storage and are not inside.
-const BACKUP_TABLES = ['settings', 'site_images', 'workshops', 'bookings', 'workshop_waitlist', 'class_types', 'class_levels', 'class_sessions', 'class_enrolments', 'products', 'orders', 'order_items', 'customers', 'enquiries', 'invoices', 'invoice_payments', 'ledger_entries', 'events', 'rentouts', 'todos', 'profiles'];
+const BACKUP_TABLES = ['settings', 'site_images', 'workshops', 'bookings', 'class_types', 'class_levels', 'class_sessions', 'class_enrolments', 'products', 'orders', 'order_items', 'customers', 'enquiries', 'invoices', 'invoice_payments', 'ledger_entries', 'events', 'rentouts', 'todos', 'profiles'];
 
 export default function DataTools() {
   const toast = useToast(); const [busyKey, setBusyKey] = useState(''); const [up, setUp] = useState(null); const [note, setNote] = useState(''); const [run, busy] = useAction();

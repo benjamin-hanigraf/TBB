@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLoad, sb, must, every, Page, Card, Fold, Badge, Empty, Spin, Err, Modal, Btn, F, PhotoField, useForm, useAction, Confirm, useToast, fmtD, fmtDT, dmyToISO, isoToDMY, slugify } from './kit';
-import { MessageModal, RefundModal, Waitlist, CancelWorkshop } from './WorkshopTools';
+import { MessageModal, RefundModal, CancelWorkshop } from './WorkshopTools';
 import { useClash } from './Clash';
 import { slotFromStart } from '@/lib/clash';
 import { GST_MODES } from '@/lib/gst';
@@ -40,7 +40,7 @@ export default function Workshops() {
   const line = (w) => (
     <div key={w.id} className="ws-row">
       {w.image_path ? <img className="ad-thumb" src={photo(w.image_path)} alt="" /> : <div className="ad-thumb" />}
-      <div className="ws-text"><b>{w.title}</b><small>{fmtDT(w.starts_at)}{w.kind === 'course' && w.ends_at ? ` to ${fmtD(w.ends_at)}` : ''} · {w.venue_name || 'Venue not set'}</small><small>{data.taken[w.id] || 0} of {w.capacity} seats booked · {money(w.price_paise)}</small></div>
+      <div className="ws-text"><b>{w.title}</b><small>{fmtDT(w.starts_at)}{w.kind === 'course' && w.ends_at ? ` to ${fmtD(w.ends_at)}` : ''}<span className="ws-sep"> · </span><span className="ws-v">{w.venue_name || 'Venue not set'}</span></small><small>{data.taken[w.id] || 0} of {w.capacity} seats booked · {money(w.price_paise)}</small></div>
       <div className="ws-act"><Badge tone={w.status === 'published' ? 'ok' : w.status === 'cancelled' ? 'bad' : ''}>{w.status === 'published' ? 'Published' : w.status === 'cancelled' ? 'Cancelled' : 'Draft'}</Badge><Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setAtt(w)}>Participants</Btn><Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setEdit(w)}>Edit</Btn></div></div>);
   return (<Page title="Workshops" action={<Btn icon="plus" onClick={() => setEdit({})}>New workshop</Btn>}>
     <Card title={`Upcoming (${up.length})`} tight>{up.length ? <div className="ad-list">{up.map(line)}</div> : <Empty>No upcoming workshops. Tap "New workshop" to add one.</Empty>}</Card>
@@ -87,7 +87,7 @@ function WorkshopForm({ w, onClose, onSaved, onCopy }) {
   const remove = () => run(async () => {
     const { count } = await sb().from('bookings').select('id', { count: 'exact', head: true }).eq('workshop_id', w.id).in('status', ['paid', 'pending', 'refunded', 'transferred']);
     if (count > 0) { setBlocked(count); return; }                                           // it has bookings: offer to hide it instead of failing
-    must(await sb().from('workshop_waitlist').delete().eq('workshop_id', w.id)); must(await sb().from('workshops').delete().eq('id', w.id)); onSaved(); }, 'Workshop deleted');
+    must(await sb().from('workshops').delete().eq('id', w.id)); onSaved(); }, 'Workshop deleted');
   const hide = () => run(async () => { must(await sb().from('workshops').update({ status: 'draft' }).eq('id', w.id)); onSaved(); }, 'Workshop hidden from the website');
   const course = f.v.kind === 'course';
   return (<Modal title={isNew ? 'New workshop' : 'Edit workshop'} onClose={onClose} wide>
@@ -126,7 +126,7 @@ function WorkshopForm({ w, onClose, onSaved, onCopy }) {
 }
 
 function Attendees({ w, taken, onClose, onChanged }) {
-  const [add, setAdd] = useState(false); const [one, setOne] = useState(null); const [msg, setMsg] = useState(null); const [refund, setRefund] = useState(false); const [book, setBook] = useState(null);
+  const [add, setAdd] = useState(false); const [one, setOne] = useState(null); const [msg, setMsg] = useState(null); const [refund, setRefund] = useState(false);
   const { data, error, reload } = useLoad(async () => must(await sb().from('bookings').select('*,workshops(title,starts_at)').eq('workshop_id', w.id).in('status', ['paid', 'pending', 'transferred']).order('created_at')), [w.id]);
   const rows = (data || []).filter((b) => b.status !== 'pending' || b.channel === 'manual'); const seats = rows.filter((b) => b.status === 'paid').reduce((s, b) => s + b.seats, 0); const left = Math.max(0, w.capacity - seats);
   const changed = () => { reload(); onChanged(); };
@@ -136,12 +136,10 @@ function Attendees({ w, taken, onClose, onChanged }) {
       {rows.length ? <div className="ad-list">{rows.map((b) => <button key={b.id} className="ad-row" onClick={() => setOne(b)}><div className="main"><b>{b.name}</b><small>{[b.phone, b.email].filter(Boolean).join(' · ')}</small></div><div className="end"><b>{money(b.amount_paise)}</b><small>{b.seats} {b.seats > 1 ? 'seats' : 'seat'}</small><Badge tone={b.status === 'paid' ? 'ok' : b.status === 'pending' ? 'warn' : ''}>{b.status === 'pending' ? 'not paid' : b.status}</Badge></div></button>)}</div> : <Empty>No participants yet.</Empty>}
       <div className="ad-actions full"><Btn icon="plus" onClick={() => setAdd(true)}>Add sign-up</Btn>{rows.some((b) => b.status === 'paid') && <Btn variant="ghost" icon="mail" onClick={() => setMsg({ audience: 'workshop', id: w.id, title: w.title, people: rows.filter((b) => b.status === 'paid') })}>Message all</Btn>}
 </div>
-      <Waitlist workshop={w} left={left} onBook={setBook} onMessage={(people) => setMsg({ audience: 'waitlist', id: w.id, title: `${w.title} waitlist`, people })} />
       {rows.some((b) => b.status === 'paid') && w.status !== 'cancelled' && <div className="ad-actions" style={{ marginTop: 22 }}><Btn variant="ghost" className="ad-btn ghost danger-text" onClick={() => setRefund(true)}>Cancel and refund everyone</Btn></div>}</>}
     {msg && <MessageModal {...msg} onClose={() => setMsg(null)} />}
     {refund && <RefundModal workshop={w} bookings={rows} onClose={() => setRefund(false)} onDone={() => { changed(); }} />}
     {add && <AddSignup w={w} taken={seats} onClose={() => setAdd(false)} onSaved={() => { setAdd(false); changed(); }} />}
-    {book && <AddSignup w={w} taken={seats} prefill={{ name: book.name, email: book.email, phone: book.phone, seats: book.seats, waitlistId: book.id }} onClose={() => setBook(null)} onSaved={() => { setBook(null); changed(); }} />}
     {one && <BookingModal b={one} onClose={() => setOne(null)} onSaved={() => { setOne(null); changed(); }} />}
   </Modal>);
 }

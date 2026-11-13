@@ -8,6 +8,7 @@ import { orderNumber } from '@/lib/numbering';
 import { syncPaymentsToLedger } from '@/lib/ledgerSync';
 import { AddOrder, METHOD_OPTIONS } from './ManualEntry';
 import { RefundDialog } from './Refund';
+import { ReceiptModal } from './DocViewer';
 import { adminClient as supabase } from '@/lib/supabase-admin';
 
 // An order is either not paid yet, paid (to ship), shipped, or cancelled/refunded. Older "packed" counts as paid and "delivered" as shipped.
@@ -22,18 +23,19 @@ export default function Orders() {
   const [open, setOpen] = useState(null); const [q, setQ] = useState(''); const [adding, setAdding] = useState(false); const [shownShipped, setShownShipped] = useState(5);
   const { data, error, reload } = useLoad(async () => {
     const c = sb(); const [o, p, s] = await Promise.all([
-      every(() => c.from('orders').select('*,order_items(*)').or('status.neq.pending,channel.eq.manual').order('created_at', { ascending: false }).order('id')),
+      every(() => c.from('orders').select('*').or('status.neq.pending,channel.eq.manual').order('created_at', { ascending: false }).order('id')),
       c.from('products').select('id,slug,title,price_paise,stock,gst_mode,active,allow_preorder').order('title'), c.from('settings').select('key,value')]);
     return { orders: must(o), products: must(p), st: Object.fromEntries(must(s).map((r) => [r.key, r.value])) };
   });
-  useEffect(() => { const id = param('open'); if (!id || !data) return; const o = data.orders.find((x) => x.id === id); if (o) setOpen(o); else sb().from('orders').select('*,order_items(*)').eq('id', id).maybeSingle().then((r) => r.data && setOpen(r.data)); }, [data]);
+  const openOrder = async (o) => { const r = await sb().from('orders').select('*,order_items(*)').eq('id', o.id).maybeSingle(); setOpen(r.data || { ...o, order_items: [] }); };       // the list stays light: an order's items are fetched when it is opened
+  useEffect(() => { const id = param('open'); if (!id || !data) return; sb().from('orders').select('*,order_items(*)').eq('id', id).maybeSingle().then((r) => r.data && setOpen(r.data)); }, [data]);
   if (error) return <Page title="Orders"><Err e={error} /></Page>; if (!data) return <Page title="Orders"><Spin /></Page>;
   const no = (o) => orderNumber(o, data.st);
   const has = (x) => !q || JSON.stringify([x.name, x.email, x.phone, no(x), x.invoice_no]).toLowerCase().includes(q.toLowerCase());
   const list = data.orders.filter(has);
   const ship = list.filter(toShip), wait = list.filter((o) => o.status === 'pending'), sent = list.filter(isShipped), off = list.filter(isOff);
-  const row = (o) => (<button key={o.id} className="ad-row" onClick={() => setOpen(o)}><div className="main"><b>{o.name}</b>
-    <small>{[no(o), (o.order_items || []).map((i) => `${i.title} × ${i.qty}`).join(', '), fmtD(o.created_at), o.channel === 'manual' ? 'added manually' : '', isOff(o) ? (o.status === 'refunded' ? 'refunded' : 'cancelled') : ''].filter(Boolean).join(' · ')}</small></div>
+  const row = (o) => (<button key={o.id} className="ad-row" onClick={() => openOrder(o)}><div className="main"><b>{o.name}</b>
+    <small>{[no(o), fmtD(o.created_at)].filter(Boolean).join(' · ')}</small></div>
     <div className="end"><b>{money(o.total_paise)}</b><span className="tags">{isPaid(o) && <Badge tone="ok">Paid</Badge>}{isShipped(o) && <Badge tone="ok">Shipped</Badge>}</span></div></button>);
   const Section = ({ title, rows, empty }) => (rows.length || empty ? <Card title={rows.length ? `${title} (${rows.length})` : title} tight>{rows.length ? <div className="ad-list">{rows.map(row)}</div> : <Empty>{empty}</Empty>}</Card> : null);
   return (<Page title="Orders" action={<><Link className="ad-btn ghost" href="/manager/labels"><Icon n="print" size={16} /><span>Label printer</span></Link><Btn icon="plus" onClick={() => setAdding(true)}>Add order</Btn></>}>
@@ -49,7 +51,7 @@ export default function Orders() {
 }
 
 function OrderModal({ o, st, products, onClose, onSaved }) {
-  const [step, setStep] = useState(null); const [edit, setEdit] = useState(false); const [refund, setRefund] = useState(false); const [run, busy] = useAction(); const toast = useToast();
+  const [step, setStep] = useState(null); const [edit, setEdit] = useState(false); const [receipt, setReceipt] = useState(false); const [refund, setRefund] = useState(false); const [run, busy] = useAction(); const toast = useToast();
   const f = useForm({ method: 'upi', carrier: o.tracking_carrier || '', number: o.tracking_number || '' });
   const no = orderNumber(o, st); const paid = isPaid(o), shipped = isShipped(o), manual = o.channel === 'manual';
   const markPaid = () => run(async () => {
@@ -64,7 +66,7 @@ function OrderModal({ o, st, products, onClose, onSaved }) {
     const { data } = await supabase().auth.getSession(); const r = await fetch('/api/manager/email', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ type: 'shipped', order_id: o.id }) });
     if (!r.ok) throw new Error('Could not send the email. Please check the email settings.'); }, 'Shipping email sent');
   return (<Modal title={`${no ? `${no} · ` : ''}${o.name}`} onClose={onClose}>
-    <p className="ad-help" style={{ marginTop: 0 }}>{fmtDT(o.created_at)}{o.channel === 'manual' ? ' · added manually' : ''}{o.email ? ` · ${o.email}` : ''}{o.phone ? ` · ${o.phone}` : ''}</p>
+    <p className="ad-help meta-lines" style={{ marginTop: 0 }}><span>{fmtDT(o.created_at)}</span>{o.channel === 'manual' && <span>Added manually</span>}{o.email && <span>{o.email}</span>}{o.phone && <span>{o.phone}</span>}</p>
     <p style={{ margin: '0 0 10px' }}>{paid && <Badge tone="ok">Paid</Badge>} {shipped && <Badge tone="ok">Shipped</Badge>}{isOff(o) && <span className="ad-help">{o.status === 'refunded' ? 'Refunded' : 'Cancelled'}</span>}</p>
     <div className="ad-list" style={{ margin: '10px 0' }}>{(o.order_items || []).map((i) => <div key={i.id} className="ad-row" style={{ cursor: 'default' }}><span>{i.title} × {i.qty}</span><b>{money(i.unit_paise * i.qty)}</b></div>)}
       {o.shipping_paise > 0 && <div className="ad-row" style={{ cursor: 'default' }}><span>Shipping</span><b>{money(o.shipping_paise)}</b></div>}<div className="ad-row" style={{ cursor: 'default' }}><b>Total</b><b>{money(o.total_paise)}</b></div></div>
@@ -83,11 +85,12 @@ function OrderModal({ o, st, products, onClose, onSaved }) {
       {toShip(o) && <Btn onClick={() => setStep('ship')}>Mark as shipped</Btn>}
       {shipped && o.tracking_number && <Btn variant="ghost" busy={busy} onClick={email} icon="mail">Email tracking</Btn>}
       {o.status === 'shipped' && <Confirm onYes={unship}>Undo shipped</Confirm>}
-      {paid && <Link className="ad-btn ghost" href={`/manager/labels?order=${o.id}`}>Print label</Link>}
-      {paid && <Link className="ad-btn ghost" href={`/invoice/${o.id}`} target="_blank">Receipt</Link>}
+      {paid && <Link className="ad-btn ghost" href={`/manager/labels?order=${o.id}`}><Icon n="print" size={16} /><span>Print label</span></Link>}
+      {paid && <Btn variant="ghost" icon="file" onClick={() => setReceipt(true)}>Receipt</Btn>}
       {manual && !isOff(o) && <Btn variant="ghost" onClick={() => setEdit(true)}>Edit</Btn>}
       {paid && <Btn variant="ghost" onClick={() => setRefund(true)}>Refund</Btn>}
       {o.status === 'pending' && <Confirm onYes={cancel}>Cancel order</Confirm>}</div>}
+    {receipt && <ReceiptModal id={o.id} onClose={() => setReceipt(false)} />}
     {edit && <AddOrder order={o} products={products} onClose={() => setEdit(false)} onSaved={onSaved} />}
     {refund && <RefundDialog kind="order" rows={[o]} title={`Refund · ${o.name}`} onClose={() => setRefund(false)} onDone={onSaved} />}
   </Modal>);

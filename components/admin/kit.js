@@ -61,8 +61,8 @@ export const Btn = ({ icon, children, variant = '', busy, ...p }) => (<button cl
 // Several windows can be open at once (a window can open another one, or close its parent). The page behind is frozen while at least one is open,
 // and freed again only when the last one closes, in whatever order they close.
 let locks = 0;
-const lockPage = () => { if (locks++ === 0) document.body.style.overflow = 'hidden'; };
-const unlockPage = () => { locks = Math.max(0, locks - 1); if (locks === 0) document.body.style.overflow = ''; };
+const lockPage = () => { if (locks++ === 0) document.documentElement.classList.add('ad-lock'); };
+const unlockPage = () => { locks = Math.max(0, locks - 1); if (locks === 0) document.documentElement.classList.remove('ad-lock'); };
 export function Modal({ title, onClose, children, wide }) {
   const ref = useRef();
   useEffect(() => { lockPage(); ref.current?.focus(); return unlockPage; }, []);
@@ -71,10 +71,10 @@ export function Modal({ title, onClose, children, wide }) {
     <div className={`ad-modal ${wide ? 'ad-wide' : ''}`} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={ref}>
       <div className="ad-modal-h"><h2>{title}</h2><button className="ad-x" onClick={onClose} aria-label="Close">✕</button></div><div className="ad-modal-b">{children}</div></div></div>);
 }
-export function Confirm({ children, onYes, label, className = '', ...p }) {
+export function Confirm({ children, onYes, label, icon, className = '', ...p }) {
   const [ask, setAsk] = useState(false); const t = useRef();
   useEffect(() => () => clearTimeout(t.current), []);
-  return <button type="button" className={`ad-btn ghost danger-text ${ask ? 'asking' : ''} ${className}`} onClick={() => { if (ask) { clearTimeout(t.current); setAsk(false); onYes(); } else { setAsk(true); t.current = setTimeout(() => setAsk(false), 4000); } }} {...p}><span>{ask ? 'Sure? Tap again' : children}</span></button>;
+  return <button type="button" className={`ad-btn ghost danger-text ${ask ? 'asking' : ''} ${className}`} onClick={() => { if (ask) { clearTimeout(t.current); setAsk(false); onYes(); } else { setAsk(true); t.current = setTimeout(() => setAsk(false), 4000); } }} {...p}>{icon && !ask && <Icon n={icon} size={16} />}<span>{ask ? 'Sure? Tap again' : children}</span></button>;
 }
 
 // ---------- drag to reorder (works with mouse and touch) ----------
@@ -92,19 +92,30 @@ export function Sortable({ items, getId = (x) => x.id, onReorder, render, classN
 }
 
 // ---------- forms ----------
+/** A window that shows an item to read. The Edit button opens the editing window. rows: [[label, value]]; empty values are left out. */
+export function ViewModal({ title, rows = [], children, onEdit, actions, onClose, wide }) {
+  const shown = rows.filter((r) => r && r[1] !== undefined && r[1] !== null && r[1] !== '' && r[1] !== false);
+  return (<Modal title={title} onClose={onClose} wide={wide}>
+    {shown.length > 0 && <dl className="ad-view">{shown.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>}
+    {children}
+    {(onEdit || actions) && <div className="ad-actions full">{onEdit && <Btn icon="edit" onClick={onEdit}>Edit</Btn>}{actions}</div>}
+  </Modal>);
+}
 export function useForm(init) {
   const [v, setV] = useState(init);
   return { v, set: (k, val) => setV((c) => ({ ...c, [k]: val })), reset: (n) => setV(n ?? init), setAll: setV };
 }
 /** One field. rule = typing/finishing rule from lib/format (name, email, phone, money, text, sentence, title, ...) */
-export function F({ form, k, label, type = 'text', rule, required, options, hint, rows = 4, ...rest }) {
-  const r = rule && RULES[rule]; const val = form.v[k] ?? '';
+export function F({ form, k, label, type = 'text', rule, required, options, hint, rows = 4, grow, ...rest }) {
+  const r = rule && RULES[rule]; const val = form.v[k] ?? ''; const ta = useRef();
+  // grow: a text box that is always as tall as its text, so it never scrolls inside
+  useEffect(() => { const el = ta.current; if (!grow || !el) return; const fit = () => { if (!el.offsetParent) return; el.style.height = 'auto'; el.style.height = `${el.scrollHeight}px`; }; fit(); const io = new IntersectionObserver(fit); io.observe(el); window.addEventListener('resize', fit); return () => { io.disconnect(); window.removeEventListener('resize', fit); }; }, [grow, val]);
   const common = { id: `f-${k}`, name: k, required, value: val, autoComplete: 'off', 'data-lpignore': 'true', 'data-1p-ignore': 'true', ...(r ? { autoCapitalize: r.cap, spellCheck: r.spell } : {}), ...rest };
   const onChange = (e) => form.set(k, r ? r.typing(e.target.value) : e.target.value);
   const onBlur = r ? (e) => form.set(k, r.done(e.target.value)) : undefined;
   let el;
   if (type === 'check') return (<label className="ad-check"><input type="checkbox" checked={!!val} onChange={(e) => form.set(k, e.target.checked)} /><span>{label}</span></label>);
-  if (type === 'textarea') el = <textarea {...common} rows={rows} onChange={onChange} onBlur={onBlur} />;
+  if (type === 'textarea') el = <textarea {...common} ref={ta} rows={rows} className={grow ? 'grow' : undefined} onChange={onChange} onBlur={onBlur} />;
   else if (type === 'select') el = <select {...common} onChange={onChange}>{required && <option value="" disabled>Select</option>}{options.map((o) => { const [value, text] = Array.isArray(o) ? o : [o, o]; return <option key={value} value={value}>{text}</option>; })}</select>;
   else if (type === 'date') el = <input {...common} type="text" inputMode="numeric" placeholder="DD/MM/YYYY" maxLength={10} pattern="(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[0-2])/20[0-9]{2}" onChange={(e) => { const d = e.target.value.replace(/\D/g, '').slice(0, 8); form.set(k, d.length > 4 ? `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}` : d.length > 2 ? `${d.slice(0, 2)}/${d.slice(2)}` : d); }} />;
   else el = <input {...common} type={type === 'money' ? 'text' : type} inputMode={type === 'money' ? 'decimal' : rest.inputMode} onChange={onChange} onBlur={onBlur} />;

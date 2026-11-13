@@ -262,7 +262,12 @@ Batch: Invoice flow, TDS-free tidy-up, ITC on expenses (owner request)
 - Standing reminder: code deploys to Vercel automatically; each supabase/database.sql change must be run by hand in Supabase
 
 == Fix: class row overlap at mid-screen widths (480–699 px) ==
-- Bug: at 480–699 px, the Attended/Scheduled/Cancelled badge was overlapping the action pill (Attended | Reschedule | Cancel), and the pill was clipping off-screen right
-- Root cause: the old min-width:700px rule set a 2-column grid [1fr | 400px] but left the badge inside sess-head (flex row), causing it to push into the pill's space
-- Fix (admin.css): at <700px the sess-row is always a single-column grid; the pill is a full-width second row below the head+badge; at ≥700px the 3-column grid [1fr | 98px | 400px] is unchanged
-- Tested widths: 320, 360, 390, 480, 600, 699, 700, 1024, 1440px
+- Bug: at all widths below ~900px, the Attended/Scheduled/Cancelled badge was overlapping the date text, and the pill was clipping off-screen right
+- Root cause 1: no overflow:hidden on .sess-head .main, so date/time text bled into the badge column
+- Root cause 2: the 700px breakpoint for the 3-column layout was too low — at 700–899px viewport, the modal content area leaves only ~70–230px for the 1fr details column, which is not enough for a full date string with white-space:nowrap
+- Root cause 3: 400px pill left too little room for details at mid widths
+- Fix (admin.css):
+  · <900px: sess-row is single-column grid; pill is a full-width second row below head+badge; c-dot hidden
+  · ≥900px: 3-column grid [1fr | 98px badge | 320px pill]; sess-head is display:contents
+  · overflow:hidden + text-overflow:ellipsis on .main and .c-no/.c-when at all widths — hard clipping prevents any bleed
+- Build passes; pushed to dev

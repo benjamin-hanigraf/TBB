@@ -481,6 +481,10 @@ begin if not is_admin() then raise exception 'not allowed'; end if; perform orde
 
 create or replace function next_invoice_number() returns bigint language plpgsql security definer set search_path = public as $$
 begin if not is_admin() then raise exception 'not allowed'; end if; return nextval('invoice_seq'); end $$;
+-- the number the next invoice will get, without using it up (shown in the new invoice form)
+create or replace function peek_invoice_number() returns bigint language plpgsql stable security definer set search_path = public as $$
+declare v bigint; called boolean;
+begin if not is_admin() then raise exception 'not allowed'; end if; select last_value, is_called into v, called from invoice_seq; return case when called then v + 1 else v end; end $$;
 create or replace function set_invoice_start(n bigint) returns void language plpgsql security definer set search_path = public as $$
 declare cur bigint;
 begin
@@ -722,6 +726,7 @@ grant execute on function book_seats(uuid, uuid, text, text, text, integer, inte
 grant execute on function order_stock_internal(uuid, boolean) to service_role;
 revoke all on function admin_order_stock(uuid, boolean) from public, anon;
 revoke all on function next_invoice_number() from public, anon;
+revoke all on function peek_invoice_number() from public, anon;
 revoke all on function set_invoice_start(bigint) from public, anon;
 revoke all on function set_order_start(bigint) from public, anon;
 revoke all on function admin_add_order(jsonb) from public, anon;
@@ -730,7 +735,7 @@ revoke all on function customer_summary() from public, anon;
 revoke all on function ledger_repair(boolean, boolean) from public, anon, authenticated;
 revoke all on function ledger_sync_item(text, uuid, boolean) from public, anon, authenticated;
 revoke all on function accounts_check_rows() from public, anon, authenticated;
-grant execute on function admin_order_stock(uuid, boolean), next_invoice_number(), set_invoice_start(bigint), set_order_start(bigint),
+grant execute on function admin_order_stock(uuid, boolean), next_invoice_number(), peek_invoice_number(), set_invoice_start(bigint), set_order_start(bigint),
   admin_add_order(jsonb), admin_update_order(jsonb), customer_summary() to authenticated;
 
 -- ---------------------------------------------------------------- the public workshop list: published workshops only (a cancelled one is never shown), seats left worked out

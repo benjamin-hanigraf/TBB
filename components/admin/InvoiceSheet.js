@@ -17,8 +17,8 @@ export function InvoiceSheet({ d }) {
         {d.customer.address && <p className="inv-sub" style={{ whiteSpace: 'pre-line' }}>{d.customer.address}</p>}{d.customer.phone && <p className="inv-sub">{d.customer.phone}</p>}{d.customer.email && <p className="inv-sub">{d.customer.email}</p>}{gst && d.customer.gstin && <p className="inv-sub">GSTIN {d.customer.gstin}</p>}</div>
       <div className="inv-right"><p className="inv-title">{d.title}</p><p className="inv-sub">{d.no}</p>{d.ref && <p className="inv-sub">{d.ref}</p>}<p className="inv-sub">Date {isoToDMY(d.date)}</p>{d.due && <p className="inv-sub">Due {isoToDMY(d.due)}</p>}</div>
     </div>
-    <table className="inv-table"><thead><tr><th className="l">Description</th>{cols && <th>HSN/SAC</th>}<th className="r">Qty</th><th className="r">Rate</th>{cols && <th className="r">GST</th>}<th className="r">Amount</th></tr></thead>
-      <tbody>{c.lines.length ? c.lines.map((l, i) => <tr key={i}><td className="l">{l.desc || '—'}</td>{cols && <td>{l.hsn || '—'}</td>}<td className="r">{l.qty}</td><td className="r">{money(l.unit_paise || 0)}</td>{cols && <td className="r">{l.rate ? `${l.rate}%` : '—'}</td>}<td className="r">{money(l.net)}</td></tr>) : <tr><td className="l" colSpan={cols ? 6 : 4}>—</td></tr>}</tbody></table>
+    <table className="inv-table"><thead><tr><th className="l">Description</th>{cols && <th>HSN/SAC</th>}{!c.noQty && <th className="r">Qty</th>}{!c.noQty && <th className="r">Rate</th>}{cols && <th className="r">GST</th>}<th className="r">Amount</th></tr></thead>
+      <tbody>{c.lines.length ? c.lines.map((l, i) => <tr key={i}><td className="l">{l.desc || '—'}</td>{cols && <td>{l.hsn || '—'}</td>}{!c.noQty && <td className="r">{l.qty ?? '—'}</td>}{!c.noQty && <td className="r">{money(l.unit_paise || 0)}</td>}{cols && <td className="r">{l.rate ? `${l.rate}%` : '—'}</td>}<td className="r">{money(l.net)}</td></tr>) : <tr><td className="l" colSpan={(cols ? 6 : 4) - (c.noQty ? 2 : 0)}>—</td></tr>}</tbody></table>
     <div className="inv-totals">
       {!c.included && <div><span>Subtotal</span><span>{money(c.subtotal)}</span></div>}
       {c.discount > 0 && <div><span>Discount</span><span>− {money(c.discount)}</span></div>}
@@ -35,9 +35,10 @@ export function InvoiceSheet({ d }) {
   </div>);
 }
 
-/** Shrinks the A4 page to fit the screen. When printing, it is shown at true A4 size. */
-export function FitA4({ children, pages = 1 }) {
-  const ref = useRef(); const [s, setS] = useState(1);
-  useEffect(() => { const el = ref.current; if (!el) return; const fit = () => setS(Math.min(1, el.clientWidth / 794)); fit(); const ro = new ResizeObserver(fit); ro.observe(el); return () => ro.disconnect(); }, []);
-  return <div ref={ref} className="inv-fit" style={{ height: 1123 * s * pages }}><div className="inv-scale" style={{ transform: `scale(${s})` }}>{children}</div></div>;
+/** Fits the A4 page to the width it is given (never changing its A4 shape). By default it only shrinks on small screens; with fill it also grows to match the box above it,
+ *  so the page lines up with the other sections. When printing, it is shown at true A4 size. */
+export function FitA4({ children, pages = 1, fill = false }) {
+  const ref = useRef(); const inner = useRef(); const [s, setS] = useState(1); const [h, setH] = useState(1123 * pages);
+  useEffect(() => { const el = ref.current; if (!el) return; const fit = () => { const w = el.clientWidth; if (w > 0) setS(fill ? w / 794 : Math.min(1, w / 794)); const ih = inner.current?.offsetHeight; if (ih) setH(Math.max(ih, 1123 * pages)); }; fit(); const ro = new ResizeObserver(fit); ro.observe(el); if (inner.current) ro.observe(inner.current); return () => ro.disconnect(); }, [fill, pages]);
+  return <div ref={ref} className="inv-fit" style={{ height: h * s }}><div ref={inner} className="inv-scale" style={{ transform: `scale(${s})` }}>{children}</div></div>;
 }

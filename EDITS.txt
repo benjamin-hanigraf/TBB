@@ -220,3 +220,10 @@ Batch: Calculator (owner request, doubts clarified)
 
 - Bug (owner): adding an invoice for a new customer created the customer twice (once with only the name, once with email and contact). Fix: a customer is recognised by name too when their email and phone do not contradict; the existing record is completed instead of a second one being made; names-only duplicates that already exist appear under Customers > Merge.
 - Invoice: the address typed on an invoice is now saved on the customer record too (parsed into address lines, city, state, pincode); only empty fields are filled, nothing is overwritten.
+
+Batch: Invoice/quotation number prefilled; quantity optional (owner request)
+- Every new invoice or quotation opens with its number already filled in from the running series (editable); it must not be blank.
+- If the quantity is deliberately left blank on every line, the Qty column is left out of the invoice or quotation (for services where quantity does not apply).
+- Invoice view: the PDF button is removed (Print stays). The totals block (subtotal, discount, GST, total) always sits at the bottom of the page above the footer, for invoices, quotations and receipts.
+- Invoice/quotation preview: its width always matches the sections above it (it grows or shrinks to fit, keeping the A4 shape).
+- Invoices: the Send reminder button is removed (owner will not use it).

@@ -7,8 +7,9 @@
 .inv-right{text-align:right}.inv-title{font-size:28px;font-weight:700;letter-spacing:.04em;margin:0;text-transform:uppercase}
 .inv-table{width:100%;border-collapse:collapse;font-size:13.5px}.inv-table th{font-size:11.5px;color:#8e8e93;text-transform:uppercase;letter-spacing:.05em;font-weight:600;padding:9px 6px;border-bottom:1px solid #d2d2d7;text-align:center}
 .inv-table td{padding:11px 6px;border-bottom:1px solid #ececef;text-align:center}.inv-table .l{text-align:left;padding-left:0}.inv-table .r{text-align:right}.inv-table th.r:last-child,.inv-table td.r:last-child{padding-right:0}
-.inv-totals{margin:18px 0 0 auto;width:300px;display:grid;gap:6px;font-size:13.5px;color:#555}.inv-totals div{display:flex;justify-content:space-between}.inv-totals .grand{border-top:2px solid #141414;padding-top:10px;margin-top:4px;font-size:18px;font-weight:700;color:#141414}.inv-totals .paid{font-weight:600;color:#141414}
-.inv-foot{margin-top:auto;padding-top:20px;border-top:1px solid #ececef;display:flex;justify-content:space-between;gap:24px;align-items:flex-end}.inv-foot .inv-sub{margin-top:3px}
+.inv-totals{margin:18px 0 20px auto;width:300px;display:grid;gap:6px;font-size:13.5px;color:#555}.inv-totals div{display:flex;justify-content:space-between}.inv-totals .grand{border-top:2px solid #141414;padding-top:10px;margin-top:4px;font-size:18px;font-weight:700;color:#141414}.inv-totals .paid{font-weight:600;color:#141414}
+.inv-totals{margin-top:auto;padding-top:18px}  /* the totals always sit at the bottom of the page, just above the footer */
+.inv-foot{margin-top:0;padding-top:20px;border-top:1px solid #ececef;display:flex;justify-content:space-between;gap:24px;align-items:flex-end}.inv-foot .inv-sub{margin-top:3px}
 @media print{@page{size:A4;margin:0}.inv-fit{height:auto!important;overflow:visible}.inv-scale{transform:none!important;width:210mm}.inv-sheet{width:210mm;min-height:297mm;box-shadow:none}body{background:#fff!important}}
 /* a receipt printed from the website: only the page itself, none of the site's menu or footer */
 @media print{body:has(.receipt-page) .nav,body:has(.receipt-page) footer,body:has(.receipt-page) .skip,body:has(.receipt-page) .receipt-extra{display:none!important}body:has(.receipt-page) main{padding:0!important}}

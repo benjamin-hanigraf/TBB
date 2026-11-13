@@ -252,3 +252,17 @@ Batch: Invoice flow, TDS-free tidy-up, ITC on expenses (owner request)
 - Classes: Attended/Scheduled/Cancelled tags share one fixed width so they line up on the same vertical line.
 - Classes pill: visible separator lines between the sections.
 - Classes rows: everything centred on one line; narrow screens show 'Class N' then date/time beneath; wide screens one line with fixed tag and pill columns.
+
+== Session: Antigravity (Nov 2026) ==
+- Switched from Claude Code to Antigravity for continued development
+- Context restored from DESIGN.md, EDITS.txt, git log and codebase
+- Currently on branch: dev (68 commits ahead of main)
+- Vercel deployment: vercel.json already in place (region bom1); no Netlify changes needed
+- Owner ran supabase/database.sql (adds invoices to customer summary, required for last batch)
+- Standing reminder: code deploys to Vercel automatically; each supabase/database.sql change must be run by hand in Supabase
+
+== Fix: class row overlap at mid-screen widths (480–699 px) ==
+- Bug: at 480–699 px, the Attended/Scheduled/Cancelled badge was overlapping the action pill (Attended | Reschedule | Cancel), and the pill was clipping off-screen right
+- Root cause: the old min-width:700px rule set a 2-column grid [1fr | 400px] but left the badge inside sess-head (flex row), causing it to push into the pill's space
+- Fix (admin.css): at <700px the sess-row is always a single-column grid; the pill is a full-width second row below the head+badge; at ≥700px the 3-column grid [1fr | 98px | 400px] is unchanged
+- Tested widths: 320, 360, 390, 480, 600, 699, 700, 1024, 1440px

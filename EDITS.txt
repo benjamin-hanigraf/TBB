@@ -192,3 +192,12 @@ Batch: Manager gestures, buttons, lists, drag, and page fixes (owner request)
 - Workshops: big gap between Add sign-up and Cancel buttons in Participants; "$" in the Add sign-up title (remove it, and look for other stray text across Manager and website); remove the Copy button from add/edit workshop.
 - Orders: "Mark as shipped" becomes "Shipped"; add "Not paid" option; on phones Add order is right-aligned with Label printer left-aligned.
 Done in this batch: swipe left-to-right goes up one level (windows close first; Home/Planner/Money/More stay put); bottom bar fixed in place; icons on every button in a group (automatic icons for common labels); list details kept whole on narrow screens; drag to reorder now slides under the finger on the top layer with others gliding aside; Visit website and Log out moved to More; Home tasks tick in Today and Receivables opens Unpaid; Planner colours (black, purple, green, blue, amber) and no arrow on the month title; Participants buttons together, stray $ removed, Copy removed; Orders: Shipped, Not paid (stock returned, income entry removed, not for online payments), Add order right-aligned on phones.
+
+Batch: PIN screen, swipe-back fix, Home/Money restructure (owner request)
+- Keep hyphenated names whole in lists (e.g. "pre-order" never split across lines).
+- Home Today tasks: after ticking, show a temporary Undo button to reverse it.
+- PIN screen redo: "Welcome Back" becomes "Welcome"; "Enter your 4-digit..." becomes "Enter PIN" then a line break and "This device will be remembered"; "Back to the website" becomes a button with an icon; on phones and tablets the page moves up when the keypad opens so the input boxes stay visible.
+- Swipe left-to-right still goes to the previously visited page; it must go to the enclosing menu/page. Find all causes. The bottom nav bar must not move during the swipe.
+- Home: the four index cards on top, then shortcut buttons: Add Income (opens the add income window directly), Add Expense (opens add expense directly), Calculator, Label Printer.
+- Calculator has no tab in Money; it stays on Home as a shortcut. Money is split into two separate pages: Accounts and Invoices.
+- Phone bottom bar: Home, Planner, Invoices, More. Accounts moves under More.

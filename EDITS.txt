@@ -230,3 +230,4 @@ Batch: Invoice/quotation number prefilled; quantity optional (owner request)
 
 - Payment methods list everywhere becomes: UPI, Cash, Bank/Card, TDS (owner request).
 - Accounts reports: new section 'TDS deducted by customers' (customer-wise totals and a summary for the selected financial year), read from payments recorded with method TDS. No other TDS mechanism.
+- TDS is offered only when recording a payment on an invoice (UPI, Cash, Bank/Card everywhere else). Quarterly split and PAN/TAN fields are not wanted.

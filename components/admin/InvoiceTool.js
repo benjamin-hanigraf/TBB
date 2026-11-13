@@ -6,8 +6,7 @@ import { CustomerSuggest, useCustomers, ensureCustomer } from './pickers';
 import { InvoiceSheet, FitA4 } from './InvoiceSheet';
 import { printElement } from '@/lib/printDoc';
 import Icon from '@/components/Icons';
-import { METHOD_OPTIONS } from './ManualEntry';
-import { nextInvoiceNo, fyOf, todayISO, money, rupeesToPaise, toCSV, IN_CATEGORIES, methodLabel } from '@/lib/accounting';
+import { nextInvoiceNo, fyOf, todayISO, money, rupeesToPaise, toCSV, IN_CATEGORIES, methodLabel, INVOICE_METHODS } from '@/lib/accounting';
 import { calcInvoice } from '@/lib/invoiceCalc';
 import { formatFor, formatNumber, nextNumberInList } from '@/lib/numbering';
 import { RULES } from '@/lib/format';
@@ -195,7 +194,7 @@ function Editor({ inv, data, onBack, onOpen }) {
         <div className="ad-actions"><Btn type="button" variant="ghost" className="ad-btn ghost sm" icon="plus" onClick={() => setItems((a) => [...a, { desc: '', qty: '1', price: '', rate: '18', hsn: '' }])}>Add item</Btn></div></div>
       <F form={f} k="discount" label="Discount (₹)" type="money" rule="money" />
       {type === 'invoice' && balance > 0 && f.v.state !== 'cancelled' && <F form={f} k="payNow" label="Payment" type="select" required options={[['no', paidSum ? 'Part paid (add payments below)' : 'Not paid yet'], ['yes', paidSum ? `Paid the rest (${money(balance)}) now` : 'Paid in full']]} />}
-      {f.v.payNow === 'yes' && type === 'invoice' && <><F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} /><F form={f} k="paidOn" label="Paid on" type="date" required /><F form={f} k="category" label="Counts as income under" type="select" required options={IN_CATEGORIES} /></>}
+      {f.v.payNow === 'yes' && type === 'invoice' && <><F form={f} k="method" label="Paid by" type="select" required options={INVOICE_METHODS} /><F form={f} k="paidOn" label="Paid on" type="date" required /><F form={f} k="category" label="Counts as income under" type="select" required options={IN_CATEGORIES} /></>}
       <div className="full"><F form={f} k="notes" label="Notes" type="textarea" rule="sentence" rows={2} /></div>
       <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn>
         {!isNew && <Btn type="button" variant="ghost" onClick={stopEdit}>Cancel</Btn>}
@@ -228,7 +227,7 @@ function PaymentForm({ inv, balance, total, gst, onClose, onSaved }) {
     onSaved(p, fullyPaid); }, 'Payment added'); };
   return (<Modal title="Add payment" onClose={onClose}><form className="ad-form" onSubmit={save}>
     <F form={f} k="amount" label="Amount received (₹)" type="money" rule="money" required hint={`${money(balance)} is still to be paid`} /><F form={f} k="on" label="Received on" type="date" required />
-    <F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} /><F form={f} k="category" label="Counts as income under" type="select" required options={IN_CATEGORIES} />
+    <F form={f} k="method" label="Paid by" type="select" required options={INVOICE_METHODS} /><F form={f} k="category" label="Counts as income under" type="select" required options={IN_CATEGORIES} />
     <div className="full"><F form={f} k="note" label="Note" rule="sentence" placeholder="e.g. Advance" /></div>
     <div className="ad-actions full"><Btn busy={busy} icon="check">Save payment</Btn></div></form></Modal>);
 }

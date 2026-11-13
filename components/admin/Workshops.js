@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useLoad, sb, must, every, Page, Card, Fold, Badge, Empty, Spin, Err, Modal, Btn, F, PhotoField, useForm, useAction, Confirm, useToast, fmtD, fmtDT, dmyToISO, isoToDMY, slugify } from './kit';
+import { Segs, useLoad, sb, must, every, Page, Card, Fold, Badge, Empty, Spin, Err, Modal, Btn, F, PhotoField, useForm, useAction, Confirm, useToast, fmtD, fmtDT, dmyToISO, isoToDMY, slugify } from './kit';
 import { MessageModal, RefundModal, CancelWorkshop } from './WorkshopTools';
 import { useClash } from './Clash';
 import { slotFromStart } from '@/lib/clash';
@@ -40,17 +40,17 @@ export default function Workshops() {
   const line = (w) => (
     <div key={w.id} className="ws-row">
       {w.image_path ? <img className="ad-thumb" src={photo(w.image_path)} alt="" /> : <div className="ad-thumb" />}
-      <div className="ws-text"><b>{w.title}</b><small>{fmtDT(w.starts_at)}{w.kind === 'course' && w.ends_at ? ` to ${fmtD(w.ends_at)}` : ''}<span className="ws-sep"> · </span><span className="ws-v">{w.venue_name || 'Venue not set'}</span></small><small>{data.taken[w.id] || 0} of {w.capacity} seats booked · {money(w.price_paise)}</small></div>
+      <div className="ws-text"><b>{w.title}</b><Segs items={[`${fmtDT(w.starts_at)}${w.kind === 'course' && w.ends_at ? ` to ${fmtD(w.ends_at)}` : ''}`, w.venue_name || 'Venue not set']} /><Segs items={[`${data.taken[w.id] || 0} of ${w.capacity} seats booked`, money(w.price_paise)]} /></div>
       <div className="ws-act"><Badge tone={w.status === 'published' ? 'ok' : w.status === 'cancelled' ? 'bad' : ''}>{w.status === 'published' ? 'Published' : w.status === 'cancelled' ? 'Cancelled' : 'Draft'}</Badge><Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setAtt(w)}>Participants</Btn><Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setEdit(w)}>Edit</Btn></div></div>);
   return (<Page title="Workshops" action={<Btn icon="plus" onClick={() => setEdit({})}>New workshop</Btn>}>
     <Card title={`Upcoming (${up.length})`} tight>{up.length ? <div className="ad-list">{up.map(line)}</div> : <Empty>No upcoming workshops. Tap "New workshop" to add one.</Empty>}</Card>
     {past.length > 0 && <Fold title="Past"><div className="ad-list">{past.map(line)}</div></Fold>}
-    {edit && <WorkshopForm key={edit.id || `new-${edit.title || ''}`} w={edit} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); reload(); }} onCopy={(x) => setEdit({ ...x, id: undefined, slug: undefined, starts_at: null, ends_at: null, early_until: null, status: 'draft', title: `${x.title} (copy)` })} />}
+    {edit && <WorkshopForm key={edit.id || `new-${edit.title || ''}`} w={edit} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); reload(); }} />}
     {att && <Attendees w={att} taken={data.taken[att.id] || 0} onClose={() => setAtt(null)} onChanged={reload} />}
   </Page>);
 }
 
-function WorkshopForm({ w, onClose, onSaved, onCopy }) {
+function WorkshopForm({ w, onClose, onSaved }) {
   const t = toISTParts(w.starts_at); const te = toISTParts(w.ends_at); const isNew = !w.id; const [run, busy] = useAction(); const [check, clashDialog] = useClash(); const [cancelling, setCancelling] = useState(false); const toast = useToast();
   const f = useForm({ title: w.title || '', kind: w.kind || 'workshop', summary: w.summary || '', description: w.description || '', venue_name: w.venue_name || '', venue_address: w.venue_address || '', map_link: w.map_link || '',
     date: t.date, endDate: w.kind === 'course' && w.ends_at ? te.date : '', h: t.h, m: t.m, ap: t.ap, price: w.price_paise != null ? String(w.price_paise / 100) : '', friend: w.friend_price_paise ? String(w.friend_price_paise / 100) : '',
@@ -117,7 +117,6 @@ function WorkshopForm({ w, onClose, onSaved, onCopy }) {
       <div className="ad-actions full"><Btn busy={busy} icon="check">{isNew ? 'Save draft' : 'Save'}</Btn>
         {status === 'published' ? <Btn type="button" variant="ghost" busy={busy} onClick={() => save(null, 'draft')}>Unpublish</Btn> : status === 'cancelled' ? <Btn type="button" variant="ghost" busy={busy} onClick={() => save(null, 'draft')}>Reopen as draft</Btn> : <Btn type="button" variant="ghost" busy={busy} onClick={() => save(null, 'published')}>Publish</Btn>}
         {!isNew && status !== 'cancelled' && <Btn type="button" variant="ghost" onClick={() => setCancelling(true)}>Cancel workshop</Btn>}
-        {!isNew && <Btn type="button" variant="ghost" onClick={() => onCopy(w)}>Copy</Btn>}
         {!isNew && <Confirm onYes={remove}>Delete</Confirm>}</div>
     </form>
     {cancelling && <CancelWorkshop w={w} onClose={() => setCancelling(false)} onDone={onSaved} />}
@@ -133,10 +132,9 @@ function Attendees({ w, taken, onClose, onChanged }) {
   return (<Modal title={`Participants · ${w.title}`} onClose={onClose} wide>
     {error && <Err e={error} />}{!data && !error && <Spin />}
     {data && <><p className="ad-help" style={{ marginTop: 0 }}>{seats} of {w.capacity} seats booked · {left} free · {fmtD(w.starts_at)}</p>
-      {rows.length ? <div className="ad-list">{rows.map((b) => <button key={b.id} className="ad-row" onClick={() => setOne(b)}><div className="main"><b>{b.name}</b><small>{[b.phone, b.email].filter(Boolean).join(' · ')}</small></div><div className="end"><b>{money(b.amount_paise)}</b><small>{b.seats} {b.seats > 1 ? 'seats' : 'seat'}</small><Badge tone={b.status === 'paid' ? 'ok' : b.status === 'pending' ? 'warn' : ''}>{b.status === 'pending' ? 'not paid' : b.status}</Badge></div></button>)}</div> : <Empty>No participants yet.</Empty>}
+      {rows.length ? <div className="ad-list">{rows.map((b) => <button key={b.id} className="ad-row" onClick={() => setOne(b)}><div className="main"><b>{b.name}</b><Segs items={[b.phone, b.email]} /></div><div className="end"><b>{money(b.amount_paise)}</b><small className="nw">{b.seats} {b.seats > 1 ? 'seats' : 'seat'}</small><Badge tone={b.status === 'paid' ? 'ok' : b.status === 'pending' ? 'warn' : ''}>{b.status === 'pending' ? 'not paid' : b.status}</Badge></div></button>)}</div> : <Empty>No participants yet.</Empty>}
       <div className="ad-actions full"><Btn icon="plus" onClick={() => setAdd(true)}>Add sign-up</Btn>{rows.some((b) => b.status === 'paid') && <Btn variant="ghost" icon="mail" onClick={() => setMsg({ audience: 'workshop', id: w.id, title: w.title, people: rows.filter((b) => b.status === 'paid') })}>Message all</Btn>}
-</div>
-      {rows.some((b) => b.status === 'paid') && w.status !== 'cancelled' && <div className="ad-actions" style={{ marginTop: 22 }}><Btn variant="ghost" className="ad-btn ghost danger-text" onClick={() => setRefund(true)}>Cancel and refund everyone</Btn></div>}</>}
+        {rows.some((b) => b.status === 'paid') && w.status !== 'cancelled' && <Btn variant="ghost" icon="wallet" className="ad-btn ghost danger-text wrapbtn" onClick={() => setRefund(true)}>Cancel and refund everyone</Btn>}</div></>}
     {msg && <MessageModal {...msg} onClose={() => setMsg(null)} />}
     {refund && <RefundModal workshop={w} bookings={rows} onClose={() => setRefund(false)} onDone={() => { changed(); }} />}
     {add && <AddSignup w={w} taken={seats} onClose={() => setAdd(false)} onSaved={() => { setAdd(false); changed(); }} />}

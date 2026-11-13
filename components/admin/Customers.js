@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Icon from '@/components/Icons';
-import { useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, fmtD } from './kit';
+import { Segs, useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, fmtD } from './kit';
 import { orderNumber } from '@/lib/numbering';
 import { digits10, findDuplicates, mergeCustomers, MergeModal } from './pickers';
 import { money, toCSV } from '@/lib/accounting';
@@ -26,7 +26,7 @@ export default function Customers() {
   if (error) return <Page title="Customers"><Err e={error} /></Page>; if (!data) return <Page title="Customers"><Spin /></Page>;
   const dups = findDuplicates(data.rows);
   const rows = data.rows.filter((c) => !q || `${c.name} ${c.email || ''} ${c.phone || ''} ${c.city || ''}`.toLowerCase().includes(q.toLowerCase()));
-  return (<Page title="Customers" action={<>{dups.length > 0 && <Btn variant="ghost" onClick={() => setMerge(true)}>Merge ({dups.length})</Btn>}<Btn icon="plus" onClick={() => setOpen({ isNew: true })}>Add customer</Btn></>}>
+  return (<Page title="Customers" action={<>{dups.length > 0 && <Btn variant="ghost" icon="user" onClick={() => setMerge(true)}>Merge ({dups.length})</Btn>}<Btn icon="plus" onClick={() => setOpen({ isNew: true })}>Add customer</Btn></>}>
     <input className="ad-search" type="search" placeholder="Search name, email, phone or city" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search customers" />
     <Card tight>{rows.length ? <div className="ad-list">{rows.map((c) => (
       <button key={c.id} className="ad-row" onClick={() => setOpen(c)}><div className="main"><b>{c.name}</b><small className="meta-lines">{c.email && <span>{c.email}</span>}{c.phone && <span>{c.phone}</span>}</small></div>
@@ -79,7 +79,7 @@ function CustomerModal({ c, all, onClose, onSaved }) {
       <p className="ad-section-t" style={{ marginTop: 22 }}>Total spent: {money(c.spent)}</p>
       {h.orders.length > 0 && <><p className="ad-section-t">Orders</p><div className="ad-list">{h.orders.map((o) => <div key={o.id} className="ad-row" style={{ cursor: 'default' }}><span>{o.no || fmtD(o.created_at)}</span><span>{money(o.total_paise)}</span></div>)}</div></>}
       {h.bookings.length > 0 && <><p className="ad-section-t">Workshops</p><div className="ad-list">{h.bookings.map((o) => <div key={o.id} className="ad-row" style={{ cursor: 'default' }}><span>{o.workshops?.title}<br /><small>{fmtD(o.created_at)}</small></span><span>{money(o.amount_paise)}</span></div>)}</div></>}
-      {h.classes.length > 0 && <><p className="ad-section-t">Writing classes</p><div className="ad-list">{h.classes.map((o) => <div key={o.id} className="ad-row" style={{ cursor: 'default' }}><span>{o.class_levels?.title}, {o.class_levels?.level}<br /><small>For {o.student_name} · {fmtD(o.created_at)}</small></span><span>{money(o.amount_paise)}</span></div>)}</div></>}</>}
+      {h.classes.length > 0 && <><p className="ad-section-t">Writing classes</p><div className="ad-list">{h.classes.map((o) => <div key={o.id} className="ad-row" style={{ cursor: 'default' }}><span>{o.class_levels?.title}, {o.class_levels?.level}<br /><Segs items={[`For ${o.student_name}`, fmtD(o.created_at)]} /></span><span>{money(o.amount_paise)}</span></div>)}</div></>}</>}
   {dup && <Modal title="Same phone number" onClose={() => setDup(null)}><p style={{ marginTop: 0 }}><b>{dup.name}</b> already uses this phone number{dup.email ? ` (${dup.email})` : ''}. Merge them into one customer?</p><p className="ad-help">Merging keeps all details and cannot be undone.</p><div className="ad-actions full"><Btn busy={busy} onClick={mergeNow}>Merge</Btn><Btn variant="ghost" busy={busy} onClick={keepBoth}>Keep separate</Btn></div></Modal>}
   </Modal>);
 }

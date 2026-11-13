@@ -1,12 +1,11 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import Icon from '@/components/Icons';
 import { useLoad, sb, must, clearCache, Page, Fold, Spin, Err, Btn, F, useForm, useAction, useToast } from './kit';
 import DataTools from './DataTools';
 import { rupeesToPaise, todayISO } from '@/lib/accounting';
 import { ADDRESS_TEXT } from '@/lib/address';
 import { formatFor, formatNumber, validFormat } from '@/lib/numbering';
-import { pinApi, setToken, applySession, lockDevice } from '@/lib/adminApi';
+import { pinApi, setToken, applySession } from '@/lib/adminApi';
 const GOOD_DEFAULT = 'Please arrive on time.\nBookings are confirmed on payment.\nTickets are non-refundable, but can be transferred to someone else with prior notice to the TBB team.';
 
 const get = (rows, k, d) => ({ ...d, ...(rows.find((r) => r.key === k)?.value || {}) });
@@ -19,7 +18,7 @@ export default function Settings() {
   const { data, error, fresh } = useLoad(async () => must(await sb().from('settings').select('key,value')));
   if (error) return <Page title="Settings"><Err e={error} /></Page>;
   if (!data || !fresh) return <Page title="Settings"><Spin /></Page>;       // the form starts from the freshly loaded settings, never from an old remembered copy
-  return (<Page title="Settings"><Main rows={data} /><Fold big tight={false} title="Data"><DataTools /></Fold><Fold big tight={false} title="Device PIN"><PinCard /></Fold><Session /></Page>);
+  return (<Page title="Settings"><Main rows={data} /><Fold big tight={false} title="Data"><DataTools /></Fold><Fold big tight={false} title="Device PIN"><PinCard /></Fold></Page>);
 }
 async function save(key, value, pub) { must(await sb().from('settings').upsert({ key, value, is_public: pub })); }
 
@@ -114,9 +113,4 @@ function PinCard() {
   return (<><p className="ad-help" style={{ marginTop: 0 }}>{def ? 'You are still using the starting PIN (0000). Please change it.' : 'A new device asks for this PIN the first time it signs in.'}</p>
     <form className="ad-form" onSubmit={submit}><F form={f} k="current" label="Current PIN" {...dg} /><div /><F form={f} k="next" label="New PIN" {...dg} /><F form={f} k="again" label="New PIN again" {...dg} />
       <div className="ad-actions full"><Btn busy={busy} icon="check">Change PIN</Btn></div></form></>);
-}
-/** On a phone the side menu is not there, so the website link and Log out live here, styled like the other buttons. */
-function Session() {
-  return (<div className="settings-session ad-actions"><a className="ad-btn ghost" href="/" target="_blank" rel="noopener"><Icon n="arrow" size={16} /><span>Visit website</span></a>
-    <Btn variant="ghost" icon="logout" onClick={async () => { await lockDevice(); clearCache(); location.reload(); }}>Log out</Btn></div>);
 }

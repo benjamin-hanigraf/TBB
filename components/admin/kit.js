@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { adminClient } from '@/lib/supabase-admin';
 import { RULES } from '@/lib/format';
 import Icon from '@/components/Icons';
@@ -40,8 +40,8 @@ export function useAction() {            // wraps a save/delete so errors become
 }
 
 // ---------- layout pieces ----------
-export const Page = ({ title, action, children, back }) => (
-  <div className="ad-page"><header className="ad-head">{back && <a className="ad-back" href={back} aria-label="Back"><Icon n="left" /></a>}<h1>{title}</h1><div className="ad-act">{action}</div></header>{children}</div>);
+export const Page = ({ title, action, actionClass = '', children, back }) => (
+  <div className="ad-page"><header className="ad-head">{back && <a className="ad-back" href={back} aria-label="Back"><Icon n="left" /></a>}<h1>{title}</h1><div className={`ad-act ${actionClass}`}>{action}</div></header>{children}</div>);
 export const Card = ({ title, children, action, tight }) => (<section className={`ad-card ${tight ? 'tight' : ''}`}>{(title || action) && <div className="ad-card-h"><h2>{title}</h2>{action}</div>}{children}</section>);
 /** A card whose title is a button with a down arrow: tap to open or close. The contents stay on the page while closed, so a form keeps what was typed. */
 export function Fold({ title, children, open: start = false, tight = true, big = false }) {
@@ -51,44 +51,83 @@ export function Fold({ title, children, open: start = false, tight = true, big =
     <div className={`ad-fold-b ${tight ? '' : 'pad'}`} hidden={!open}>{children}</div></section>);
 }
 export const Stat = ({ label, value, sub, tone }) => (<div className={`ad-stat ${tone || ''}`}><span>{label}</span><b>{value}</b>{sub && <em>{sub}</em>}</div>);
+/** The small detail line under a list item. Each detail is kept whole: when the line is too narrow, a whole detail moves to the next line instead of splitting ("3 in" / "stock"). */
+export function Segs({ items, className = '' }) {
+  const parts = items.filter((x) => x !== null && x !== undefined && x !== false && x !== '');
+  if (!parts.length) return null;
+  return <small className={`segs ${className}`}>{parts.map((t, i) => <span key={i} className={`seg ${String(t).length > 26 ? 'w' : ''}`}>{t}</span>)}</small>;
+}
 export const Badge = ({ children, tone = '' }) => <span className={`ad-badge ${tone}`}>{children}</span>;
 export const Empty = ({ children }) => <p className="ad-empty">{children}</p>;
 export const Dots = () => <span className="ad-dotsload" role="status" aria-label="Loading"><i /><i /><i /></span>;
 export const Spin = () => <div className="ad-empty"><Dots /></div>;
 export const Err = ({ e }) => <p className="ad-err" role="alert">{e?.message || 'Could not load. Please check your connection and try again.'}</p>;
-export const Btn = ({ icon, children, variant = '', busy, ...p }) => (<button className={`ad-btn ${variant}`} disabled={busy || p.disabled} {...p}>{icon && <Icon n={icon} size={16} />}<span>{children}</span></button>);
+// Buttons that sit together all carry an icon: a button with a common label gets its icon automatically (pass icon={null} for none).
+const ICON_FOR = { cancel: 'close', close: 'close', 'keep it': 'close', clear: 'close', 'keep separate': 'close', back: 'left', done: 'check', save: 'check', 'save draft': 'check', 'save payment': 'check', 'save settings': 'check', confirm: 'check', 'confirm paid': 'check', 'confirm shipped': 'check', merge: 'check', edit: 'edit', delete: 'trash', remove: 'trash', add: 'plus', 'add payment': 'plus', 'add item': 'plus', 'add label': 'plus', 'add product': 'plus', 'add level': 'plus', 'add student': 'plus', 'add sign-up': 'plus', 'add order': 'plus', 'add customer': 'plus', 'add photo': 'plus', new: 'plus', publish: 'send', unpublish: 'circle', 'hide it': 'circle', 'cancel workshop': 'close', 'cancel order': 'close', 'reopen as draft': 'edit', 'select all': 'listcheck', today: 'calendar', print: 'print', email: 'mail', 'send reminder': 'mail', 'message all': 'mail', refund: 'wallet', 'undo shipped': 'left', 'not paid': 'circle', shipped: 'box', 'mark as paid': 'check', 'reload': 'arrow', 'try again': 'arrow', transfer: 'send', receipt: 'file', pdf: 'file', whatsapp: 'whatsapp', attended: 'circlecheck', restore: 'left', undo: 'left', move: 'send', 'choose photo': 'upload', 'download pdf': 'download', send: 'send', participants: 'user', 'cancel and refund': 'wallet', 'cancel without refunds': 'close', 'add anyway': 'plus', 'go back': 'left' };
+const autoIcon = (children) => (typeof children === 'string' ? ICON_FOR[children.trim().toLowerCase()] : undefined);
+export const Btn = ({ icon, children, variant = '', busy, ...p }) => { const ic = icon === undefined ? autoIcon(children) : icon; return (<button className={`ad-btn ${variant}`} disabled={busy || p.disabled} {...p}>{ic && <Icon n={ic} size={16} />}<span>{children}</span></button>); };
 
 // Several windows can be open at once (a window can open another one, or close its parent). The page behind is frozen while at least one is open,
 // and freed again only when the last one closes, in whatever order they close.
 let locks = 0;
 const lockPage = () => { if (locks++ === 0) document.documentElement.classList.add('ad-lock'); };
 const unlockPage = () => { locks = Math.max(0, locks - 1); if (locks === 0) document.documentElement.classList.remove('ad-lock'); };
+// Swipe back (left to right) closes the top-most window first, then goes up one level. Windows and views register here.
+export const backStack = [];
+export function useBack(fn) { const f = useRef(fn); f.current = fn; useEffect(() => { const h = { close: () => f.current() }; backStack.push(h); return () => { const i = backStack.indexOf(h); if (i >= 0) backStack.splice(i, 1); }; }, []); }
 export function Modal({ title, onClose, children, wide }) {
-  const ref = useRef();
+  const ref = useRef(); useBack(onClose);
   useEffect(() => { lockPage(); ref.current?.focus(); return unlockPage; }, []);
   useEffect(() => { const k = (e) => e.key === 'Escape' && onClose(); document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k); }, [onClose]);
   return (<div className="ad-modal-bg" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
     <div className={`ad-modal ${wide ? 'ad-wide' : ''}`} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={ref}>
       <div className="ad-modal-h"><h2>{title}</h2><button className="ad-x" onClick={onClose} aria-label="Close">✕</button></div><div className="ad-modal-b">{children}</div></div></div>);
 }
-export function Confirm({ children, onYes, label, icon, className = '', ...p }) {
+export function Confirm({ children, onYes, label, icon: iconProp, className = '', ...p }) {
+  const icon = iconProp === undefined ? autoIcon(children) : iconProp;
   const [ask, setAsk] = useState(false); const t = useRef();
   useEffect(() => () => clearTimeout(t.current), []);
-  return <button type="button" className={`ad-btn ghost danger-text ${ask ? 'asking' : ''} ${className}`} onClick={() => { if (ask) { clearTimeout(t.current); setAsk(false); onYes(); } else { setAsk(true); t.current = setTimeout(() => setAsk(false), 4000); } }} {...p}>{icon && !ask && <Icon n={icon} size={16} />}<span>{ask ? 'Sure? Tap again' : children}</span></button>;
+  return <button type="button" className={`ad-btn ghost danger-text ${ask ? 'asking' : ''} ${className}`} onClick={() => { if (ask) { clearTimeout(t.current); setAsk(false); onYes(); } else { setAsk(true); t.current = setTimeout(() => setAsk(false), 4000); } }} {...p}>{icon && <Icon n={icon} size={16} />}<span>{ask ? 'Sure? Tap again' : children}</span></button>;
 }
 
 // ---------- drag to reorder (works with mouse and touch) ----------
 export function Sortable({ items, getId = (x) => x.id, onReorder, render, className, ...rest }) {
   const [list, setList] = useState(items); const [drag, setDrag] = useState(null); const ref = useRef(); const cur = useRef(items); const live = useRef(false);
+  const prev = useRef(new Map()); const st = useRef(null);
   useEffect(() => { if (!live.current) { setList(items); cur.current = items; } }, [items]);
+  const kids = () => [...(ref.current?.children || [])].filter((el) => el.dataset?.sid !== undefined);
+  const offsets = () => new Map(kids().map((el) => [el.dataset.sid, { x: el.offsetLeft, y: el.offsetTop }]));      // layout positions (they ignore the sliding itself)
+  const place = (el, s) => { const dx = s.px - s.sx + (s.ox - el.offsetLeft), dy = s.py - s.sy + (s.oy - el.offsetTop); el.style.transform = `translate(${dx}px,${dy}px) scale(1.02)`; return [dx, dy]; };
+  // After the order changes, the other items glide from where they were to their new places, and the dragged one stays under the finger.
+  useLayoutEffect(() => {
+    if (!ref.current) return; const before = prev.current; const s = st.current;
+    kids().forEach((el) => {
+      const id = el.dataset.sid; if (s && id === s.id) { place(el, s); return; }
+      const o = before.get(id); if (!o) return; const dx = o.x - el.offsetLeft, dy = o.y - el.offsetTop;
+      if (dx || dy) el.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }], { duration: 200, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    });
+    prev.current = offsets();
+  }, [list]);
   const grip = (id) => ({ className: 'ad-grip', 'aria-label': 'Drag to reorder', style: { touchAction: 'none', cursor: 'grab' }, onPointerDown: (e) => {
-    if (e.button > 0) return; e.preventDefault(); live.current = true; setDrag(id); let changed = false;
-    const move = (ev) => { const el = document.elementFromPoint(ev.clientX, ev.clientY); const row = el?.closest?.('[data-sid]'); if (!row || !ref.current?.contains(row)) return; const over = row.dataset.sid; if (over === String(id)) return;
-      const a = cur.current.findIndex((x) => String(getId(x)) === String(id)), b = cur.current.findIndex((x) => String(getId(x)) === over); if (a < 0 || b < 0) return;
-      const n = [...cur.current]; const [m] = n.splice(a, 1); n.splice(b, 0, m); cur.current = n; changed = true; setList(n); };
-    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up); live.current = false; setDrag(null); if (changed) onReorder(cur.current); };
+    if (e.button > 0) return; const el = e.currentTarget.closest('[data-sid]'); if (!el || !ref.current?.contains(el)) return; e.preventDefault();
+    live.current = true; setDrag(String(id)); prev.current = offsets(); let changed = false;
+    const s = { id: String(id), sx: e.clientX, sy: e.clientY, px: e.clientX, py: e.clientY, ox: el.offsetLeft, oy: el.offsetTop, el }; st.current = s; place(el, s);
+    const move = (ev) => {
+      s.px = ev.clientX; s.py = ev.clientY; place(el, s);                                 // the item follows the finger or cursor
+      const cx = s.ox + (s.px - s.sx) + el.offsetWidth / 2, cy = s.oy + (s.py - s.sy) + el.offsetHeight / 2;            // where the middle of the item is, in layout space
+      const over = kids().find((o) => o !== el && cx > o.offsetLeft && cx < o.offsetLeft + o.offsetWidth && cy > o.offsetTop && cy < o.offsetTop + o.offsetHeight); if (!over) return;
+      const a = cur.current.findIndex((x) => String(getId(x)) === s.id), b = cur.current.findIndex((x) => String(getId(x)) === over.dataset.sid); if (a < 0 || b < 0 || a === b) return;
+      const n = [...cur.current]; const [m] = n.splice(a, 1); n.splice(b, 0, m); cur.current = n; changed = true; setList(n);
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up);
+      const [dx, dy] = place(el, s); el.style.transform = ''; el.style.position = 'relative'; el.style.zIndex = '60';          // slide into the final place, still on top
+      const a = el.animate([{ transform: `translate(${dx}px,${dy}px) scale(1.02)` }, { transform: 'none' }], { duration: 180, easing: 'cubic-bezier(.2,.8,.2,1)' });
+      a.onfinish = a.oncancel = () => { el.style.position = ''; el.style.zIndex = ''; };
+      st.current = null; live.current = false; setDrag(null); if (changed) onReorder(cur.current);
+    };
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up); } });
-  return <div ref={ref} className={className} {...rest}>{list.map((x, i) => { const id = getId(x); return <div key={id} data-sid={id} className={`ad-sortable ${drag === id ? 'dragging' : ''}`}>{render(x, grip(id), i)}</div>; })}</div>;
+  return <div ref={ref} className={className} {...rest}>{list.map((x, i) => { const id = getId(x); return <div key={id} data-sid={id} className={`ad-sortable ${drag === String(id) ? 'dragging' : ''}`}>{render(x, grip(id), i)}</div>; })}</div>;
 }
 
 // ---------- forms ----------

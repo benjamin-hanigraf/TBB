@@ -55,7 +55,7 @@ export function MergeModal({ groups, onClose, onDone }) {
   return (<Modal title="Possible duplicates" onClose={onClose}>
     <p className="ad-help" style={{ marginTop: 0 }}>These customers share an email address or phone number. Merging keeps one customer with all the details.</p>
     {groups.map((g, i) => <div key={i} className="ad-card" style={{ background: '#f5f5f7' }}>{g.map((c) => <p key={c.id} style={{ margin: '4px 0' }}><b>{c.name}</b><br /><small className="ad-help">{[c.phone, c.email].filter(Boolean).join(' · ')}</small></p>)}
-      <Btn variant="ghost" onClick={() => setAsk(g)}>Merge these {g.length}</Btn></div>)}
+      <Btn variant="ghost" icon="user" onClick={() => setAsk(g)}>Merge these {g.length}</Btn></div>)}
     {!groups.length && <p className="ad-empty">No duplicates found.</p>}
     {ask && <Modal title="Merge customers?" onClose={() => setAsk(null)}><p style={{ marginTop: 0 }}>{ask.length} customers will become one: <b>{[...ask].sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''))[0].name}</b>. The others are removed and their details are kept. This cannot be undone.</p>
       <div className="ad-actions full"><Btn busy={busy} onClick={() => run(async () => { await mergeCustomers(ask); setAsk(null); onDone(); }, 'Merged')}>Merge</Btn><Btn variant="ghost" onClick={() => setAsk(null)}>Cancel</Btn></div></Modal>}

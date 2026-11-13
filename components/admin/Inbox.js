@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Icon from '@/components/Icons';
-import { useLoad, sb, must, every, Page, Card, Fold, Badge, Empty, Spin, Err, Modal, Btn, useAction, Confirm, fmtDT } from './kit';
+import { Segs, useLoad, sb, must, every, Page, Card, Fold, Badge, Empty, Spin, Err, Modal, Btn, useAction, Confirm, fmtDT } from './kit';
 // Everything people send through the website forms: contact messages, custom invitation requests, service requests, collaboration offers and job applications.
 // Two separate marks: read (opening a message reads it) and attended (you have dealt with it).
 const KIND = { contact: 'Message', invitation: 'Invitation request', service: 'Service request', collaboration: 'Collaboration', hiring: 'Job application' };
@@ -19,7 +19,7 @@ export default function Inbox() {
   const view = async (e) => { setOpen(e); if (!isRead(e)) setRead(e, true); };
   const row = (e) => (<div key={e.id} className={`ad-row mail-row ${isRead(e) ? '' : 'unread'}`} style={{ cursor: 'default' }}>
     <button type="button" className="mail-open" onClick={() => view(e)}><span className="udot" aria-hidden="true" />
-      <span className="main"><b>{e.name}</b><small className="mail-sub"><span>{KIND[e.kind] || 'Message'}</span> · {new Date(e.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' })}</small></span></button>
+      <span className="main"><b>{e.name}</b><Segs className="mail-sub" items={[KIND[e.kind] || 'Message', new Date(e.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' })]} /></span></button>
     <div className="mail-tools">
       <button type="button" className="ad-x tg" aria-pressed={!!e.handled} aria-label={e.handled ? 'Mark as not attended' : 'Mark as attended'} title={e.handled ? 'Attended. Tap to undo' : 'Mark as attended'} onClick={() => setHandled(e, !e.handled)}><Icon n={e.handled ? 'circlecheck' : 'circle'} size={18} /></button>
       <button type="button" className="ad-x tg" aria-pressed={isRead(e)} aria-label={isRead(e) ? 'Mark as unread' : 'Mark as read'} title={isRead(e) ? 'Read. Tap to mark unread' : 'Unread. Tap to mark read'} onClick={() => setRead(e, !isRead(e))}><Icon n={isRead(e) ? 'mailopen' : 'mail'} size={18} /></button></div></div>);

@@ -40,6 +40,6 @@ export function RefundDialog({ kind, rows, title, cancelled = kind !== 'order', 
       {kind === 'order' && <div className="full"><F form={f} k="restock" label="Put the items back in stock?" type="select" required options={[['yes', 'Yes, they are back and fine to sell'], ['no', 'No (damaged, faulty or not returned)']]} /></div>}
       <div className="full"><F form={f} k="reason" label="Reason" rule="sentence" hint="Included in the email to the customer" /></div>
       <div className="full"><F form={f} k="notify" label="Email the customer" type="check" /></div>
-      <div className="ad-actions full"><Btn busy={busy} onClick={go}>Refund {money(total)}</Btn><Btn type="button" variant="ghost" onClick={onClose}>Cancel</Btn></div></div>}
+      <div className="ad-actions full"><Btn busy={busy} icon="wallet" onClick={go}>Refund {money(total)}</Btn><Btn type="button" variant="ghost" onClick={onClose}>Cancel</Btn></div></div>}
   </Modal>);
 }

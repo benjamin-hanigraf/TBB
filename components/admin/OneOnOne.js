@@ -1,7 +1,8 @@
 'use client';
+import Icon from '@/components/Icons';
 // One-on-one classes: each student has their own class dates (any day, any time). A class is either attended or not yet; a student cannot "miss" one.
 import { useState } from 'react';
-import { useLoad, sb, must, Modal, Btn, F, useForm, useAction, Confirm, Badge, Empty, Spin, Err, dmyToISO, isoToDMY } from './kit';
+import { Segs, useLoad, sb, must, Modal, Btn, F, useForm, useAction, Confirm, Badge, Empty, Spin, Err, dmyToISO, isoToDMY } from './kit';
 import { fmtDay } from '@/lib/dates';
 import { todayISO } from '@/lib/accounting';
 import { parseSlot } from '@/lib/clash';
@@ -45,7 +46,7 @@ export function OneOnOneModal({ e, level, onClose, onChanged }) {
     <p className="ad-help" style={{ marginTop: 0 }}>{level.title} ({level.level}) · attended <b>{done}</b> · {live.length} of {total} classes scheduled{toSchedule ? ` · ${toSchedule} still to schedule` : ''}</p>
     {data.length ? <div className="ad-list">{data.map((s) => { const past = s.on_date < today;
       return (<div key={s.id} className="ad-row" style={{ cursor: 'default', alignItems: 'flex-start' }}><div className="main"><b>Class {s.no} · {fmtDay(s.on_date)}{s.time_text ? ` · ${s.time_text}` : ''}</b>
-        <small>{s.moved_from ? `Moved from ${fmtDay(s.moved_from)}` : s.status === 'scheduled' && past ? 'Not marked yet' : s.on_date === today && s.status === 'scheduled' ? 'Today' : ''}{s.note ? `${s.moved_from || (s.status === 'scheduled' && (past || s.on_date === today)) ? ' · ' : ''}${s.note}` : ''}</small>
+        <Segs items={[s.moved_from ? `Moved from ${fmtDay(s.moved_from)}` : s.status === 'scheduled' && past ? 'Not marked yet' : s.on_date === today && s.status === 'scheduled' ? 'Today' : '', s.note]} />
         <div className="row-actions">
           {s.status === 'scheduled' && <><Btn variant="ghost" busy={busy} onClick={() => setStatus(s, 'done')}>Attended</Btn><Btn variant="ghost" onClick={() => setMove(s)}>Move</Btn><Confirm onYes={() => setStatus(s, 'cancelled')}>Cancel</Confirm></>}
           {s.status === 'done' && <Btn variant="ghost" busy={busy} onClick={() => setStatus(s, 'scheduled')}>Undo</Btn>}
@@ -54,7 +55,7 @@ export function OneOnOneModal({ e, level, onClose, onChanged }) {
       : <Empty>No classes scheduled yet. Add the first date below.</Empty>}
     <form className="ad-form" style={{ marginTop: 14 }} onSubmit={add}>
       <F form={f} k="date" label="Add a class on" type="date" required /><F form={f} k="time" label="Time" rule="text" placeholder={lastTime || 'e.g. 4:30 pm'} hint={lastTime ? 'Leave empty to use the same time as last time' : undefined} />
-      <div className="row-actions full"><Btn busy={busy} icon="plus">Add</Btn>{wa && <a className="ad-btn ghost" href={wa} target="_blank" rel="noopener">Send dates on WhatsApp</a>}</div></form>
+      <div className="row-actions full"><Btn busy={busy} icon="plus">Add</Btn>{wa && <a className="ad-btn ghost" href={wa} target="_blank" rel="noopener"><Icon n="whatsapp" size={16} /><span>Send dates on WhatsApp</span></a>}</div></form>
     {move && <MoveOne s={move} student={e.student_name} check={check} onClose={() => setMove(null)} onSaved={async () => { setMove(null); await renumber(e.id); changed(); }} />}
     {clashDialog}
   </Modal>);

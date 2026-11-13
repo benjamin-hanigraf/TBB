@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/Icons';
-import { useLoad, sb, must, every, Page, Card, Fold, Badge, Empty, Spin, Err, Modal, Btn, Confirm, F, useForm, useAction, useToast, fmtDT, fmtD } from './kit';
+import { Segs, useLoad, sb, must, every, Page, Card, Fold, Badge, Empty, Spin, Err, Modal, Btn, Confirm, F, useForm, useAction, useToast, fmtDT, fmtD } from './kit';
 import { money } from '@/lib/accounting';
 import { orderNumber } from '@/lib/numbering';
 import { syncPaymentsToLedger } from '@/lib/ledgerSync';
@@ -23,7 +23,7 @@ export default function Orders() {
   const [open, setOpen] = useState(null); const [q, setQ] = useState(''); const [adding, setAdding] = useState(false); const [shownShipped, setShownShipped] = useState(5);
   const { data, error, reload } = useLoad(async () => {
     const c = sb(); const [o, p, s] = await Promise.all([
-      every(() => c.from('orders').select('*').or('status.neq.pending,channel.eq.manual').order('created_at', { ascending: false }).order('id')),
+      every(() => c.from('orders').select('*').or('status.neq.pending,channel.eq.manual,notes.ilike.*Marked as not paid*').order('created_at', { ascending: false }).order('id')),
       c.from('products').select('id,slug,title,price_paise,stock,gst_mode,active,allow_preorder').order('title'), c.from('settings').select('key,value')]);
     return { orders: must(o), products: must(p), st: Object.fromEntries(must(s).map((r) => [r.key, r.value])) };
   });
@@ -35,10 +35,10 @@ export default function Orders() {
   const list = data.orders.filter(has);
   const ship = list.filter(toShip), wait = list.filter((o) => o.status === 'pending'), sent = list.filter(isShipped), off = list.filter(isOff);
   const row = (o) => (<button key={o.id} className="ad-row" onClick={() => openOrder(o)}><div className="main"><b>{o.name}</b>
-    <small>{[no(o), fmtD(o.created_at)].filter(Boolean).join(' · ')}</small></div>
+    <Segs items={[no(o), fmtD(o.created_at)]} /></div>
     <div className="end"><b>{money(o.total_paise)}</b><span className="tags">{isPaid(o) && <Badge tone="ok">Paid</Badge>}{isShipped(o) && <Badge tone="ok">Shipped</Badge>}</span></div></button>);
   const Section = ({ title, rows, empty }) => (rows.length || empty ? <Card title={rows.length ? `${title} (${rows.length})` : title} tight>{rows.length ? <div className="ad-list">{rows.map(row)}</div> : <Empty>{empty}</Empty>}</Card> : null);
-  return (<Page title="Orders" action={<><Link className="ad-btn ghost" href="/manager/labels"><Icon n="print" size={16} /><span>Label printer</span></Link><Btn icon="plus" onClick={() => setAdding(true)}>Add order</Btn></>}>
+  return (<Page title="Orders" actionClass="split" action={<><Link className="ad-btn ghost" href="/manager/labels"><Icon n="print" size={16} /><span>Label printer</span></Link><Btn icon="plus" onClick={() => setAdding(true)}>Add order</Btn></>}>
     <input className="ad-search" type="search" placeholder="Search name, email, phone or order number" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search" />
     <Section title="To ship" rows={ship} empty="Nothing to ship right now." />
     <Section title="Awaiting payment" rows={wait} />
@@ -61,6 +61,12 @@ function OrderModal({ o, st, products, onClose, onSaved }) {
   const markShipped = () => run(async () => { must(await sb().from('orders').update({ status: 'shipped', tracking_carrier: f.v.carrier.trim() || null, tracking_number: f.v.number.trim() || null }).eq('id', o.id)); onSaved(); }, 'Marked as shipped');
   const saveTracking = () => run(async () => { must(await sb().from('orders').update({ tracking_carrier: f.v.carrier.trim() || null, tracking_number: f.v.number.trim() || null }).eq('id', o.id)); onSaved(); }, 'Saved');
   const unship = () => run(async () => { must(await sb().from('orders').update({ status: 'paid' }).eq('id', o.id)); onSaved(); }, 'Moved back to To ship');      // a slip of the finger can be undone
+  const unpay = () => run(async () => {            // paid by mistake (UPI or cash not received): back to "not paid", stock returned, the income entry removed
+    if (o.razorpay_payment_id) throw new Error('This was paid online. Use Refund to give the money back.');
+    const note = `Marked as not paid on ${fmtD(new Date().toISOString())}`;
+    must(await sb().from('orders').update({ status: 'pending', paid_at: null, payment_method: null, notes: [o.notes, note].filter(Boolean).join('\n') }).eq('id', o.id));
+    const r = await sb().rpc('admin_order_stock', { p_order: o.id, p_take: false }); if (r.error) toast('Saved, but stock was not updated: run supabase/database.sql again.', 'err');
+    await sb().from('ledger_entries').delete().eq('source', 'order').eq('source_id', o.id); onSaved(); }, 'Marked as not paid');
   const cancel = () => run(async () => { must(await sb().from('orders').update({ status: 'cancelled' }).eq('id', o.id)); onSaved(); }, 'Order cancelled');      // only an unpaid order is cancelled this way; a paid one is refunded
   const email = () => run(async () => {
     const { data } = await supabase().auth.getSession(); const r = await fetch('/api/manager/email', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ type: 'shipped', order_id: o.id }) });
@@ -81,15 +87,16 @@ function OrderModal({ o, st, products, onClose, onSaved }) {
       <div className="ad-actions full">{step === 'ship' ? <><Btn busy={busy} icon="check" onClick={markShipped}>Confirm shipped</Btn><Btn variant="ghost" onClick={() => setStep(null)}>Back</Btn></> : <Btn busy={busy} icon="check" onClick={saveTracking}>Save</Btn>}</div></div>}
 
     {!step && <div className="ad-actions full" style={{ marginTop: 16 }}>
-      {!paid && !isOff(o) && <Btn onClick={() => setStep('pay')}>Mark as paid</Btn>}
-      {toShip(o) && <Btn onClick={() => setStep('ship')}>Mark as shipped</Btn>}
+      {!paid && !isOff(o) && <Btn icon="check" onClick={() => setStep('pay')}>Mark as paid</Btn>}
+      {toShip(o) && <Btn icon="box" onClick={() => setStep('ship')}>Shipped</Btn>}
+      {toShip(o) && <Confirm icon="circle" onYes={unpay}>Not paid</Confirm>}
       {shipped && o.tracking_number && <Btn variant="ghost" busy={busy} onClick={email} icon="mail">Email tracking</Btn>}
-      {o.status === 'shipped' && <Confirm onYes={unship}>Undo shipped</Confirm>}
+      {o.status === 'shipped' && <Confirm icon="left" onYes={unship}>Undo shipped</Confirm>}
       {paid && <Link className="ad-btn ghost" href={`/manager/labels?order=${o.id}`}><Icon n="print" size={16} /><span>Print label</span></Link>}
       {paid && <Btn variant="ghost" icon="file" onClick={() => setReceipt(true)}>Receipt</Btn>}
-      {manual && !isOff(o) && <Btn variant="ghost" onClick={() => setEdit(true)}>Edit</Btn>}
-      {paid && <Btn variant="ghost" onClick={() => setRefund(true)}>Refund</Btn>}
-      {o.status === 'pending' && <Confirm onYes={cancel}>Cancel order</Confirm>}</div>}
+      {manual && !isOff(o) && <Btn variant="ghost" icon="edit" onClick={() => setEdit(true)}>Edit</Btn>}
+      {paid && <Btn variant="ghost" icon="wallet" onClick={() => setRefund(true)}>Refund</Btn>}
+      {o.status === 'pending' && <Confirm icon="close" onYes={cancel}>Cancel order</Confirm>}</div>}
     {receipt && <ReceiptModal id={o.id} onClose={() => setReceipt(false)} />}
     {edit && <AddOrder order={o} products={products} onClose={() => setEdit(false)} onSaved={onSaved} />}
     {refund && <RefundDialog kind="order" rows={[o]} title={`Refund · ${o.name}`} onClose={() => setRefund(false)} onDone={onSaved} />}

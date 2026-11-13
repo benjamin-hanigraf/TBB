@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Icon from '@/components/Icons';
-import { useLoad, useToast, sb, must, every, Page, Card, Stat, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, dmyToISO, isoToDMY, fmtD, download } from './kit';
+import { Segs, useLoad, useToast, sb, must, every, Page, Card, Stat, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, dmyToISO, isoToDMY, fmtD, download } from './kit';
 import { syncPaymentsToLedger } from '@/lib/ledgerSync';
 import { IN_CATEGORIES, OUT_CATEGORIES, METHODS, summarise, fyChoices, fyOf, inFY, fyRange, todayISO, money, moneyR, monthLabel, rupeesToPaise, gstInside } from '@/lib/accounting';
 
@@ -27,7 +27,7 @@ export default function Money() {
     {view === 'list' ? (<>
       <input className="ad-search" type="search" placeholder="Search category, name or note" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search entries" />
       <Card tight>{rows.length ? <div className="ad-list">{rows.map((e) => (
-        <button key={e.id} className="ad-row" onClick={() => setEdit(e)}><div className="main"><b>{e.category}</b><small>{fmtD(e.entry_date)}{e.party ? ` · ${e.party}` : ''}{e.description ? ` · ${e.description}` : ''}</small></div>
+        <button key={e.id} className="ad-row" onClick={() => setEdit(e)}><div className="main"><b>{e.category}</b><Segs items={[fmtD(e.entry_date), e.party, e.description]} /></div>
           <div className="end"><b style={{ color: e.kind === 'in' ? '#14532d' : '#9b1c1c' }}>{e.kind === 'in' ? '+' : '−'}{money(e.amount_paise)}</b>{e.source !== 'manual' && <Badge>Automatic</Badge>}</div></button>))}</div> : <Empty>No entries in {fy}. Tap "Income" or "Expense" to add one. Online payments are added automatically.</Empty>}</Card></>)
     : (<Reports sum={sum} gstOn={gstOn} kind={kind} />)}
     {edit && <Entry e={edit} gst={data.gst} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); reload(); }} />}

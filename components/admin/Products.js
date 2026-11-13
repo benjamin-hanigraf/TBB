@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Icon from '@/components/Icons';
-import { useLoad, sb, must, Page, Card, Badge, Empty, Spin, Err, Modal, ViewModal, Btn, F, PhotoField, useForm, useAction, useToast, Confirm, Sortable, slugify } from './kit';
+import { Segs, useLoad, sb, must, Page, Card, Badge, Empty, Spin, Err, Modal, ViewModal, Btn, F, PhotoField, useForm, useAction, useToast, Confirm, Sortable, slugify } from './kit';
 import { GST_MODES } from '@/lib/gst';
 import { money, rupeesToPaise } from '@/lib/accounting';
 import { photo } from '@/lib/photo';
@@ -20,7 +20,7 @@ export default function Products() {
   const reorder = async (arr) => { try { for (let i = 0; i < arr.length; i++) if (arr[i].sort_order !== i + 1) must(await sb().from('products').update({ sort_order: i + 1 }).eq('id', arr[i].id)); toast('Order saved'); reload(); } catch (e) { toast(e.message || 'Could not save the order.', 'err'); } };
   const item = (p, grip) => (<div className="ad-row prod-row">{grip && <span {...grip}><Icon n="grip" size={18} /></span>}
     <button type="button" className="prod-main" onClick={() => setView(p)}>{p.images?.[0] ? <img className="ad-thumb" src={photo(p.images[0])} alt="" /> : <div className="ad-thumb" />}
-      <span className="main"><b>{p.title}</b><small>{money(p.price_paise)}{p.gst_mode === 'add' ? ' + GST' : p.gst_mode === 'included' ? ' incl. GST' : ''}{p.allow_preorder ? ' · pre-order' : ` · ${p.stock} in stock`}</small></span></button>
+      <span className="main"><b>{p.title}</b><Segs items={[`${money(p.price_paise)}${p.gst_mode === 'add' ? ' + GST' : p.gst_mode === 'included' ? ' incl. GST' : ''}`, p.allow_preorder ? 'pre-order' : `${p.stock} in stock`]} /></span></button>
     <div className="end">{!p.active ? <Badge>Hidden</Badge> : p.stock === 0 && !p.allow_preorder ? <Badge tone="bad">Out of stock</Badge> : p.stock <= 2 && !p.allow_preorder ? <Badge tone="warn">Low</Badge> : <Badge tone="ok">On sale</Badge>}</div></div>);
   return (<Page title="Store" action={<><Btn icon="plus" onClick={() => setEdit({})}>Add product</Btn></>}>
     <input className="ad-search" type="search" placeholder="Search products" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search products" />

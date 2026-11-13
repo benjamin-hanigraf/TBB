@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/Icons';
-import { useLoad, sb, must, every, Card, Fold, Empty, Spin, Err, Badge, Modal, ViewModal, Btn, F, useForm, useAction, Confirm, dmyToISO, isoToDMY, fmtD } from './kit';
+import { Segs, useLoad, sb, must, every, Card, Fold, Empty, Spin, Err, Badge, Modal, ViewModal, Btn, F, useForm, useAction, Confirm, dmyToISO, isoToDMY, fmtD } from './kit';
 import { todayISO, rupeesToPaise, money } from '@/lib/accounting';
 import { addDays } from '@/lib/dates';
 import { parseSlot } from '@/lib/clash';
@@ -64,13 +64,13 @@ export default function CalendarPanel({ version = 0, ym, setYm, sel, setSel, onO
   const go = (n) => { const d = new Date(y, m - 1 + n, 1); setYm(`${d.getFullYear()}-${pad(d.getMonth() + 1)}`); };
   const upcoming = events.filter((e) => e.date >= today).slice(0, 10); const dayList = by[sel] || [];
   const py = pickYear ?? y;
-  const row = (e, i, showDate) => { const inner = (<><div className="main"><b>{e.title}</b><small>{[showDate && new Date(`${e.date}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }), e.time, e.note].filter(Boolean).join(' · ')}</small></div><div className="end"><Badge>{KINDS[e.kind]}</Badge></div></>);
+  const row = (e, i, showDate) => { const inner = (<><div className="main"><b>{e.title}</b><Segs items={[showDate && new Date(`${e.date}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }), e.time, e.note]} /></div><div className="end"><Badge tone={`k-${e.kind}`}>{KINDS[e.kind]}</Badge></div></>);
     return e.event ? <button key={i} className="ad-row" onClick={() => onOpen(e.event, 'event')}>{inner}</button> : e.rentout ? <button key={i} className="ad-row" onClick={() => onOpen(e.rentout, 'rentout')}>{inner}</button> : <Link key={i} href={e.href} className="ad-row">{inner}</Link>; };
   return (<>
     {data.missing?.length > 0 && <p className="ad-err" role="alert">Could not load {data.missing.join(', ')}. If this keeps happening, supabase/database.sql may not have been run yet.</p>}
     <Card>
       <div className="cal-head"><button className="ad-x" aria-label="Previous month" onClick={() => go(-1)}><Icon n="left" size={18} /></button>
-        <div className="cal-mid"><button type="button" className="cal-title" aria-expanded={pick} aria-haspopup="listbox" onClick={() => { setPickYear(y); setPick(!pick); }}>{MONTHS[m - 1]} {y}<Icon n="chevdown" size={14} /></button></div>
+        <div className="cal-mid"><button type="button" className="cal-title" aria-expanded={pick} aria-haspopup="listbox" onClick={() => { setPickYear(y); setPick(!pick); }}>{MONTHS[m - 1]} {y}</button></div>
         <button className="ad-x" aria-label="Next month" onClick={() => go(1)}><Icon n="right" size={18} /></button></div>
       {pick && <div className="cal-pickwrap">
         <div className="cal-pickhead"><button type="button" className="ad-x" aria-label="Previous year" onClick={() => setPickYear(py - 1)}><Icon n="left" size={16} /></button><b>{py}</b><button type="button" className="ad-x" aria-label="Next year" onClick={() => setPickYear(py + 1)}><Icon n="right" size={16} /></button></div>
@@ -80,7 +80,7 @@ export default function CalendarPanel({ version = 0, ym, setYm, sel, setSel, onO
         {cells.map((d, i) => d ? (<button key={d} type="button" className={`cal-day ${d === today ? 'today' : ''} ${d === sel ? 'sel' : ''}`} onClick={() => setSel(d)} aria-label={`${+d.slice(8)} ${MONTHS[m - 1]}${by[d] ? `, ${by[d].length} item${by[d].length > 1 ? 's' : ''}` : ''}`}>
           <b>{+d.slice(8)}</b>
           <span className="cal-chips">{(by[d] || []).slice(0, 2).map((e, k) => <i key={k} className={`chip ${e.kind} ${e.draft ? 'draft' : ''}`}><em>{e.title}</em></i>)}{(by[d] || []).length > 2 && <i className="more">+{by[d].length - 2}</i>}</span>
-          <span className="cal-letters" aria-hidden="true">{(by[d] || []).slice(0, 4).map((e, k) => <i key={k} className={k % 2 ? 'b' : 'a'}>{LETTER[e.kind]}</i>)}{(by[d] || []).length > 4 && <i className="b">+</i>}</span></button>) : <div key={`e${i}`} className="cal-empty" />)}
+          <span className="cal-letters" aria-hidden="true">{(by[d] || []).slice(0, 4).map((e, k) => <i key={k} className={e.kind}>{LETTER[e.kind]}</i>)}{(by[d] || []).length > 4 && <i className="more">+</i>}</span></button>) : <div key={`e${i}`} className="cal-empty" />)}
       </div>
     </Card>
     <Card title={new Date(`${sel}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}>
@@ -97,7 +97,7 @@ export function PlanView({ kind, item, onEdit, onClose }) {
   return (<ViewModal title={`Rent-out · ${item.name}`} onEdit={onEdit} onClose={onClose}
     rows={[['Hired by', item.name], ['Phone', item.phone], ['Email', item.email], ['For', item.purpose], ['Date', item.end_date && item.end_date > item.on_date ? `${fmtD(item.on_date)} to ${fmtD(item.end_date)}` : fmtD(item.on_date)], ['Time', item.time_text],
       ['Amount', item.amount_paise ? money(item.amount_paise) : ''], ['Paid so far', item.amount_paise ? `${money(paid)}${left ? ` · ${money(left)} still to pay` : ' · fully paid'}` : ''], ['Note', item.note]]}>
-    {pays.length > 0 && <div className="ad-list" style={{ marginBottom: 12 }}>{pays.map((p) => <div key={p.id} className="ad-row" style={{ cursor: 'default' }}><div className="main"><b>{money(p.amount_paise)}</b><small>{[fmtD(p.paid_on), METHOD_OPTIONS.find(([k]) => k === p.method)?.[1] || p.method, p.note].filter(Boolean).join(' · ')}</small></div></div>)}</div>}
+    {pays.length > 0 && <div className="ad-list" style={{ marginBottom: 12 }}>{pays.map((p) => <div key={p.id} className="ad-row" style={{ cursor: 'default' }}><div className="main"><b>{money(p.amount_paise)}</b><Segs items={[fmtD(p.paid_on), METHOD_OPTIONS.find(([k]) => k === p.method)?.[1] || p.method, p.note]} /></div></div>)}</div>}
   </ViewModal>);
 }
 
@@ -148,7 +148,7 @@ export function PlanForm({ kind: startKind, item = {}, onClose, onSaved }) {
     <F form={f} k="time" label="Time" rule="text" placeholder={rent ? 'e.g. 10 am to 2 pm' : 'e.g. 3 pm'} hint={rent ? 'Leave empty if it takes the whole day' : undefined} />
     {rent && <F form={f} k="amount" label="Amount (₹)" type="money" rule="money" />}
     {rent && <div className="full"><p className="ad-section-t">Payments</p>
-      {pays.length > 0 && <div className="ad-list" style={{ marginTop: 8 }}>{pays.map((p) => <div key={p.id} className="ad-row" style={{ cursor: 'default' }}><div className="main"><b>{money(p.amount_paise)}</b><small>{[fmtD(p.paid_on), METHOD_OPTIONS.find(([k]) => k === p.method)?.[1] || p.method, p.note].filter(Boolean).join(' · ')}</small></div><button type="button" className="ad-x" aria-label="Remove payment" onClick={() => setPays((l) => l.filter((x) => x.id !== p.id))}>✕</button></div>)}</div>}
+      {pays.length > 0 && <div className="ad-list" style={{ marginTop: 8 }}>{pays.map((p) => <div key={p.id} className="ad-row" style={{ cursor: 'default' }}><div className="main"><b>{money(p.amount_paise)}</b><Segs items={[fmtD(p.paid_on), METHOD_OPTIONS.find(([k]) => k === p.method)?.[1] || p.method, p.note]} /></div><button type="button" className="ad-x" aria-label="Remove payment" onClick={() => setPays((l) => l.filter((x) => x.id !== p.id))}>✕</button></div>)}</div>}
       {amount > 0 && <p className="ad-help" style={{ margin: '8px 0 0' }}>Paid {money(paidSum)} of {money(amount)} · {amount > paidSum ? `${money(amount - paidSum)} still to pay` : 'fully paid'}</p>}</div>}
     {rent && (amount === 0 || paidSum < amount) && <div className="full"><div className="ad-form pay-add"><F form={f} k="pAmount" label="Add a payment (₹)" type="money" rule="money" /><F form={f} k="pOn" label="Received on" type="date" /><F form={f} k="pMethod" label="Paid by" type="select" options={METHOD_OPTIONS} /><F form={f} k="pNote" label="Note" rule="sentence" placeholder="e.g. Advance" />
       <div className="ad-actions"><Btn type="button" variant="ghost" icon="plus" onClick={addPay}>Add payment</Btn></div></div></div>}

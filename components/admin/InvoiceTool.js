@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Btn, F, useForm, useAction, Confirm, Modal, dmyToISO, isoToDMY, fmtD, fmtDT, download } from './kit';
+import { Segs, useBack, useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Btn, F, useForm, useAction, Confirm, Modal, dmyToISO, isoToDMY, fmtD, fmtDT, download } from './kit';
 import { CustomerSuggest, useCustomers, ensureCustomer } from './pickers';
 import { InvoiceSheet, FitA4 } from './InvoiceSheet';
 import { DocModal } from './DocViewer';
@@ -58,7 +58,7 @@ async function nextNumber(type, issue, list, st) {
 }
 
 export default function InvoiceTool() {
-  const [edit, setEdit] = useState(null); const [q, setQ] = useState(''); const [show, setShow] = useState('all'); const [sort, setSort] = useState('new');
+  const [edit, setEdit] = useState(null); const [q, setQ] = useState(''); const [show, setShow] = useState(() => { const s = param('show'); return SHOW.some(([k]) => k === s) ? s : 'all'; }); const [sort, setSort] = useState('new');
   const { data, error, reload } = useLoad(async () => {
     const c = sb(); const [i, s, p] = await Promise.all([every(() => c.from('invoices').select('*').order('created_at', { ascending: false }).order('id')), c.from('settings').select('key,value'), every(() => c.from('invoice_payments').select('*').order('paid_on').order('id'))]);
     return { list: must(i), st: Object.fromEntries(must(s).map((r) => [r.key, r.value])), payments: p.error ? [] : p.data };
@@ -80,12 +80,13 @@ export default function InvoiceTool() {
       <select aria-label="Sort" value={sort} onChange={(e) => setSort(e.target.value)} className="ad-sort">{SORTS.map(([k, t]) => <option key={k} value={k}>{t}</option>)}</select></div>
     <input className="ad-search" type="search" placeholder="Search customer or number" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search invoices" />
     <Card tight>{rows.length ? <div className="ad-list">{rows.map((i) => { const [label, tone] = statusOf(i, data.payments); const b = balanceOf(i, data.payments); const ty = typeOf(i);
-      return (<button key={i.id} className="ad-row" onClick={() => setEdit(i)}><div className="main"><b>{i.customer_name}</b><small>{ty !== 'invoice' ? `${TYPE_NAME[ty]} · ` : ''}{i.invoice_no} · {fmtD(i.issue_date)}{label === 'Part paid' ? ` · ${money(b.balance)} left` : ''}</small></div><div className="end"><b>{ty === 'credit_note' ? '− ' : ''}{money(i.total_paise)}</b><Badge tone={tone}>{label}</Badge></div></button>); })}</div>
+      return (<button key={i.id} className="ad-row" onClick={() => setEdit(i)}><div className="main"><b>{i.customer_name}</b><Segs items={[ty !== 'invoice' ? TYPE_NAME[ty] : '', i.invoice_no, fmtD(i.issue_date), label === 'Part paid' ? `${money(b.balance)} left` : '']} /></div><div className="end"><b>{ty === 'credit_note' ? '− ' : ''}{money(i.total_paise)}</b><Badge tone={tone}>{label}</Badge></div></button>); })}</div>
       : <Empty>{data.list.length ? 'Nothing matches.' : 'No invoices yet. Tap "New".'}</Empty>}</Card>
   </Page>);
 }
 
 function Editor({ inv, data, onBack, onOpen }) {
+  useBack(onBack);
   const isNew = !inv.id; const [editing, setEditing] = useState(!inv.id); const snap = useRef(null); const sheetBox = useRef(); const [pdf, setPdf] = useState(false); const st = data.st; const gstSet = st.gst || {}; const [run, busy] = useAction(); const { data: customers, reload: reloadCustomers } = useCustomers();
   const [payments, setPayments] = useState(() => data.payments.filter((p) => p.invoice_id === inv.id)); const [payForm, setPayForm] = useState(false);
   const f = useForm({ type: typeOf(inv), name: inv.customer_name || '', email: inv.customer_email || '', phone: inv.customer_phone || '', address: inv.customer_address || '', gstin: inv.customer_gstin || '', date: isoToDMY(inv.issue_date || todayISO()), due: isoToDMY(inv.due_date),
@@ -188,7 +189,7 @@ function Editor({ inv, data, onBack, onOpen }) {
 
       {type === 'invoice' && (<Card title="Payments" action={!isNew && balance > 0 && <Btn variant="ghost" icon="plus" onClick={() => setPayForm(true)}>Add payment</Btn>}>
         {isNew ? <Empty>Choose "Paid in full" above, or save first and add payments here as they come in.</Empty> : <>
-          {payments.length ? <div className="ad-list">{payments.map((p) => (<div key={p.id} className="ad-row"><div className="main"><b>{money(p.amount_paise)}</b><small>{[fmtD(p.paid_on), METHOD_OPTIONS.find(([k]) => k === p.method)?.[1] || p.method, p.note].filter(Boolean).join(' · ')}</small></div><div className="end"><Confirm onYes={() => removePayment(p)}>Remove</Confirm></div></div>))}</div> : <Empty>No payments yet.</Empty>}
+          {payments.length ? <div className="ad-list">{payments.map((p) => (<div key={p.id} className="ad-row"><div className="main"><b>{money(p.amount_paise)}</b><Segs items={[fmtD(p.paid_on), METHOD_OPTIONS.find(([k]) => k === p.method)?.[1] || p.method, p.note]} /></div><div className="end"><Confirm onYes={() => removePayment(p)}>Remove</Confirm></div></div>))}</div> : <Empty>No payments yet.</Empty>}
           <p className="ad-sub">Total {money(calc.total)} · Paid {money(paidSum)} · <b>{balance > 0 ? `Left to pay ${money(balance)}` : 'Fully paid'}</b></p></>}
       </Card>)}
     </div>

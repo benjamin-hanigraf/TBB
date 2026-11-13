@@ -68,7 +68,7 @@ export function AddSignup({ w, taken, onClose, onSaved }) {
     const paid = f.v.pay === 'paid';
     must(await sb().from('bookings').insert({ workshop_id: w.id, name: f.v.name, email: f.v.email || '', phone: f.v.phone || '', seats, amount_paise: rupeesToPaise(f.v.amount), status: paid ? 'paid' : 'pending', channel: 'manual', payment_method: paid ? f.v.method : null, paid_at: paid ? nowISO() : null }));
     await ensureCustomer({ name: f.v.name, email: f.v.email, phone: f.v.phone }); if (paid) await syncPaymentsToLedger(sb()); onSaved(); }, 'Sign-up added'); };
-  return (<Modal title={`$Add sign-up · ${w.title}`} onClose={onClose}><form className="ad-form" onSubmit={save}>
+  return (<Modal title={`Add sign-up · ${w.title}`} onClose={onClose}><form className="ad-form" onSubmit={save}>
     <Person f={f} customers={customers} /><F form={f} k="seats" label="Seats" rule="digits" required inputMode="numeric" /><F form={f} k="amount" label="Total amount (₹)" type="money" rule="money" required hint="Change it if you gave a discount" />
     <PaymentFields f={f} />
     <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn><Btn type="button" variant="ghost" onClick={onClose}>Cancel</Btn></div></form></Modal>);

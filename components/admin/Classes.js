@@ -29,7 +29,7 @@ export default function Classes() {
   return (<Page title="Classes" action={<Btn icon="plus" onClick={() => setEdit({})}>Add level</Btn>}>
     <Card tight>{data.levels.length ? <Sortable className="cls-list" items={data.levels} onReorder={reorder} render={(c, grip) => (
       <div className={`cls-box t${tone(c.track)}`}><span {...grip}><Icon n="grip" size={18} /></span>
-        <button type="button" className="main cls-main" onClick={() => setView(c)}><b>{c.title} ({c.level})</b><small>{c.track}</small><small className="cls-n">{c.sessions} classes · {data.n[c.id] || 0} {(data.n[c.id] || 0) === 1 ? 'student' : 'students'}</small></button>
+        <button type="button" className="main cls-main" onClick={() => setView(c)}><b>{c.title} ({c.level})</b><small>{c.track}</small><small className="cls-n"><span className="seg">{c.sessions} classes · {data.n[c.id] || 0} {(data.n[c.id] || 0) === 1 ? 'student' : 'students'}</span></small></button>
         <div className="end"><span className="cls-tags">{!c.active && <Badge>Hidden</Badge>}{data.loose[c.id] > 0 && <Badge tone="warn">{data.loose[c.id]} to schedule</Badge>}</span><b className="cls-amt">{money(c.price_paise)}</b><Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setPeople(c)}>Students</Btn></div></div>)} /> : <Empty>No levels yet.</Empty>}</Card>
     {data.levels.length > 1 && <p className="ad-help" style={{ textAlign: 'center' }}>Drag the handle to change the order on the website. "To schedule" means students who paid but have no class dates yet: open Students, then Classes.</p>}
     {view && <ViewModal title={`${view.title} (${view.level})`} onClose={() => setView(null)} onEdit={() => { setEdit(view); setView(null); }}
@@ -86,7 +86,7 @@ function Participants({ level, autoOpen, onClose, onChanged }) {
   return (<Modal title={`Students · ${level.title} (${level.level})`} onClose={onClose} wide>
     {error && <Err e={error} />}{!data && !error && <Spin />}
     {data && <>{rows.length ? <div className="ad-list">{rows.map((x) => <div key={x.id} className="ad-row" style={{ cursor: 'default' }}>
-      <button type="button" className="main cls-main" onClick={() => setOne(x)}><b>{x.student_name}</b><small>{x.student_group === 'child' ? `Child, age ${x.student_age} · parent ${x.name}` : 'Adult'}{x.phone ? ` · ${x.phone}` : ''}</small><small>{['paid', 'transferred'].includes(x.status) ? summary(x) : 'Not paid yet'}</small></button>
+      <button type="button" className="main cls-main" onClick={() => setOne(x)}><b>{x.student_name}</b><Segs items={[x.student_group === 'child' ? `Child, age ${x.student_age}` : 'Adult', x.student_group === 'child' ? `parent ${x.name}` : '', x.phone]} /><Segs items={['paid', 'transferred'].includes(x.status) ? summary(x) : ['Not paid yet']} /></button>
       <div className="end"><b>{money(x.amount_paise)}</b>{['paid', 'transferred'].includes(x.status) && <Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setSched(x)}>Classes</Btn>}</div></div>)}</div> : <Empty>No students yet.</Empty>}
       <div className="row-actions" style={{ marginTop: 16 }}><Btn icon="plus" onClick={() => setAdd(true)}>Add student</Btn></div></>}
     {add && <AddEnrol level={level} onClose={() => setAdd(false)} onSaved={() => { setAdd(false); changed(); }} />}

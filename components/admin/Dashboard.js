@@ -1,7 +1,8 @@
 'use client';
 import Link from 'next/link';
 import Icon from '@/components/Icons';
-import { useLoad, sb, must, every, Page, Card, Fold, Stat, Badge, Empty, Spin, Err, fmtD, fmtDT } from './kit';
+import { useState } from 'react';
+import { useLoad, sb, must, every, Page, Card, Fold, Stat, Badge, Empty, Spin, Err, fmtD, fmtDT, useToast } from './kit';
 import { summarise, fyOf, todayISO, money, moneyR } from '@/lib/accounting';
 
 const istDay = (s) => new Date(new Date(s).getTime() + 5.5 * 3600e3).toISOString().slice(0, 10);
@@ -10,6 +11,7 @@ const soft = (r) => (r.error ? [] : r.data || []);        // a part that fails t
 const MAX_ATTENTION = 10;
 
 export default function Dashboard() {
+  const toast = useToast(); const [leaving, setLeaving] = useState({}); const [gone, setGone] = useState({});        // a ticked task slides away, then is saved
   const { data: d, error } = useLoad(async () => {
     const c = sb(); const today = todayISO(); const fy = fyOf(today); const lvl = (l) => `${l?.title || 'Class'}${l?.level ? ` (${l.level})` : ''}`;
     const [ledger, toPack, inbox, ws, recentO, recentB, low, recentE, todos, near, sess, late, inv] = await Promise.all([
@@ -35,7 +37,7 @@ export default function Dashboard() {
     const day = [
       ...soft(near).filter((x) => { const s = istDay(x.starts_at), e = x.kind === 'course' && x.ends_at ? istDay(x.ends_at) : s; return s <= today && today <= e; }).map((x) => ({ key: `w${x.id}`, t: x.title, s: `${istDay(x.starts_at) === today ? istTime(x.starts_at) : 'Course day'}${x.status === 'draft' ? ' · draft' : ''}`, kind: 'Workshop', href: '/manager/workshops' })),
       ...soft(sess).map((x) => { const en = x.class_enrolments || {}; return { key: `c${x.id}`, t: en.student_name || 'Class', s: [x.time_text, lvl(en.class_levels)].filter(Boolean).join(' · '), kind: 'Class', href: '/manager/classes' }; }),
-      ...td.map((x) => ({ key: `t${x.id}`, t: x.title, s: x.due_on && x.due_on < today ? `Overdue since ${fmtD(x.due_on)}` : '', kind: 'Task', href: `/manager/planner?todo=${x.id}` }))];      // pending tasks: due today, overdue, or with no date (the same ones the Planner shows under Today)
+      ...td.map((x) => ({ key: `t${x.id}`, t: x.title, s: x.due_on && x.due_on < today ? `Overdue since ${fmtD(x.due_on)}` : '', kind: 'Task', task: x.id, href: `/manager/planner?todo=${x.id}` }))];      // pending tasks: due today, overdue, or with no date (the same ones the Planner shows under Today)
     // Receivables: what customers still owe on invoices (all unpaid ones, not only late ones)
     const owing = must(inv).map((i) => ({ ...i, left: i.total_paise - (i.invoice_payments || []).reduce((s, p) => s + p.amount_paise, 0) })).filter((i) => i.left > 0);
     // Needs attention: things that are late or running out, each one opens exactly that item
@@ -47,6 +49,8 @@ export default function Dashboard() {
   });
   if (error) return <Page title="Hello Rahi"><Err e={error} /></Page>;
   if (!d) return <Page title="Hello Rahi"><Spin /></Page>;
+  const day = d.day.filter((x) => !gone[x.task]);
+  const tick = (id) => { setLeaving((l) => ({ ...l, [id]: true })); setTimeout(async () => { setGone((g) => ({ ...g, [id]: true })); const r = await sb().from('todos').update({ done: true, done_at: new Date().toISOString() }).eq('id', id); if (r.error) { toast('Could not save. Please try again.', 'err'); setGone((g) => { const n = { ...g }; delete n[id]; return n; }); setLeaving((l) => { const n = { ...l }; delete n[id]; return n; }); } }, 260); };
   const defPin = (() => { try { return !!sessionStorage.getItem('tbb-defpin'); } catch { return false; } })();
   const first = d.toPack > 0 ? <Link href="/manager/orders"><Stat label="Orders to ship" value={d.toPack} sub={d.inbox ? `${d.inbox} new ${d.inbox === 1 ? 'message' : 'messages'}` : 'Tap to see'} /></Link>
     : d.inbox > 0 ? <Link href="/manager/inbox"><Stat label="New messages" value={d.inbox} sub="Tap to read" /></Link> : <Link href="/manager/orders"><Stat label="Orders to ship" value={0} sub="All caught up" /></Link>;
@@ -57,11 +61,13 @@ export default function Dashboard() {
     </div>
     <div className="ad-grid">
       {first}
-      <Link href="/manager/money?tab=invoices"><Stat label="Receivables" value={moneyR(d.owed)} sub={d.owedN ? `From ${d.owedN} ${d.owedN === 1 ? 'invoice' : 'invoices'}` : 'Nothing owed'} /></Link>
+      <Link href="/manager/money?tab=invoices&show=unpaid"><Stat label="Receivables" value={moneyR(d.owed)} sub={d.owedN ? `From ${d.owedN} ${d.owedN === 1 ? 'invoice' : 'invoices'}` : 'Nothing owed'} /></Link>
       <Link href="/manager/money"><Stat label="Income this month" value={moneyR(d.month.moneyIn)} sub={`Expense: ${moneyR(d.month.moneyOut)}`} /></Link>
       <Link href="/manager/money?view=report"><Stat label="Profit this month" value={moneyR(d.month.profit)} tone={d.month.profit < 0 ? 'bad' : 'good'} sub={`This year: ${moneyR(d.sum.profit)}`} /></Link>
     </div>
-    <Card title="Today">{d.day.length ? <div className="ad-list">{d.day.map((x) => <Link key={x.key} href={x.href} className="ad-row"><div className="main"><b>{x.t}</b>{x.s && <small>{x.s}</small>}</div><div className="end"><Badge>{x.kind}</Badge></div></Link>)}</div> : <Empty>Nothing scheduled today.</Empty>}</Card>
+    <Card title="Today">{day.length ? <div className="ad-list">{day.map((x) => x.task
+      ? <div key={x.key} className={`ad-row todo-row ${leaving[x.task] ? 'leaving' : ''}`}><input type="checkbox" checked={!!leaving[x.task]} onChange={() => tick(x.task)} aria-label="Mark as done" /><Link href={x.href} className="main todo-main"><b>{x.t}</b>{x.s && <small>{x.s}</small>}</Link></div>
+      : <Link key={x.key} href={x.href} className="ad-row"><div className="main"><b>{x.t}</b>{x.s && <small>{x.s}</small>}</div><div className="end"><Badge tone={`k-${x.kind.toLowerCase()}`}>{x.kind}</Badge></div></Link>)}</div> : <Empty>Nothing scheduled today.</Empty>}</Card>
     <Card title="Upcoming workshops" action={<Link href="/manager/workshops" className="ad-help">See all</Link>}>
       {d.ws.length ? <div className="ad-list">{d.ws.map((w) => <Link key={w.id} href="/manager/workshops" className="ad-row"><div className="main"><b>{w.title}</b><small>{fmtD(w.starts_at)}</small></div><div className="end"><b>{d.taken[w.id] || 0} / {w.capacity}</b><small>seats booked</small></div></Link>)}</div> : <Empty>No upcoming workshops. Add one to start taking bookings.</Empty>}
     </Card>

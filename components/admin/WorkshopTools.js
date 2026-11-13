@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { sb, must, every, useLoad, Modal, Btn, F, useForm, useAction, useToast, Empty, Err, Spin, Badge, fmtD } from './kit';
+import { Segs, sb, must, every, useLoad, Modal, Btn, F, useForm, useAction, useToast, Empty, Err, Spin, Badge, fmtD } from './kit';
 import { adminPost } from '@/lib/adminApi';
 import { RefundDialog } from './Refund';
 import { money } from '@/lib/accounting';
@@ -36,10 +36,10 @@ export function RefundModal({ workshop, bookings, onClose, onDone }) {
   if (step === 'refund') return <RefundDialog kind="booking" rows={chosen} title={`Refund · ${workshop.title}`} reasonDefault={cancel ? 'The workshop has been cancelled.' : ''} cancelled={cancel} onClose={() => { onDone(); onClose(); }} onDone={() => { onDone(); onClose(); }} />;
   return (<Modal title={`Cancel and refund · ${workshop.title}`} onClose={onClose} wide>
     <p className="ad-help" style={{ marginTop: 0 }}>Everyone below paid for this workshop. Choose who to refund. Next, you choose to refund online or to record refunds you sent yourself.</p>
-    {paid.length ? <div className="ad-list">{paid.map((b) => <label key={b.id} className="ad-row" style={{ cursor: 'pointer' }}><span style={{ display: 'flex', gap: 12, alignItems: 'center' }}><input type="checkbox" checked={!!pick[b.id]} onChange={(e) => setPick((p) => ({ ...p, [b.id]: e.target.checked }))} /><span className="main"><b>{b.name}</b><small>{b.seats} {b.seats > 1 ? 'seats' : 'seat'} · {b.razorpay_payment_id ? 'paid online' : `paid by ${b.payment_method || 'hand'}`}</small></span></span><b>{money(b.amount_paise)}</b></label>)}</div> : <Empty>Nobody has paid yet.</Empty>}
+    {paid.length ? <div className="ad-list">{paid.map((b) => <label key={b.id} className="ad-row" style={{ cursor: 'pointer' }}><span style={{ display: 'flex', gap: 12, alignItems: 'center' }}><input type="checkbox" checked={!!pick[b.id]} onChange={(e) => setPick((p) => ({ ...p, [b.id]: e.target.checked }))} /><span className="main"><b>{b.name}</b><Segs items={[`${b.seats} ${b.seats > 1 ? 'seats' : 'seat'}`, b.razorpay_payment_id ? 'paid online' : `paid by ${b.payment_method || 'hand'}`]} /></span></span><b>{money(b.amount_paise)}</b></label>)}</div> : <Empty>Nobody has paid yet.</Empty>}
     <div className="ad-form" style={{ marginTop: 14 }}><div className="full"><F form={{ v: { c: cancel }, set: (k, v) => setCancel(v) }} k="c" label="Also mark this workshop as cancelled" type="check" /></div></div>
     <p style={{ margin: '14px 0 0' }}>Refunding <b>{chosen.length}</b> {chosen.length === 1 ? 'person' : 'people'}: <b>{money(total)}</b>.</p>
-    <div className="ad-actions full"><Btn busy={busy} disabled={!chosen.length && !cancel} onClick={next}>{chosen.length ? 'Next' : 'Cancel workshop'}</Btn><Btn variant="ghost" onClick={onClose}>Back</Btn></div>
+    <div className="ad-actions full"><Btn busy={busy} icon={chosen.length ? 'right' : 'close'} disabled={!chosen.length && !cancel} onClick={next}>{chosen.length ? 'Next' : 'Cancel workshop'}</Btn><Btn variant="ghost" onClick={onClose}>Back</Btn></div>
   </Modal>);
 }
 

@@ -1,10 +1,10 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Icon from '@/components/Icons';
 import { adminClient } from '@/lib/supabase-admin';
-import { ToastProvider, Dots, clearCache } from './kit';
+import { ToastProvider, Dots, clearCache, backStack } from './kit';
 import PinGate from './PinGate';
 import ErrorBoundary from './ErrorBoundary';
 import { pinApi, getToken, setToken, applySession, lockDevice } from '@/lib/adminApi';
@@ -17,6 +17,8 @@ export const NAV = [
 const TAB_PAGES = ['/manager', '/manager/planner', '/manager/money'];
 export const MORE = NAV.filter(([h]) => !TAB_PAGES.includes(h));
 const TABS = [...NAV.filter(([h]) => TAB_PAGES.includes(h)), ['/manager/more', 'More', 'menu']];
+/** The page one level up. The bottom-bar pages (Home, Planner, Money, More) have none. */
+export const parentOf = (p) => (p.startsWith('/manager/labels') ? '/manager/orders' : ['/manager/workshops', '/manager/classes', '/manager/orders', '/manager/products', '/manager/inbox', '/manager/customers', '/manager/settings'].some((x) => p.startsWith(x)) ? '/manager/more' : null);
 const active = (p, h) => (h === '/manager' ? p === '/manager' : p.startsWith(h));
 /** How many Inbox messages have not been opened yet (shown as "Inbox (2)"). */
 export async function unreadCount() {
@@ -31,7 +33,24 @@ export default function AdminShell({ children }) {
   return <ErrorBoundary><Inner>{children}</Inner></ErrorBoundary>;
 }
 function Inner({ children }) {
-  const path = usePathname(); const [state, setState] = useState('loading'); const [unread, setUnread] = useState(0); const [why, setWhy] = useState('');
+  const path = usePathname(); const router = useRouter(); const here = useRef(path); const [state, setState] = useState('loading'); const [unread, setUnread] = useState(0); const [why, setWhy] = useState('');
+  useEffect(() => { here.current = path; }, [path]);
+  // Swipe left to right = go back one level (close the window on top, or go up to the page that holds this one), never to the page visited before.
+  useEffect(() => {
+    const up = () => { if (backStack.length) { backStack[backStack.length - 1].close(); return; } const par = parentOf(here.current); if (par) router.push(par); };
+    let g = null;
+    const start = (e) => {
+      g = null; if (e.touches.length !== 1) return; const t = e.touches[0], el = e.target; if (t.clientX <= 24) return;               // the screen's own edge swipe is handled below
+      if (el.closest?.('input,textarea,select,[contenteditable="true"],.ad-grip,.ad-imgs,.ad-scroll,.ad-tabsbar,.cal-grid,.ad-sortable.dragging')) return;
+      for (let a = el; a && a !== document.body; a = a.parentElement) { const o = getComputedStyle(a).overflowX; if ((o === 'auto' || o === 'scroll') && a.scrollWidth > a.clientWidth + 2) return; }
+      g = { x: t.clientX, y: t.clientY, at: Date.now() };
+    };
+    const end = (e) => { if (!g) return; const t = e.changedTouches[0]; const dx = t.clientX - g.x, dy = t.clientY - g.y; const fast = Date.now() - g.at < 800; g = null; if (fast && dx > 90 && Math.abs(dy) < 60 && dx > 2 * Math.abs(dy)) up(); };
+    // The edge swipe of the phone itself goes back in the browser history; send it to the enclosing page instead.
+    const pop = () => { const left = here.current; const closed = backStack.length ? (backStack[backStack.length - 1].close(), true) : false; const par = parentOf(left); const to = closed ? left : par || left; if (to !== window.location.pathname) router.replace(to); };
+    document.addEventListener('touchstart', start, { passive: true }); document.addEventListener('touchend', end, { passive: true }); window.addEventListener('popstate', pop);
+    return () => { document.removeEventListener('touchstart', start); document.removeEventListener('touchend', end); window.removeEventListener('popstate', pop); };
+  }, [router]);
   useEffect(() => { if (state === 'ok') unreadCount().then(setUnread).catch(() => {}); }, [state, path]);
   // Behave like an app: no pinch zoom (iPhones ignore the viewport rule, so the gesture itself is stopped), no long-press menus, no photo dragging.
   // Input boxes keep their normal behaviour so typing, selecting and pasting still work.

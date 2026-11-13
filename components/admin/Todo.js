@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useLoad, sb, must, every, Page, Card, Fold, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, useToast, Confirm, dmyToISO, isoToDMY, fmtD } from './kit';
+import { Segs, useLoad, sb, must, every, Page, Card, Fold, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, useToast, Confirm, dmyToISO, isoToDMY, fmtD } from './kit';
 import { todayISO } from '@/lib/accounting';
 
 const Wrap = ({ embedded, title, action, children }) => (embedded ? <div id="todo" className="ad-embed"><div className="ad-embed-row"><h2 className="ad-embed-h">{title}</h2>{action}</div>{children}</div> : <Page title={title} action={action}>{children}</Page>);
@@ -29,7 +29,7 @@ export default function Todo({ embedded = false, onChanged }) {
     must(await sb().from('todos').insert({ title: add.v.title.trim(), due_on: due })); add.reset({ title: '', due: '' }); setAdding(false); reload(); onChanged?.(); }, 'Task added'); };
   const row = (t) => (<div key={t.id} className={`ad-row todo-row ${leaving[t.id] ? 'leaving' : ''}`} style={{ cursor: 'default' }}>
     <input type="checkbox" checked={t.done || !!leaving[t.id]} onChange={() => toggle(t)} aria-label={t.done ? 'Mark as not done' : 'Mark as done'} />
-    <button type="button" className="main todo-main" onClick={() => setEdit(t)}><b style={t.done ? { textDecoration: 'line-through', color: '#8e8e93' } : undefined}>{t.title}</b>{(t.due_on || t.note) && <small style={!t.done && t.due_on && t.due_on < today ? { color: '#9b1c1c' } : undefined}>{[t.due_on && (!t.done && t.due_on < today ? `Overdue · ${fmtD(t.due_on)}` : fmtD(t.due_on)), t.note].filter(Boolean).join(' · ')}</small>}</button></div>);
+    <button type="button" className="main todo-main" onClick={() => setEdit(t)}><b style={t.done ? { textDecoration: 'line-through', color: '#8e8e93' } : undefined}>{t.title}</b>{(t.due_on || t.note) && <Segs className={!t.done && t.due_on && t.due_on < today ? 'late' : ''} items={[t.due_on && (!t.done && t.due_on < today ? `Overdue · ${fmtD(t.due_on)}` : fmtD(t.due_on)), t.note]} />}</button></div>);
   return (<Wrap embedded={embedded} title="Tasks" action={<Btn variant="ghost" icon={adding ? 'close' : 'plus'} onClick={() => setAdding((a) => !a)}>{adding ? 'Close' : 'Add'}</Btn>}>
     {adding && <Card><form className="ad-form todo-add" onSubmit={create}>
       <F form={add} k="title" label="New task" rule="sentence" placeholder="e.g. Order paper for the next workshop" required autoFocus />

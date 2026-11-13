@@ -2,7 +2,7 @@
 // "Something is already planned then": before a class, workshop, event or rent-out is saved, check what else is on the same day at the same time.
 // If something overlaps, show it and ask whether to add anyway. If the check itself cannot run, saving is never blocked.
 import { useState } from 'react';
-import { sb, every, Modal, Btn } from './kit';
+import { Segs, sb, every, Modal, Btn } from './kit';
 import { findClashes, parseSlot, slotFromStart, describeSlot } from '@/lib/clash';
 import { fmtDay, addDays } from '@/lib/dates';
 
@@ -39,7 +39,7 @@ export function useClash() {
   const done = (yes) => { ask.resolve(yes); setAsk(null); };
   const dialog = ask ? (<Modal title="Already something then" onClose={() => done(false)}>
     <p style={{ marginTop: 0 }}>{ask.hits[0].cand.label ? <b>{ask.hits[0].cand.label}</b> : 'This'} falls at the same time as:</p>
-    <div className="ad-list">{ask.hits.slice(0, 6).map((h, i) => <div key={i} className="ad-row" style={{ cursor: 'default' }}><div className="main"><b>{h.o.label}</b><small>{fmtDay(h.o.date)} · {describeSlot(h.o.slot)}</small></div></div>)}</div>
+    <div className="ad-list">{ask.hits.slice(0, 6).map((h, i) => <div key={i} className="ad-row" style={{ cursor: 'default' }}><div className="main"><b>{h.o.label}</b><Segs items={[fmtDay(h.o.date), describeSlot(h.o.slot)]} /></div></div>)}</div>
     {ask.hits.length > 6 && <p className="ad-help">…and {ask.hits.length - 6} more.</p>}
     <div className="ad-actions full"><Btn onClick={() => done(true)}>Add anyway</Btn><Btn variant="ghost" onClick={() => done(false)}>Go back</Btn></div></Modal>) : null;
   return [check, dialog];

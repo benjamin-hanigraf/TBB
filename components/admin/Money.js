@@ -47,6 +47,10 @@ function Reports({ sum, gstOn, kind }) {
   return (<>
     {kind !== 'out' && <Card title="Where the income came from"><Donut rows={sum.inByCategory} total={sum.moneyIn} /></Card>}
     {kind !== 'in' && <Card title="Where the expense went"><Donut rows={sum.outByCategory} total={sum.moneyOut} /></Card>}
+    {kind !== 'out' && sum.tdsByCustomer.length > 0 && <Card title="TDS deducted by customers">
+      <p style={{ margin: '0 0 6px' }}><b>{moneyR(sum.tdsTotal)}</b> in TDS from {sum.tdsByCustomer.length} {sum.tdsByCustomer.length === 1 ? 'customer' : 'customers'} this financial year{sum.moneyIn ? `, ${Math.round((sum.tdsTotal / sum.moneyIn) * 1000) / 10}% of your income` : ''}.</p>
+      <div className="ad-list">{sum.tdsByCustomer.map((t) => <div key={t.customer} className="ad-row" style={{ cursor: 'default' }}><div className="main"><b>{t.customer}</b><small>{t.count} {t.count === 1 ? 'payment' : 'payments'}</small></div><div className="end"><b>{moneyR(t.amount)}</b></div></div>)}</div>
+      <p className="ad-help" style={{ marginBottom: 0 }}>This is tax your customers have deducted and paid to the government on your behalf. You can claim it as credit when you file your return.</p></Card>}
     <Card title="Month by month"><div className="ad-scroll"><table className="ad-table"><thead><tr><th>Month</th><th className="r">Income</th><th className="r">Expense</th><th className="r">Profit</th>{gstOn && <th className="r">GST due</th>}</tr></thead>
       <tbody>{sum.months.map((m) => <tr key={m.month}><td>{monthLabel(m.month)}</td><td className="r">{moneyR(m.in)}</td><td className="r">{moneyR(m.out)}</td><td className="r" style={{ color: m.profit < 0 ? '#9b1c1c' : undefined }}>{moneyR(m.profit)}</td>{gstOn && <td className="r">{moneyR(m.gstPayable)}</td>}</tr>)}
         {!sum.months.length && <tr><td colSpan={5}><Empty>No entries yet.</Empty></td></tr>}</tbody></table></div></Card>

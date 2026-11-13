@@ -229,3 +229,4 @@ Batch: Invoice/quotation number prefilled; quantity optional (owner request)
 - Invoices: the Send reminder button is removed (owner will not use it).
 
 - Payment methods list everywhere becomes: UPI, Cash, Bank/Card, TDS (owner request).
+- Accounts reports: new section 'TDS deducted by customers' (customer-wise totals and a summary for the selected financial year), read from payments recorded with method TDS. No other TDS mechanism.

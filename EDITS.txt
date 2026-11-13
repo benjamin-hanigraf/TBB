@@ -202,3 +202,8 @@ Batch: PIN screen, swipe-back fix, Home/Money restructure (owner request)
 - Calculator has no tab in Money; it stays on Home as a shortcut. Money is split into two separate pages: Accounts and Invoices.
 - Phone bottom bar: Home, Planner, Invoices, More. Accounts moves under More.
 - Classes: the Add level button is renamed Add Class (owner request)
+
+Batch: Accounts and Invoices overhaul (owner request)
+- Icons: change the Add Income / Add Expense icons; the tray-with-arrow icons become the upload and download icons (download: arrow toward the tray, upload: away from it).
+- Classes: the Students window does not open (fix).
+- Accounts and Invoices: the biggest piece. Entries must be simple to make but cover every possibility (refund, cancel, add, mark paid/unpaid everywhere). Check, verify, simplify and fix the whole accounting system: scenario audit, automatic reconciliation, safeguards, partial refunds, invoice cases, clear rules for automatic entries, report of what was found.

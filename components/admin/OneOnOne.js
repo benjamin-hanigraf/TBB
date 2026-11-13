@@ -2,7 +2,7 @@
 import Icon from '@/components/Icons';
 // One-on-one classes: each student has their own class dates (any day, any time). A class is either attended or not yet; a student cannot "miss" one.
 import { useState } from 'react';
-import { Segs, useLoad, sb, must, Modal, Btn, F, useForm, useAction, Confirm, Badge, Empty, Spin, Err, dmyToISO, isoToDMY } from './kit';
+import { Segs, nb, useLoad, sb, must, Modal, Btn, F, useForm, useAction, Confirm, Badge, Empty, Spin, Err, dmyToISO, isoToDMY } from './kit';
 import { fmtDay } from '@/lib/dates';
 import { todayISO } from '@/lib/accounting';
 import { parseSlot } from '@/lib/clash';
@@ -46,7 +46,7 @@ export function OneOnOneModal({ e, level, onClose, onChanged }) {
     <p className="ad-help" style={{ marginTop: 0 }}>{level.title} ({level.level}) · attended <b>{done}</b> · {live.length} of {total} classes scheduled{toSchedule ? ` · ${toSchedule} still to schedule` : ''}</p>
     {data.length ? <div className="ad-list">{data.map((s) => { const past = s.on_date < today;
       return (<div key={s.id} className="ad-row sess-row" style={{ cursor: 'default' }}>
-        <div className="sess-head"><div className="main"><b><span style={{ whiteSpace: 'nowrap' }}>Class {s.no} ·</span> <span style={{ whiteSpace: 'nowrap' }}>{fmtDay(s.on_date)}{s.time_text ? ' ·' : ''}</span>{s.time_text ? <> <span style={{ whiteSpace: 'nowrap' }}>{s.time_text}</span></> : ''}</b>
+        <div className="sess-head"><div className="main"><b><span className="c-no">Class {s.no}</span><span className="c-when"><i className="c-dot"> · </i>{nb(fmtDay(s.on_date))}{s.time_text ? ` · ${s.time_text}` : ''}</span></b>
           <Segs items={[s.moved_from ? `Moved from ${fmtDay(s.moved_from)}` : s.status === 'scheduled' && past ? 'Not marked yet' : s.on_date === today && s.status === 'scheduled' ? 'Today' : '', s.note]} /></div>
           <Badge tone={s.status === 'cancelled' ? 'bad' : s.status === 'done' ? 'ok' : ''}>{s.status === 'cancelled' ? 'Cancelled' : s.status === 'done' ? 'Attended' : 'Scheduled'}</Badge></div>
         <div className="sess-actions">

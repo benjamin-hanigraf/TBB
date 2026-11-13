@@ -247,3 +247,8 @@ Batch: Invoice flow, TDS-free tidy-up, ITC on expenses (owner request)
 - Invoices: 'Still to be paid on invoices' line reworded to 'Pending from invoices'.
 - Invoices/quotations: Sent button uses tick icon; removed 'Accepted' status from quotations (Draft -> Sent -> Cancelled only); a quotation turned into an invoice leaves the Quotations list.
 - Classes sessions: header badge stacks above title on very narrow phones; invoices now appear in customer summary/history (re-run supabase/database.sql).
+- Classes: Attended/Reschedule/Cancel become one three-section pill; button groups everywhere follow one rule: spread evenly across the full width, or stack in a single column (all screen widths).
+- Classes: on wide screens the action pill sits to the right of the class details.
+- Classes: Attended/Scheduled/Cancelled tags share one fixed width so they line up on the same vertical line.
+- Classes pill: visible separator lines between the sections.
+- Classes rows: everything centred on one line; narrow screens show 'Class N' then date/time beneath; wide screens one line with fixed tag and pill columns.

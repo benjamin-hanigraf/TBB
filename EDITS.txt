@@ -241,3 +241,9 @@ Batch: Invoice flow, TDS-free tidy-up, ITC on expenses (owner request)
 - Classes (owner): Undo uses an anti-clockwise circular arrow icon everywhere; the Move button becomes Reschedule with a clock icon; Attended, Reschedule and Cancel sit on one row.
 - Classes list (website and Manager): the third colour group picked up a heading style by accident (a clash between the colour class t3 and the heading class t3), so its text had a different size and weight. The colour classes are renamed so only the box fill differs.
 - Invoices page: remove the Paid filter; Unpaid and All merge into one toggle button (Show Unpaid / Show All); the sort control becomes a small up-down arrows icon that opens a dropdown of the options.
+
+- Customers: invoices issued to a customer count in their summary (invoices count, amount received, and an Invoices list in the customer window). 'Left to pay' and 'Fully paid' become 'Balance'. Classes: the Attended / Reschedule / Cancel buttons must be properly built on phones (verify with screenshots).
+- Invoices list: restore separate Unpaid / All filter buttons (replace Show Unpaid toggle); more gap between filters and the 'still to be paid' line.
+- Invoices: 'Still to be paid on invoices' line reworded to 'Pending from invoices'.
+- Invoices/quotations: Sent button uses tick icon; removed 'Accepted' status from quotations (Draft -> Sent -> Cancelled only); a quotation turned into an invoice leaves the Quotations list.
+- Classes sessions: header badge stacks above title on very narrow phones; invoices now appear in customer summary/history (re-run supabase/database.sql).

@@ -15,7 +15,7 @@ export default function Customers() {
     const customers = must(cu);
     if (!sum.error) {        // totals counted in the database, matched by email or phone
       const by = new Map((sum.data || []).map((x) => [x.customer_id, x]));
-      return { rows: customers.map((r) => { const x = by.get(r.id) || {}; return { ...r, n: { orders: x.orders || 0, bookings: x.bookings || 0, classes: x.classes || 0 }, spent: Number(x.spent_paise || 0), last: x.last_at || '' }; }) };
+      return { rows: customers.map((r) => { const x = by.get(r.id) || {}; return { ...r, n: { orders: x.orders || 0, bookings: x.bookings || 0, classes: x.classes || 0, invoices: x.invoices || 0 }, spent: Number(x.spent_paise || 0), last: x.last_at || '' }; }) };
     }
     // database update not run yet: count here, matched by email only (the older way)
     const [o, b, en] = await Promise.all([every(() => c.from('orders').select('email,total_paise,created_at').in('status', PAID).order('id')), every(() => c.from('bookings').select('email,amount_paise,created_at').eq('status', 'paid').order('id')), every(() => c.from('class_enrolments').select('email,amount_paise,created_at').eq('status', 'paid').order('id'))]);
@@ -30,7 +30,7 @@ export default function Customers() {
     <input className="ad-search" type="search" placeholder="Search name, email, phone or city" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search customers" />
     <Card tight>{rows.length ? <div className="ad-list">{rows.map((c) => (
       <button key={c.id} className="ad-row" onClick={() => setOpen(c)}><div className="main"><b>{nb(c.name)}</b><small className="meta-lines">{c.email && <span>{c.email}</span>}{c.phone && <span>{c.phone}</span>}</small></div>
-        <div className="end"><b>{money(c.spent)}</b><small>{c.n.orders + c.n.bookings + c.n.classes} purchases</small></div></button>))}</div> : <Empty>No customers yet. They appear here after a sign-up or purchase, or you can add or import them.</Empty>}</Card>
+        <div className="end"><b>{money(c.spent)}</b><small>{c.n.orders + c.n.bookings + c.n.classes + (c.n.invoices || 0)} purchases</small></div></button>))}</div> : <Empty>No customers yet. They appear here after a sign-up or purchase, or you can add or import them.</Empty>}</Card>
     {merge && <MergeModal groups={dups} onClose={() => setMerge(false)} onDone={() => { setMerge(false); reload(); }} />}
     {open && <CustomerModal all={data.rows} c={open} onClose={() => setOpen(null)} onSaved={() => { setOpen(null); reload(); }} />}
   </Page>);
@@ -53,15 +53,20 @@ function CustomerModal({ c, all, onClose, onSaved }) {
   const wa = String(c.phone || '').replace(/\D/g, '').slice(-10);
   const { data: hist } = useLoad(async () => {
     if (isNew) return null; const email = (c.email || '').toLowerCase(); const ph = digits10(c.phone);
-    const parts = [/^[^,()"]+$/.test(email) && email ? `email.ilike.${email}` : null, ph.length === 10 ? `phone.ilike.*${ph}` : null].filter(Boolean); if (!parts.length) return { orders: [], bookings: [], classes: [] };
-    const who = parts.join(','); const cl = sb(); const [o, b, en] = await Promise.all([
+    const parts = [/^[^,()"]+$/.test(email) && email ? `email.ilike.${email}` : null, ph.length === 10 ? `phone.ilike.*${ph}` : null].filter(Boolean); if (!parts.length && !(c.name || '').trim()) return { orders: [], bookings: [], classes: [], invoices: [] };
+    const who = parts.join(','); const cl = sb();
+    // issued invoices: matched by email or phone; an invoice with no email or phone is matched by the customer's name
+    const iv = 'id,invoice_no,issue_date,total_paise,status,invoice_payments(amount_paise)'; const nm = (c.name || '').replace(/[,()*%"]/g, ' ').trim();
+    const inv = async () => { const a = parts.length ? await cl.from('invoices').select(iv).eq('doc_type', 'invoice').in('status', ['sent', 'paid']).or(parts.map((x) => x.replace('email.', 'customer_email.').replace('phone.', 'customer_phone.')).join(',')).limit(200) : { data: [] };
+      const b2 = nm ? await cl.from('invoices').select(iv).eq('doc_type', 'invoice').in('status', ['sent', 'paid']).is('customer_email', null).is('customer_phone', null).ilike('customer_name', nm).limit(200) : { data: [] }; const seen = new Set(); return [...(a.data || []), ...(b2.data || [])].filter((x) => !seen.has(x.id) && seen.add(x.id)).sort((x, y) => String(y.issue_date).localeCompare(String(x.issue_date))); };
+    const [o, b, en, invs] = await Promise.all([
       cl.from('orders').select('id,order_no,total_paise,created_at').in('status', PAID).or(who).order('created_at', { ascending: false }).limit(200),
       cl.from('bookings').select('id,amount_paise,status,created_at,workshops(title)').eq('status', 'paid').or(who).order('created_at', { ascending: false }).limit(200),
-      cl.from('class_enrolments').select('id,amount_paise,status,created_at,student_name,class_levels(title,level)').eq('status', 'paid').or(who).order('created_at', { ascending: false }).limit(200)]);
+      cl.from('class_enrolments').select('id,amount_paise,status,created_at,student_name,class_levels(title,level)').eq('status', 'paid').or(who).order('created_at', { ascending: false }).limit(200), inv()]);
     const st = Object.fromEntries(must(await cl.from('settings').select('key,value')).map((r) => [r.key, r.value]));      // for the order number format
-    return { orders: must(o).map((x) => ({ ...x, no: orderNumber(x, st) })), bookings: must(b), classes: must(en) };
+    return { orders: must(o).map((x) => ({ ...x, no: orderNumber(x, st) })), bookings: must(b), classes: must(en), invoices: invs };
   }, [c.id]);
-  const h = hist || { orders: [], bookings: [], classes: [] };
+  const h = hist || { orders: [], bookings: [], classes: [], invoices: [] };
   return (<Modal title={isNew ? 'Add customer' : c.name} onClose={onClose} wide>
     {!isNew && <><p style={{ marginTop: 0, marginBottom: 16 }}><Badge>{SRC[c.source] || c.source}</Badge> {c.user_id ? <Badge tone="ok">Has an account</Badge> : null} <span className="ad-help"> Added {fmtD(c.created_at)}</span></p>
       <div className="ad-actions" style={{ marginTop: 0, marginBottom: 14 }}>{c.phone && <a className="ad-btn ghost sm" href={`tel:${c.phone}`}><Icon n="phone" size={15} /><span>Call</span></a>}{wa.length === 10 && <a className="ad-btn ghost sm" target="_blank" rel="noopener" href={`https://wa.me/91${wa}`}><Icon n="whatsapp" size={15} /><span>WhatsApp</span></a>}{c.email && <a className="ad-btn ghost sm" href={`mailto:${c.email}`}><Icon n="mail" size={15} /><span>Email</span></a>}</div></>}
@@ -75,10 +80,11 @@ function CustomerModal({ c, all, onClose, onSaved }) {
       <div className="full"><F form={f} k="notes" label="Notes" type="textarea" rule="sentence" rows={3} /></div>
       <div className="full"><F form={f} k="marketing" label="Happy to receive news about workshops and products" type="check" /></div>
       <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn>{!isNew && <Btn type="button" variant="ghost" onClick={() => { f.reset(); setEditing(false); }}>Cancel</Btn>}{!isNew && <Confirm onYes={del}>Delete</Confirm>}</div></form>}
-    {!isNew && (h.orders.length + h.bookings.length + h.classes.length > 0) && <>
+    {!isNew && (h.orders.length + h.bookings.length + h.classes.length + (h.invoices?.length || 0) > 0) && <>
       <p className="ad-section-t" style={{ marginTop: 22 }}>Total spent: {money(c.spent)}</p>
       {h.orders.length > 0 && <><p className="ad-section-t">Orders</p><div className="ad-list">{h.orders.map((o) => <div key={o.id} className="ad-row" style={{ cursor: 'default' }}><span>{o.no || fmtD(o.created_at)}</span><span>{money(o.total_paise)}</span></div>)}</div></>}
       {h.bookings.length > 0 && <><p className="ad-section-t">Workshops</p><div className="ad-list">{h.bookings.map((o) => <div key={o.id} className="ad-row" style={{ cursor: 'default' }}><span>{o.workshops?.title}<br /><small>{fmtD(o.created_at)}</small></span><span>{money(o.amount_paise)}</span></div>)}</div></>}
+      {h.invoices?.length > 0 && <><p className="ad-section-t">Invoices</p><div className="ad-list">{h.invoices.map((o) => { const paid = (o.invoice_payments || []).reduce((t, x) => t + x.amount_paise, 0); const bal = Math.max(0, o.total_paise - paid); return <div key={o.id} className="ad-row" style={{ cursor: 'default' }}><span>{o.invoice_no}<br /><small>{fmtD(o.issue_date)}{bal > 0 ? ` · Balance ${money(bal)}` : ''}</small></span><span>{money(o.total_paise)}</span></div>; })}</div></>}
       {h.classes.length > 0 && <><p className="ad-section-t">Writing classes</p><div className="ad-list">{h.classes.map((o) => <div key={o.id} className="ad-row" style={{ cursor: 'default' }}><span>{o.class_levels?.title}, {o.class_levels?.level}<br /><Segs items={[`For ${o.student_name}`, fmtD(o.created_at)]} /></span><span>{money(o.amount_paise)}</span></div>)}</div></>}</>}
   {dup && <Modal title="Same phone number" onClose={() => setDup(null)}><p style={{ marginTop: 0 }}><b>{dup.name}</b> already uses this phone number{dup.email ? ` (${dup.email})` : ''}. Merge them into one customer?</p><p className="ad-help">Merging keeps all details and cannot be undone.</p><div className="ad-actions full"><Btn busy={busy} onClick={mergeNow}>Merge</Btn><Btn variant="ghost" busy={busy} onClick={keepBoth}>Keep separate</Btn></div></Modal>}
   </Modal>);

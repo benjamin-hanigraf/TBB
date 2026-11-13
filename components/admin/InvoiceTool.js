@@ -27,11 +27,11 @@ export function balanceOf(inv, payments = []) {
   if (!paid && inv.status === 'paid' && typeOf(inv) === 'invoice') paid = inv.total_paise || 0;   // imported or older invoices marked paid without payment rows
   return { paid, balance: Math.max(0, (inv.total_paise || 0) - paid) };
 }
-/** Status shown for a row: Paid, Part paid, Unpaid, Accepted, Refunded, and so on. */
+/** Status shown for a row: Paid, Part paid, Unpaid, Refunded, and so on. */
 export function statusOf(inv, payments = []) {
   const t = typeOf(inv);
   if (inv.status === 'cancelled') return ['Cancelled', 'bad'];
-  if (t === 'quotation') return inv.status === 'accepted' ? ['Accepted', 'ok'] : inv.status === 'sent' ? ['Sent', 'info'] : ['Draft', ''];
+  if (t === 'quotation') return inv.status === 'accepted' || inv.status === 'sent' ? ['Sent', 'info'] : ['Draft', ''];
   if (t === 'credit_note') return ['Credit note', ''];          // no longer made; any older one still shows
   if (inv.status === 'draft') return ['Draft', ''];
   const { paid, balance } = balanceOf(inv, payments);
@@ -76,7 +76,8 @@ export default function InvoiceTool() {
   });
   const rows = useMemo(() => {
     if (!data) return []; const t = q.trim().toLowerCase();
-    const keep = (i) => { const ty = typeOf(i); if (show === 'quotation') return ty === show; if (show === 'all') return true; if (ty !== 'invoice' || i.status === 'cancelled') return false; const b = balanceOf(i, data.payments); return show === 'paid' ? b.paid > 0 && b.balance === 0 : b.balance > 0; };
+    const keep = (i) => { const ty = typeOf(i); if (ty === 'quotation' && i.status === 'accepted') return false;       // already turned into an invoice: it lives under Invoices now
+      if (show === 'quotation') return ty === show; if (show === 'all') return true; if (ty !== 'invoice' || i.status === 'cancelled') return false; const b = balanceOf(i, data.payments); return show === 'paid' ? b.paid > 0 && b.balance === 0 : b.balance > 0; };
     const r = data.list.filter((i) => keep(i) && (!t || `${i.customer_name} ${i.invoice_no} ${i.customer_email || ''}`.toLowerCase().includes(t)));
     const by = { new: (a, b) => b.issue_date.localeCompare(a.issue_date) || b.created_at.localeCompare(a.created_at), old: (a, b) => a.issue_date.localeCompare(b.issue_date), high: (a, b) => b.total_paise - a.total_paise, low: (a, b) => a.total_paise - b.total_paise, name: (a, b) => a.customer_name.localeCompare(b.customer_name) };
     return r.sort(by[sort]);
@@ -86,10 +87,11 @@ export default function InvoiceTool() {
   if (edit) return <Editor inv={edit} data={data} onOpen={setEdit} onBack={() => { setEdit(null); reload(); }} />;
   const owed = data.list.filter((i) => typeOf(i) === 'invoice' && i.status !== 'cancelled').reduce((s, i) => s + balanceOf(i, data.payments).balance, 0);
   return (<Page title="Invoices" action={<><Btn icon="plus" onClick={() => setEdit({ doc_type: show === 'quotation' ? 'quotation' : 'invoice' })}>New</Btn></>}>
-    {owed > 0 && <p className="ad-sub">Still to be paid on invoices: <b>{money(owed)}</b></p>}
+    {owed > 0 && <p className="ad-sub" style={{ margin: "4px 0 18px" }}>Pending from invoices: <b>{money(owed)}</b></p>}
     <div className="ad-filterbar"><div className="ad-tabsbar" style={{ margin: 0 }}>
-      <button className={show === 'unpaid' ? 'on' : ''} onClick={() => setShow(show === 'unpaid' ? 'all' : 'unpaid')}>{show === 'unpaid' ? 'Show All' : 'Show Unpaid'}</button>
-      <button className={show === 'quotation' ? 'on' : ''} onClick={() => setShow(show === 'quotation' ? 'all' : 'quotation')}>Quotations</button></div>
+      <button className={show === 'all' ? 'on' : ''} onClick={() => setShow('all')}>All</button>
+      <button className={show === 'unpaid' ? 'on' : ''} onClick={() => setShow('unpaid')}>Unpaid</button>
+      <button className={show === 'quotation' ? 'on' : ''} onClick={() => setShow('quotation')}>Quotations</button></div>
       <SortMenu options={SORTS} value={sort} onChange={setSort} /></div>
     <input className="ad-search" type="search" placeholder="Search customer or number" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search invoices" />
     <Card tight>{rows.length ? <div className="ad-list">{rows.map((i) => { const [label, tone] = statusOf(i, data.payments); const b = balanceOf(i, data.payments); const ty = typeOf(i);
@@ -150,10 +152,11 @@ function Editor({ inv, data, onBack, onOpen }) {
   // Turn into invoice: the quotation becomes a new invoice with the same items. For a few seconds an Undo button is shown; nothing is created until they have passed.
   const [turning, setTurning] = useState(false); const turn = useRef(null);
   const makeInvoice = async () => {
-    const saved = await saveCore(); if (status !== 'accepted') { must(await sb().from('invoices').update({ status: 'accepted' }).eq('id', saved.id)); setStatus('accepted'); }
+    const saved = await saveCore(); const made = { ...saved };
     const no = await nextNumber('invoice', todayISO(), data.list, st);
-    const { id, created_at, ...rest } = { ...saved, status: 'accepted' };
+    const { id, created_at, ...rest } = made;
     const created = must(await sb().from('invoices').insert({ ...rest, doc_type: 'invoice', invoice_no: no, against_no: null, issue_date: todayISO(), due_date: null, status: 'draft', notes: [saved.notes, `From quotation ${saved.invoice_no}.`].filter(Boolean).join('\n') }).select().single());
+    must(await sb().from('invoices').update({ status: 'accepted' }).eq('id', saved.id));       // hidden from the Quotations list; the invoice keeps a note of the quotation number
     onOpen(created);
   };
   const toInvoice = () => { if (turn.current) return; setTurning(true); turn.current = setTimeout(() => { turn.current = null; setTurning(false); run(makeInvoice, 'Invoice made from the quotation'); }, 6000); };
@@ -171,7 +174,7 @@ function Editor({ inv, data, onBack, onOpen }) {
   return (<Page title={heading} action={bar}>
     {!editing && inv.id && <div className="ad-noprint"><p style={{ margin: '0 0 12px' }}><Badge tone={curStatus[1]}>{curStatus[0]}</Badge></p>{turning && <div className="undo-bar"><span>Making an invoice from this quotation…</span><Btn variant="ghost" icon="undo" className="ad-btn ghost sm undo" onClick={undoTurn}>Undo</Btn></div>}</div>}
     {!editing && <div className="ad-noprint"><div className="ad-actions" style={{ marginBottom: 14 }}>
-      {inv.id && status === 'draft' && <Btn icon="send" busy={busy} onClick={markSent}>Sent</Btn>}
+      {inv.id && status === 'draft' && <Btn icon="check" busy={busy} onClick={markSent}>Sent</Btn>}
       <Btn variant="ghost" icon="print" onClick={printSheet}>Print</Btn>
       {inv.customer_email && <Btn variant="ghost" busy={busy} icon="mail" onClick={() => run(async () => { await email(inv); if (status === 'draft') { must(await sb().from('invoices').update({ status: 'sent' }).eq('id', inv.id)); setStatus('sent'); } }, 'Emailed')}>Email</Btn>}
       {type === 'quotation' && inv.id && status !== 'cancelled' && <Btn variant="ghost" busy={busy} icon="note" onClick={toInvoice}>Turn into invoice</Btn>}
@@ -207,7 +210,7 @@ function Editor({ inv, data, onBack, onOpen }) {
 
       {type === 'invoice' && !isNew && status !== 'draft' && (<Card title="Payments" action={balance > 0 && status !== 'cancelled' && <Btn variant="ghost" icon="plus" onClick={() => setPayForm(true)}>Add payment</Btn>}>
         {payments.length ? <div className="ad-list">{payments.map((p) => (<div key={p.id} className="ad-row"><div className="main"><b>{money(p.amount_paise)}</b><Segs items={[fmtD(p.paid_on), methodLabel(p.method), p.note]} /></div><div className="end"><Confirm onYes={() => removePayment(p)}>Remove</Confirm></div></div>))}</div> : <Empty>No payments yet.</Empty>}
-        <div className="pay-sum"><div><span>Total</span><b>{money(calc.total)}</b></div><div><span>Paid</span><b>{money(paidSum)}</b></div><div className={balance > 0 ? 'due' : 'ok'}><span>{balance > 0 ? 'Left to pay' : 'Fully paid'}</span><b>{money(balance)}</b></div></div>
+        <div className="pay-sum"><div><span>Total</span><b>{money(calc.total)}</b></div><div><span>Paid</span><b>{money(paidSum)}</b></div><div className={balance > 0 ? 'due' : 'ok'}><span>Balance</span><b>{money(balance)}</b></div></div>
       </Card>)}
     </div>
     <div ref={sheetBox}><FitA4 fill><InvoiceSheet d={doc} /></FitA4></div>

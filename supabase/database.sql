@@ -705,17 +705,25 @@ begin
 end $$;
 
 -- what each customer has bought, counted in the database (matched by email or phone) so the Customers page stays fast
-create or replace function customer_summary() returns table (customer_id uuid, orders int, bookings int, classes int, spent_paise bigint, last_at timestamptz)
+drop function if exists customer_summary();
+create function customer_summary() returns table (customer_id uuid, orders int, bookings int, classes int, invoices int, spent_paise bigint, last_at timestamptz)
 language sql stable security definer set search_path = public as $$
-  with c as (select id, lower(coalesce(email,'')) e, right(regexp_replace(coalesce(phone,''),'\D','','g'),10) ph from customers),
+  with c as (select id, lower(coalesce(email,'')) e, right(regexp_replace(coalesce(phone,''),'\D','','g'),10) ph, lower(btrim(name)) nm from customers),
+  inv as (select v.id, lower(coalesce(v.customer_email,'')) e, right(regexp_replace(coalesce(v.customer_phone,''),'\D','','g'),10) ph, lower(btrim(v.customer_name)) nm,
+            coalesce((select sum(p.amount_paise) from invoice_payments p where p.invoice_id = v.id), 0) paid,
+            coalesce((select max(p.paid_on)::timestamptz from invoice_payments p where p.invoice_id = v.id), v.issue_date::timestamptz) at
+          from invoices v where v.doc_type = 'invoice' and v.status in ('sent','paid')),               -- issued invoices (not drafts, not cancelled)
   p as (
     select 'o' k, id pid, lower(coalesce(email,'')) e, right(regexp_replace(coalesce(phone,''),'\D','','g'),10) ph, total_paise amt, coalesce(paid_at, created_at) at from orders where status in ('paid','packed','shipped','delivered')
     union all select 'b', id, lower(coalesce(email,'')), right(regexp_replace(coalesce(phone,''),'\D','','g'),10), amount_paise, coalesce(paid_at, created_at) from bookings where status in ('paid','transferred')
-    union all select 'c', id, lower(coalesce(email,'')), right(regexp_replace(coalesce(phone,''),'\D','','g'),10), amount_paise, coalesce(paid_at, created_at) from class_enrolments where status in ('paid','transferred')),
+    union all select 'c', id, lower(coalesce(email,'')), right(regexp_replace(coalesce(phone,''),'\D','','g'),10), amount_paise, coalesce(paid_at, created_at) from class_enrolments where status in ('paid','transferred')
+    union all select 'i', id, e, ph, paid, at from inv),
   m as (                                              -- a purchase belongs to a customer with the same email or the same phone (two quick joins instead of one slow either-or join)
     select c.id cid, p.k, p.pid, p.amt, p.at from c join p on c.e <> '' and p.e = c.e
-    union select c.id, p.k, p.pid, p.amt, p.at from c join p on length(c.ph) = 10 and p.ph = c.ph)
-  select c.id, count(m.pid) filter (where m.k = 'o')::int, count(m.pid) filter (where m.k = 'b')::int, count(m.pid) filter (where m.k = 'c')::int, coalesce(sum(m.amt), 0)::bigint, max(m.at)
+    union select c.id, p.k, p.pid, p.amt, p.at from c join p on length(c.ph) = 10 and p.ph = c.ph
+    union select c.id, 'i', v.id, v.paid, v.at from c join inv v on v.e = '' and length(v.ph) < 10 and c.nm <> '' and c.nm = v.nm)       -- an invoice with no email or phone is matched by name
+  select c.id, count(m.pid) filter (where m.k = 'o')::int, count(m.pid) filter (where m.k = 'b')::int, count(m.pid) filter (where m.k = 'c')::int, count(m.pid) filter (where m.k = 'i')::int,
+         coalesce(sum(m.amt), 0)::bigint, max(m.at)
   from c left join m on m.cid = c.id
   where is_admin() group by c.id
 $$;

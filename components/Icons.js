@@ -20,6 +20,8 @@ const P = {
   list: <path d="M3 6h.01M3 12h.01M3 18h.01M8 6h13M8 12h13M8 18h13" />,
   logout: <><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /></>,
   // the four Home shortcut icons: each is drawn to fill the same 18 x 18 square, so they look the same size
+  qin: <><path d="M12 3v11M7.5 9.5 12 14l4.5-4.5" /><path d="M3 15v3a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-3" /></>,
+  qout: <><path d="M12 14V3M7.5 7.5 12 3l4.5 4.5" /><path d="M3 15v3a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-3" /></>,
   qplanner: <><rect x="3" y="4.5" width="18" height="16.5" rx="3.5" /><path d="M3 10h18M8 2.5v4M16 2.5v4" /><path d="M8 14.5h.01M12 14.5h.01M16 14.5h.01M8 17.8h.01M12 17.8h.01" /></>,
   qcalc: <><rect x="3" y="3" width="18" height="18" rx="4" /><rect x="7" y="6.5" width="10" height="3.5" rx="1" /><path d="M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01M16 17.5h.01" /></>,
   qinvoice: <><path d="M4.5 3h10l5 5v13h-15z" /><path d="M14.5 3v5h5M8 13h8M8 17h8" /></>,

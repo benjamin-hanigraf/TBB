@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Segs, useBack, useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Btn, F, useForm, useAction, Confirm, Modal, dmyToISO, isoToDMY, fmtD, fmtDT, download } from './kit';
+import { nb, Segs, useBack, useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Btn, F, useForm, useAction, Confirm, Modal, dmyToISO, isoToDMY, fmtD, fmtDT, download } from './kit';
 import { CustomerSuggest, useCustomers, ensureCustomer } from './pickers';
 import { InvoiceSheet, FitA4 } from './InvoiceSheet';
 import { DocModal } from './DocViewer';
@@ -80,7 +80,7 @@ export default function InvoiceTool() {
       <select aria-label="Sort" value={sort} onChange={(e) => setSort(e.target.value)} className="ad-sort">{SORTS.map(([k, t]) => <option key={k} value={k}>{t}</option>)}</select></div>
     <input className="ad-search" type="search" placeholder="Search customer or number" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search invoices" />
     <Card tight>{rows.length ? <div className="ad-list">{rows.map((i) => { const [label, tone] = statusOf(i, data.payments); const b = balanceOf(i, data.payments); const ty = typeOf(i);
-      return (<button key={i.id} className="ad-row" onClick={() => setEdit(i)}><div className="main"><b>{i.customer_name}</b><Segs items={[ty !== 'invoice' ? TYPE_NAME[ty] : '', i.invoice_no, fmtD(i.issue_date), label === 'Part paid' ? `${money(b.balance)} left` : '']} /></div><div className="end"><b>{ty === 'credit_note' ? '− ' : ''}{money(i.total_paise)}</b><Badge tone={tone}>{label}</Badge></div></button>); })}</div>
+      return (<button key={i.id} className="ad-row" onClick={() => setEdit(i)}><div className="main"><b>{nb(i.customer_name)}</b><Segs items={[ty !== 'invoice' ? TYPE_NAME[ty] : '', i.invoice_no, fmtD(i.issue_date), label === 'Part paid' ? `${money(b.balance)} left` : '']} /></div><div className="end"><b>{ty === 'credit_note' ? '− ' : ''}{money(i.total_paise)}</b><Badge tone={tone}>{label}</Badge></div></button>); })}</div>
       : <Empty>{data.list.length ? 'Nothing matches.' : 'No invoices yet. Tap "New".'}</Empty>}</Card>
   </Page>);
 }

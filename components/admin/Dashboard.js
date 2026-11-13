@@ -1,8 +1,8 @@
 'use client';
 import Link from 'next/link';
 import Icon from '@/components/Icons';
-import { useState } from 'react';
-import { useLoad, sb, must, every, Page, Card, Fold, Stat, Badge, Empty, Spin, Err, fmtD, fmtDT, useToast } from './kit';
+import { useRef, useState } from 'react';
+import { nb, useLoad, sb, must, every, Page, Card, Fold, Stat, Badge, Empty, Spin, Err, Btn, fmtD, fmtDT, useToast } from './kit';
 import { summarise, fyOf, todayISO, money, moneyR } from '@/lib/accounting';
 
 const istDay = (s) => new Date(new Date(s).getTime() + 5.5 * 3600e3).toISOString().slice(0, 10);
@@ -11,7 +11,7 @@ const soft = (r) => (r.error ? [] : r.data || []);        // a part that fails t
 const MAX_ATTENTION = 10;
 
 export default function Dashboard() {
-  const toast = useToast(); const [leaving, setLeaving] = useState({}); const [gone, setGone] = useState({});        // a ticked task slides away, then is saved
+  const toast = useToast(); const [mark, setMark] = useState({}); const [gone, setGone] = useState({}); const timers = useRef({});        // a ticked task stays a few seconds with an Undo button, then slides away
   const { data: d, error } = useLoad(async () => {
     const c = sb(); const today = todayISO(); const fy = fyOf(today); const lvl = (l) => `${l?.title || 'Class'}${l?.level ? ` (${l.level})` : ''}`;
     const [ledger, toPack, inbox, ws, recentO, recentB, low, recentE, todos, near, sess, late, inv] = await Promise.all([
@@ -42,7 +42,7 @@ export default function Dashboard() {
     const owing = must(inv).map((i) => ({ ...i, left: i.total_paise - (i.invoice_payments || []).reduce((s, p) => s + p.amount_paise, 0) })).filter((i) => i.left > 0);
     // Needs attention: things that are late or running out, each one opens exactly that item
     const attention = [
-      ...owing.filter((i) => i.due_date && i.due_date < today).map((i) => ({ key: `i${i.id}`, t: `${i.customer_name}: invoice overdue`, s: money(i.left), href: `/manager/money?tab=invoices&open=${i.id}` })),
+      ...owing.filter((i) => i.due_date && i.due_date < today).map((i) => ({ key: `i${i.id}`, t: `${i.customer_name}: invoice overdue`, s: money(i.left), href: `/manager/invoices?open=${i.id}` })),
       ...soft(late).map((x) => ({ key: `a${x.id}`, t: `${x.class_enrolments?.student_name || 'Student'}: class ${x.no} not marked`, s: fmtD(x.on_date), href: `/manager/classes?student=${x.enrolment_id}` })),
       ...must(low).map((p) => ({ key: `p${p.id}`, t: p.stock === 0 ? `${p.title} is out of stock` : `${p.title}: only ${p.stock} left`, s: '', href: `/manager/products?open=${p.id}` }))];
     return { sum: summarise(all.map((e) => ({ ...e })), fy), month: summarise(all.filter((e) => e.entry_date.startsWith(month)), fy), toPack: toPack.count || 0, inbox: unread.count || 0, owed: owing.reduce((s, i) => s + i.left, 0), owedN: owing.length, ws: w, taken, recent, day, attention };
@@ -50,30 +50,35 @@ export default function Dashboard() {
   if (error) return <Page title="Hello Rahi"><Err e={error} /></Page>;
   if (!d) return <Page title="Hello Rahi"><Spin /></Page>;
   const day = d.day.filter((x) => !gone[x.task]);
-  const tick = (id) => { setLeaving((l) => ({ ...l, [id]: true })); setTimeout(async () => { setGone((g) => ({ ...g, [id]: true })); const r = await sb().from('todos').update({ done: true, done_at: new Date().toISOString() }).eq('id', id); if (r.error) { toast('Could not save. Please try again.', 'err'); setGone((g) => { const n = { ...g }; delete n[id]; return n; }); setLeaving((l) => { const n = { ...l }; delete n[id]; return n; }); } }, 260); };
+  const save = async (id, done) => { const r = await sb().from('todos').update({ done, done_at: done ? new Date().toISOString() : null }).eq('id', id); if (r.error) { toast('Could not save. Please try again.', 'err'); return false; } return true; };
+  const tick = async (id) => {
+    setMark((m) => ({ ...m, [id]: 'done' })); if (!(await save(id, true))) { setMark((m) => { const n = { ...m }; delete n[id]; return n; }); return; }
+    timers.current[id] = setTimeout(() => { setMark((m) => ({ ...m, [id]: 'leaving' })); setTimeout(() => setGone((g) => ({ ...g, [id]: true })), 280); }, 5000);
+  };
+  const undo = async (id) => { clearTimeout(timers.current[id]); setMark((m) => { const n = { ...m }; delete n[id]; return n; }); await save(id, false); };
   const defPin = (() => { try { return !!sessionStorage.getItem('tbb-defpin'); } catch { return false; } })();
   const first = d.toPack > 0 ? <Link href="/manager/orders"><Stat label="Orders to ship" value={d.toPack} sub={d.inbox ? `${d.inbox} new ${d.inbox === 1 ? 'message' : 'messages'}` : 'Tap to see'} /></Link>
     : d.inbox > 0 ? <Link href="/manager/inbox"><Stat label="New messages" value={d.inbox} sub="Tap to read" /></Link> : <Link href="/manager/orders"><Stat label="Orders to ship" value={0} sub="All caught up" /></Link>;
   return (<Page title="Hello Rahi">
     {defPin && <Link href="/manager/settings" className="ad-err" style={{ display: 'block', background: '#fff3d6', color: '#7a4b00' }}>You are still using the starting PIN (0000). Tap here to change it.</Link>}
-    <div className="ad-quick">
-      {[['/manager/planner', 'Planner', 'qplanner'], ['/manager/money?tab=calculator', 'Calculator', 'qcalc'], ['/manager/money?tab=invoices', 'Invoices', 'qinvoice'], ['/manager/labels', 'Label Printer', 'qprint']].map(([h, t, i]) => <Link key={h} href={h}><Icon n={i} size={26} /><span>{t}</span></Link>)}
-    </div>
     <div className="ad-grid">
       {first}
-      <Link href="/manager/money?tab=invoices&show=unpaid"><Stat label="Receivables" value={moneyR(d.owed)} sub={d.owedN ? `From ${d.owedN} ${d.owedN === 1 ? 'invoice' : 'invoices'}` : 'Nothing owed'} /></Link>
+      <Link href="/manager/invoices?show=unpaid"><Stat label="Receivables" value={moneyR(d.owed)} sub={d.owedN ? `From ${d.owedN} ${d.owedN === 1 ? 'invoice' : 'invoices'}` : 'Nothing owed'} /></Link>
       <Link href="/manager/money"><Stat label="Income this month" value={moneyR(d.month.moneyIn)} sub={`Expense: ${moneyR(d.month.moneyOut)}`} /></Link>
       <Link href="/manager/money?view=report"><Stat label="Profit this month" value={moneyR(d.month.profit)} tone={d.month.profit < 0 ? 'bad' : 'good'} sub={`This year: ${moneyR(d.sum.profit)}`} /></Link>
     </div>
+    <div className="ad-quick">
+      {[['/manager/money?new=in', 'Add Income', 'qin'], ['/manager/money?new=out', 'Add Expense', 'qout'], ['/manager/calculator', 'Calculator', 'qcalc'], ['/manager/labels', 'Label Printer', 'qprint']].map(([h, t, i]) => <Link key={h} href={h}><Icon n={i} size={26} /><span>{t}</span></Link>)}
+    </div>
     <Card title="Today">{day.length ? <div className="ad-list">{day.map((x) => x.task
-      ? <div key={x.key} className={`ad-row todo-row ${leaving[x.task] ? 'leaving' : ''}`}><input type="checkbox" checked={!!leaving[x.task]} onChange={() => tick(x.task)} aria-label="Mark as done" /><Link href={x.href} className="main todo-main"><b>{x.t}</b>{x.s && <small>{x.s}</small>}</Link></div>
-      : <Link key={x.key} href={x.href} className="ad-row"><div className="main"><b>{x.t}</b>{x.s && <small>{x.s}</small>}</div><div className="end"><Badge tone={`k-${x.kind.toLowerCase()}`}>{x.kind}</Badge></div></Link>)}</div> : <Empty>Nothing scheduled today.</Empty>}</Card>
+      ? <div key={x.key} className={`ad-row todo-row ${mark[x.task] === 'leaving' ? 'leaving' : ''}`}><input type="checkbox" checked={!!mark[x.task]} onChange={() => (mark[x.task] ? undo(x.task) : tick(x.task))} aria-label={mark[x.task] ? 'Mark as not done' : 'Mark as done'} /><Link href={x.href} className="main todo-main"><b style={mark[x.task] ? { textDecoration: 'line-through', color: '#8e8e93' } : undefined}>{x.t}</b>{x.s && <small>{x.s}</small>}</Link>{mark[x.task] && <Btn variant="ghost" icon="left" className="ad-btn ghost sm undo" onClick={() => undo(x.task)}>Undo</Btn>}</div>
+      : <Link key={x.key} href={x.href} className="ad-row"><div className="main"><b>{nb(x.t)}</b>{x.s && <small>{x.s}</small>}</div><div className="end"><Badge tone={`k-${x.kind.toLowerCase()}`}>{x.kind}</Badge></div></Link>)}</div> : <Empty>Nothing scheduled today.</Empty>}</Card>
     <Card title="Upcoming workshops" action={<Link href="/manager/workshops" className="ad-help">See all</Link>}>
-      {d.ws.length ? <div className="ad-list">{d.ws.map((w) => <Link key={w.id} href="/manager/workshops" className="ad-row"><div className="main"><b>{w.title}</b><small>{fmtD(w.starts_at)}</small></div><div className="end"><b>{d.taken[w.id] || 0} / {w.capacity}</b><small>seats booked</small></div></Link>)}</div> : <Empty>No upcoming workshops. Add one to start taking bookings.</Empty>}
+      {d.ws.length ? <div className="ad-list">{d.ws.map((w) => <Link key={w.id} href="/manager/workshops" className="ad-row"><div className="main"><b>{nb(w.title)}</b><small>{fmtD(w.starts_at)}</small></div><div className="end"><b>{d.taken[w.id] || 0} / {w.capacity}</b><small>seats booked</small></div></Link>)}</div> : <Empty>No upcoming workshops. Add one to start taking bookings.</Empty>}
     </Card>
     <Card title="Recent payments">
-      {d.recent.length ? <div className="ad-list">{d.recent.map((r) => <div key={r.k + r.id} className="ad-row" style={{ cursor: 'default' }}><div className="main"><b>{r.who}</b><small>{fmtDT(r.at)}</small></div><div className="end"><b>{money(r.amt)}</b></div></div>)}</div> : <Empty>Payments will appear here.</Empty>}
+      {d.recent.length ? <div className="ad-list">{d.recent.map((r) => <div key={r.k + r.id} className="ad-row" style={{ cursor: 'default' }}><div className="main"><b>{nb(r.who)}</b><small>{fmtDT(r.at)}</small></div><div className="end"><b>{money(r.amt)}</b></div></div>)}</div> : <Empty>Payments will appear here.</Empty>}
     </Card>
-    {d.attention.length > 0 && <Fold title={`Needs attention (${d.attention.length})`}><div className="ad-list">{d.attention.slice(0, MAX_ATTENTION).map((x) => <Link key={x.key} href={x.href} className="ad-row"><div className="main"><b>{x.t}</b>{x.s && <small>{x.s}</small>}</div></Link>)}</div></Fold>}
+    {d.attention.length > 0 && <Fold title={`Needs attention (${d.attention.length})`}><div className="ad-list">{d.attention.slice(0, MAX_ATTENTION).map((x) => <Link key={x.key} href={x.href} className="ad-row"><div className="main"><b>{nb(x.t)}</b>{x.s && <small>{x.s}</small>}</div></Link>)}</div></Fold>}
   </Page>);
 }

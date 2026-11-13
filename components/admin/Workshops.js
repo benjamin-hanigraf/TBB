@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Segs, useLoad, sb, must, every, Page, Card, Fold, Badge, Empty, Spin, Err, Modal, Btn, F, PhotoField, useForm, useAction, Confirm, useToast, fmtD, fmtDT, dmyToISO, isoToDMY, slugify } from './kit';
+import { nb, Segs, useLoad, sb, must, every, Page, Card, Fold, Badge, Empty, Spin, Err, Modal, Btn, F, PhotoField, useForm, useAction, Confirm, useToast, fmtD, fmtDT, dmyToISO, isoToDMY, slugify } from './kit';
 import { MessageModal, RefundModal, CancelWorkshop } from './WorkshopTools';
 import { useClash } from './Clash';
 import { slotFromStart } from '@/lib/clash';
@@ -40,7 +40,7 @@ export default function Workshops() {
   const line = (w) => (
     <div key={w.id} className="ws-row">
       {w.image_path ? <img className="ad-thumb" src={photo(w.image_path)} alt="" /> : <div className="ad-thumb" />}
-      <div className="ws-text"><b>{w.title}</b><Segs items={[`${fmtDT(w.starts_at)}${w.kind === 'course' && w.ends_at ? ` to ${fmtD(w.ends_at)}` : ''}`, w.venue_name || 'Venue not set']} /><Segs items={[`${data.taken[w.id] || 0} of ${w.capacity} seats booked`, money(w.price_paise)]} /></div>
+      <div className="ws-text"><b>{nb(w.title)}</b><Segs items={[`${fmtDT(w.starts_at)}${w.kind === 'course' && w.ends_at ? ` to ${fmtD(w.ends_at)}` : ''}`, w.venue_name || 'Venue not set']} /><Segs items={[`${data.taken[w.id] || 0} of ${w.capacity} seats booked`, money(w.price_paise)]} /></div>
       <div className="ws-act"><Badge tone={w.status === 'published' ? 'ok' : w.status === 'cancelled' ? 'bad' : ''}>{w.status === 'published' ? 'Published' : w.status === 'cancelled' ? 'Cancelled' : 'Draft'}</Badge><Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setAtt(w)}>Participants</Btn><Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setEdit(w)}>Edit</Btn></div></div>);
   return (<Page title="Workshops" action={<Btn icon="plus" onClick={() => setEdit({})}>New workshop</Btn>}>
     <Card title={`Upcoming (${up.length})`} tight>{up.length ? <div className="ad-list">{up.map(line)}</div> : <Empty>No upcoming workshops. Tap "New workshop" to add one.</Empty>}</Card>
@@ -132,7 +132,7 @@ function Attendees({ w, taken, onClose, onChanged }) {
   return (<Modal title={`Participants · ${w.title}`} onClose={onClose} wide>
     {error && <Err e={error} />}{!data && !error && <Spin />}
     {data && <><p className="ad-help" style={{ marginTop: 0 }}>{seats} of {w.capacity} seats booked · {left} free · {fmtD(w.starts_at)}</p>
-      {rows.length ? <div className="ad-list">{rows.map((b) => <button key={b.id} className="ad-row" onClick={() => setOne(b)}><div className="main"><b>{b.name}</b><Segs items={[b.phone, b.email]} /></div><div className="end"><b>{money(b.amount_paise)}</b><small className="nw">{b.seats} {b.seats > 1 ? 'seats' : 'seat'}</small><Badge tone={b.status === 'paid' ? 'ok' : b.status === 'pending' ? 'warn' : ''}>{b.status === 'pending' ? 'not paid' : b.status}</Badge></div></button>)}</div> : <Empty>No participants yet.</Empty>}
+      {rows.length ? <div className="ad-list">{rows.map((b) => <button key={b.id} className="ad-row" onClick={() => setOne(b)}><div className="main"><b>{nb(b.name)}</b><Segs items={[b.phone, b.email]} /></div><div className="end"><b>{money(b.amount_paise)}</b><small className="nw">{b.seats} {b.seats > 1 ? 'seats' : 'seat'}</small><Badge tone={b.status === 'paid' ? 'ok' : b.status === 'pending' ? 'warn' : ''}>{b.status === 'pending' ? 'not paid' : b.status}</Badge></div></button>)}</div> : <Empty>No participants yet.</Empty>}
       <div className="ad-actions full"><Btn icon="plus" onClick={() => setAdd(true)}>Add sign-up</Btn>{rows.some((b) => b.status === 'paid') && <Btn variant="ghost" icon="mail" onClick={() => setMsg({ audience: 'workshop', id: w.id, title: w.title, people: rows.filter((b) => b.status === 'paid') })}>Message all</Btn>}
         {rows.some((b) => b.status === 'paid') && w.status !== 'cancelled' && <Btn variant="ghost" icon="wallet" className="ad-btn ghost danger-text wrapbtn" onClick={() => setRefund(true)}>Cancel and refund everyone</Btn>}</div></>}
     {msg && <MessageModal {...msg} onClose={() => setMsg(null)} />}

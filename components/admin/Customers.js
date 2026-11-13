@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Icon from '@/components/Icons';
-import { Segs, useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, fmtD } from './kit';
+import { nb, Segs, useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, fmtD } from './kit';
 import { orderNumber } from '@/lib/numbering';
 import { digits10, findDuplicates, mergeCustomers, MergeModal } from './pickers';
 import { money, toCSV } from '@/lib/accounting';
@@ -29,7 +29,7 @@ export default function Customers() {
   return (<Page title="Customers" action={<>{dups.length > 0 && <Btn variant="ghost" icon="user" onClick={() => setMerge(true)}>Merge ({dups.length})</Btn>}<Btn icon="plus" onClick={() => setOpen({ isNew: true })}>Add customer</Btn></>}>
     <input className="ad-search" type="search" placeholder="Search name, email, phone or city" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search customers" />
     <Card tight>{rows.length ? <div className="ad-list">{rows.map((c) => (
-      <button key={c.id} className="ad-row" onClick={() => setOpen(c)}><div className="main"><b>{c.name}</b><small className="meta-lines">{c.email && <span>{c.email}</span>}{c.phone && <span>{c.phone}</span>}</small></div>
+      <button key={c.id} className="ad-row" onClick={() => setOpen(c)}><div className="main"><b>{nb(c.name)}</b><small className="meta-lines">{c.email && <span>{c.email}</span>}{c.phone && <span>{c.phone}</span>}</small></div>
         <div className="end"><b>{money(c.spent)}</b><small>{c.n.orders + c.n.bookings + c.n.classes} purchases</small></div></button>))}</div> : <Empty>No customers yet. They appear here after a sign-up or purchase, or you can add or import them.</Empty>}</Card>
     {merge && <MergeModal groups={dups} onClose={() => setMerge(false)} onDone={() => { setMerge(false); reload(); }} />}
     {open && <CustomerModal all={data.rows} c={open} onClose={() => setOpen(null)} onSaved={() => { setOpen(null); reload(); }} />}

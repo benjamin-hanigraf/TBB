@@ -201,3 +201,4 @@ Batch: PIN screen, swipe-back fix, Home/Money restructure (owner request)
 - Home: the four index cards on top, then shortcut buttons: Add Income (opens the add income window directly), Add Expense (opens add expense directly), Calculator, Label Printer.
 - Calculator has no tab in Money; it stays on Home as a shortcut. Money is split into two separate pages: Accounts and Invoices.
 - Phone bottom bar: Home, Planner, Invoices, More. Accounts moves under More.
+- Classes: the Add level button is renamed Add Class (owner request)

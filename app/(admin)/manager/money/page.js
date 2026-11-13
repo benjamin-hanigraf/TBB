@@ -1,3 +1,3 @@
-import MoneyHub from '@/components/admin/MoneyHub';
-export const metadata = { title: { absolute: 'Money | TBB Manager' } };
-export default function Page() { return <MoneyHub />; }
+import Money from '@/components/admin/Money';
+export const metadata = { title: { absolute: 'Accounts | TBB Manager' } };
+export default function Page() { return <Money />; }

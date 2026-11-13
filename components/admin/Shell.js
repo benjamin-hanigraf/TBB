@@ -11,14 +11,14 @@ import { pinApi, getToken, setToken, applySession, lockDevice } from '@/lib/admi
 
 export const NAV = [
   ['/manager', 'Home', 'home'], ['/manager/planner', 'Planner', 'calendardays'], ['/manager/workshops', 'Workshops', 'workshops'], ['/manager/classes', 'Classes', 'classes'], ['/manager/orders', 'Orders', 'box'],
-  ['/manager/products', 'Store', 'bag'], ['/manager/money', 'Money', 'note'], ['/manager/inbox', 'Inbox', 'mail'], ['/manager/customers', 'Customers', 'user'], ['/manager/settings', 'Settings', 'gear'],
+  ['/manager/products', 'Store', 'bag'], ['/manager/money', 'Accounts', 'note'], ['/manager/invoices', 'Invoices', 'file'], ['/manager/inbox', 'Inbox', 'mail'], ['/manager/customers', 'Customers', 'user'], ['/manager/settings', 'Settings', 'gear'],
 ];
-// On a phone only Home, Planner and Money stay on the bottom bar; everything else is inside More.
-const TAB_PAGES = ['/manager', '/manager/planner', '/manager/money'];
+// On a phone only Home, Planner and Invoices stay on the bottom bar; everything else is inside More.
+const TAB_PAGES = ['/manager', '/manager/planner', '/manager/invoices'];
 export const MORE = NAV.filter(([h]) => !TAB_PAGES.includes(h));
 const TABS = [...NAV.filter(([h]) => TAB_PAGES.includes(h)), ['/manager/more', 'More', 'menu']];
 /** The page one level up. The bottom-bar pages (Home, Planner, Money, More) have none. */
-export const parentOf = (p) => (p.startsWith('/manager/labels') ? '/manager/orders' : ['/manager/workshops', '/manager/classes', '/manager/orders', '/manager/products', '/manager/inbox', '/manager/customers', '/manager/settings'].some((x) => p.startsWith(x)) ? '/manager/more' : null);
+export const parentOf = (p) => (p.startsWith('/manager/labels') ? '/manager/orders' : p.startsWith('/manager/calculator') ? '/manager' : ['/manager/workshops', '/manager/classes', '/manager/orders', '/manager/products', '/manager/money', '/manager/inbox', '/manager/customers', '/manager/settings'].some((x) => p.startsWith(x)) ? '/manager/more' : null);
 const active = (p, h) => (h === '/manager' ? p === '/manager' : p.startsWith(h));
 /** How many Inbox messages have not been opened yet (shown as "Inbox (2)"). */
 export async function unreadCount() {
@@ -35,21 +35,30 @@ export default function AdminShell({ children }) {
 function Inner({ children }) {
   const path = usePathname(); const router = useRouter(); const here = useRef(path); const [state, setState] = useState('loading'); const [unread, setUnread] = useState(0); const [why, setWhy] = useState('');
   useEffect(() => { here.current = path; }, [path]);
-  // Swipe left to right = go back one level (close the window on top, or go up to the page that holds this one), never to the page visited before.
+  // Swipe left to right = go up one level (close the window on top, or go to the page that holds this one), never to the page visited before.
+  // On phones and tablets the app never adds pages to the browser history (every move replaces the current entry). With nothing to go back to, the
+  // device's own back-swipe (and its sliding picture, which carried the bottom bar along) has nothing to do, and the swipe below does the job.
   useEffect(() => {
-    const up = () => { if (backStack.length) { backStack[backStack.length - 1].close(); return; } const par = parentOf(here.current); if (par) router.push(par); };
+    const touchy = window.matchMedia?.('(pointer: coarse)').matches;
+    const up = () => { if (backStack.length) { backStack[backStack.length - 1].close(); return; } const par = parentOf(here.current); if (par) router.replace(par); };
     let g = null;
     const start = (e) => {
-      g = null; if (e.touches.length !== 1) return; const t = e.touches[0], el = e.target; if (t.clientX <= 24) return;               // the screen's own edge swipe is handled below
+      g = null; if (e.touches.length !== 1) return; const t = e.touches[0], el = e.target;
       if (el.closest?.('input,textarea,select,[contenteditable="true"],.ad-grip,.ad-imgs,.ad-scroll,.ad-tabsbar,.cal-grid,.ad-sortable.dragging')) return;
       for (let a = el; a && a !== document.body; a = a.parentElement) { const o = getComputedStyle(a).overflowX; if ((o === 'auto' || o === 'scroll') && a.scrollWidth > a.clientWidth + 2) return; }
       g = { x: t.clientX, y: t.clientY, at: Date.now() };
     };
-    const end = (e) => { if (!g) return; const t = e.changedTouches[0]; const dx = t.clientX - g.x, dy = t.clientY - g.y; const fast = Date.now() - g.at < 800; g = null; if (fast && dx > 90 && Math.abs(dy) < 60 && dx > 2 * Math.abs(dy)) up(); };
-    // The edge swipe of the phone itself goes back in the browser history; send it to the enclosing page instead.
+    const end = (e) => { if (!g) return; const t = e.changedTouches[0]; const dx = t.clientX - g.x, dy = t.clientY - g.y; const fast = Date.now() - g.at < 900; g = null; if (fast && dx > 80 && Math.abs(dy) < 70 && dx > 1.6 * Math.abs(dy)) up(); };
+    const click = (e) => {                      // moving between pages: replace the history entry instead of adding one
+      if (!touchy || e.defaultPrevented || e.button > 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = e.target.closest?.('a[href]'); if (!a || (a.target && a.target !== '_self') || a.hasAttribute('download')) return;
+      let u; try { u = new URL(a.href, window.location.href); } catch { return; } if (u.origin !== window.location.origin || !u.pathname.startsWith('/manager')) return;
+      e.preventDefault(); e.stopPropagation(); if (u.pathname + u.search === window.location.pathname + window.location.search) return; router.replace(u.pathname + u.search + u.hash);
+    };
+    // Where history does exist (a computer's browser buttons, or a page opened from elsewhere), going back still lands on the enclosing page.
     const pop = () => { const left = here.current; const closed = backStack.length ? (backStack[backStack.length - 1].close(), true) : false; const par = parentOf(left); const to = closed ? left : par || left; if (to !== window.location.pathname) router.replace(to); };
-    document.addEventListener('touchstart', start, { passive: true }); document.addEventListener('touchend', end, { passive: true }); window.addEventListener('popstate', pop);
-    return () => { document.removeEventListener('touchstart', start); document.removeEventListener('touchend', end); window.removeEventListener('popstate', pop); };
+    document.addEventListener('touchstart', start, { passive: true }); document.addEventListener('touchend', end, { passive: true }); document.addEventListener('click', click, true); window.addEventListener('popstate', pop);
+    return () => { document.removeEventListener('touchstart', start); document.removeEventListener('touchend', end); document.removeEventListener('click', click, true); window.removeEventListener('popstate', pop); };
   }, [router]);
   useEffect(() => { if (state === 'ok') unreadCount().then(setUnread).catch(() => {}); }, [state, path]);
   // Behave like an app: no pinch zoom (iPhones ignore the viewport rule, so the gesture itself is stopped), no long-press menus, no photo dragging.

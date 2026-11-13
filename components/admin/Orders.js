@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/Icons';
-import { Segs, useLoad, sb, must, every, Page, Card, Fold, Badge, Empty, Spin, Err, Modal, Btn, Confirm, F, useForm, useAction, useToast, fmtDT, fmtD } from './kit';
+import { nb, Segs, useLoad, sb, must, every, Page, Card, Fold, Badge, Empty, Spin, Err, Modal, Btn, Confirm, F, useForm, useAction, useToast, fmtDT, fmtD } from './kit';
 import { money } from '@/lib/accounting';
 import { orderNumber } from '@/lib/numbering';
 import { syncPaymentsToLedger } from '@/lib/ledgerSync';
@@ -34,7 +34,7 @@ export default function Orders() {
   const has = (x) => !q || JSON.stringify([x.name, x.email, x.phone, no(x), x.invoice_no]).toLowerCase().includes(q.toLowerCase());
   const list = data.orders.filter(has);
   const ship = list.filter(toShip), wait = list.filter((o) => o.status === 'pending'), sent = list.filter(isShipped), off = list.filter(isOff);
-  const row = (o) => (<button key={o.id} className="ad-row" onClick={() => openOrder(o)}><div className="main"><b>{o.name}</b>
+  const row = (o) => (<button key={o.id} className="ad-row" onClick={() => openOrder(o)}><div className="main"><b>{nb(o.name)}</b>
     <Segs items={[no(o), fmtD(o.created_at)]} /></div>
     <div className="end"><b>{money(o.total_paise)}</b><span className="tags">{isPaid(o) && <Badge tone="ok">Paid</Badge>}{isShipped(o) && <Badge tone="ok">Shipped</Badge>}</span></div></button>);
   const Section = ({ title, rows, empty }) => (rows.length || empty ? <Card title={rows.length ? `${title} (${rows.length})` : title} tight>{rows.length ? <div className="ad-list">{rows.map(row)}</div> : <Empty>{empty}</Empty>}</Card> : null);

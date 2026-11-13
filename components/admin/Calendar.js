@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/Icons';
-import { Segs, useLoad, sb, must, every, Card, Fold, Empty, Spin, Err, Badge, Modal, ViewModal, Btn, F, useForm, useAction, Confirm, dmyToISO, isoToDMY, fmtD } from './kit';
+import { nb, Segs, useLoad, sb, must, every, Card, Fold, Empty, Spin, Err, Badge, Modal, ViewModal, Btn, F, useForm, useAction, Confirm, dmyToISO, isoToDMY, fmtD } from './kit';
 import { todayISO, rupeesToPaise, money } from '@/lib/accounting';
 import { addDays } from '@/lib/dates';
 import { parseSlot } from '@/lib/clash';
@@ -64,7 +64,7 @@ export default function CalendarPanel({ version = 0, ym, setYm, sel, setSel, onO
   const go = (n) => { const d = new Date(y, m - 1 + n, 1); setYm(`${d.getFullYear()}-${pad(d.getMonth() + 1)}`); };
   const upcoming = events.filter((e) => e.date >= today).slice(0, 10); const dayList = by[sel] || [];
   const py = pickYear ?? y;
-  const row = (e, i, showDate) => { const inner = (<><div className="main"><b>{e.title}</b><Segs items={[showDate && new Date(`${e.date}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }), e.time, e.note]} /></div><div className="end"><Badge tone={`k-${e.kind}`}>{KINDS[e.kind]}</Badge></div></>);
+  const row = (e, i, showDate) => { const inner = (<><div className="main"><b>{nb(e.title)}</b><Segs items={[showDate && new Date(`${e.date}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }), e.time, e.note]} /></div><div className="end"><Badge tone={`k-${e.kind}`}>{KINDS[e.kind]}</Badge></div></>);
     return e.event ? <button key={i} className="ad-row" onClick={() => onOpen(e.event, 'event')}>{inner}</button> : e.rentout ? <button key={i} className="ad-row" onClick={() => onOpen(e.rentout, 'rentout')}>{inner}</button> : <Link key={i} href={e.href} className="ad-row">{inner}</Link>; };
   return (<>
     {data.missing?.length > 0 && <p className="ad-err" role="alert">Could not load {data.missing.join(', ')}. If this keeps happening, supabase/database.sql may not have been run yet.</p>}

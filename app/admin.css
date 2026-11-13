@@ -287,3 +287,12 @@ button,input,select,textarea{-webkit-tap-highlight-color:transparent}
 html,body{overscroll-behavior-x:none}
 
 .ad-btn.wrapbtn{white-space:normal;text-align:center;line-height:1.2;padding-top:8px;padding-bottom:8px}
+
+/* sign-in screen: the card follows the visible area (above the keypad), the website link is a normal button */
+.ad-center.pinpage{--vvh:100dvh;--vvt:0px;position:fixed;left:0;right:0;top:var(--vvt);height:var(--vvh);min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:grid;place-items:center;padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom))}
+.pin-sub{line-height:1.5;margin:10px 0 26px}.pin-status{min-height:40px;margin-top:12px}
+.pin-back{margin-top:6px;padding:0 18px;color:#1d1d1f;font-size:15px}.pin-back:hover{background:#f5f5f7;color:#1d1d1f}
+@media(max-height:560px){.pin-logo{width:110px;margin-bottom:16px}.pin-card{padding-top:28px}}
+/* every page title sits at the same place and size, whether or not the page has buttons beside it */
+.ad-head{min-height:48px;align-items:center;margin-bottom:20px}.ad-head h1{font-size:clamp(26px,4vw,34px);line-height:1.15;margin:0;letter-spacing:-.02em;font-weight:600}
+.ad-head{align-items:flex-start;min-height:0}.ad-head h1{min-height:48px;display:flex;align-items:center}.ad-head .ad-back{margin-top:6px}.ad-act{align-items:center;min-height:48px}

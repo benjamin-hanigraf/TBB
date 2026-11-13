@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { nb, Segs, useBack, useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Btn, F, useForm, useAction, Confirm, Modal, dmyToISO, isoToDMY, fmtD, fmtDT, download } from './kit';
+import { nb, Segs, SortMenu, useBack, useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Btn, F, useForm, useAction, Confirm, Modal, dmyToISO, isoToDMY, fmtD, fmtDT, download } from './kit';
 import { CustomerSuggest, useCustomers, ensureCustomer } from './pickers';
 import { InvoiceSheet, FitA4 } from './InvoiceSheet';
 import { printElement } from '@/lib/printDoc';
@@ -18,7 +18,7 @@ const SORTS = [['new', 'Newest first'], ['old', 'Oldest first'], ['high', 'Highe
 const RATES = ['0', '5', '12', '18', '28'];
 const TYPES = [['invoice', 'Invoice'], ['quotation', 'Quotation']];
 const TYPE_NAME = { ...Object.fromEntries(TYPES), credit_note: 'Credit note' };
-const SHOW = [['all', 'All'], ['unpaid', 'Unpaid'], ['paid', 'Paid'], ['quotation', 'Quotations']];
+const SHOW = [['all', 'All'], ['unpaid', 'Unpaid'], ['quotation', 'Quotations']];
 const typeOf = (i) => i.doc_type || 'invoice';
 
 /** How much has been paid on an invoice and what is left. */
@@ -87,8 +87,10 @@ export default function InvoiceTool() {
   const owed = data.list.filter((i) => typeOf(i) === 'invoice' && i.status !== 'cancelled').reduce((s, i) => s + balanceOf(i, data.payments).balance, 0);
   return (<Page title="Invoices" action={<><Btn icon="plus" onClick={() => setEdit({ doc_type: show === 'quotation' ? 'quotation' : 'invoice' })}>New</Btn></>}>
     {owed > 0 && <p className="ad-sub">Still to be paid on invoices: <b>{money(owed)}</b></p>}
-    <div className="ad-filterbar"><div className="ad-tabsbar" style={{ margin: 0 }}>{SHOW.map(([k, t]) => <button key={k} className={show === k ? 'on' : ''} onClick={() => setShow(k)}>{t}</button>)}</div>
-      <select aria-label="Sort" value={sort} onChange={(e) => setSort(e.target.value)} className="ad-sort">{SORTS.map(([k, t]) => <option key={k} value={k}>{t}</option>)}</select></div>
+    <div className="ad-filterbar"><div className="ad-tabsbar" style={{ margin: 0 }}>
+      <button className={show === 'unpaid' ? 'on' : ''} onClick={() => setShow(show === 'unpaid' ? 'all' : 'unpaid')}>{show === 'unpaid' ? 'Show All' : 'Show Unpaid'}</button>
+      <button className={show === 'quotation' ? 'on' : ''} onClick={() => setShow(show === 'quotation' ? 'all' : 'quotation')}>Quotations</button></div>
+      <SortMenu options={SORTS} value={sort} onChange={setSort} /></div>
     <input className="ad-search" type="search" placeholder="Search customer or number" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search invoices" />
     <Card tight>{rows.length ? <div className="ad-list">{rows.map((i) => { const [label, tone] = statusOf(i, data.payments); const b = balanceOf(i, data.payments); const ty = typeOf(i);
       return (<button key={i.id} className="ad-row" onClick={() => setEdit(i)}><div className="main"><b>{nb(i.customer_name)}</b><Segs items={[ty !== 'invoice' ? TYPE_NAME[ty] : '', i.invoice_no, fmtD(i.issue_date), label === 'Part paid' ? `${money(b.balance)} left` : '']} /></div><div className="end"><b>{ty === 'credit_note' ? '− ' : ''}{money(i.total_paise)}</b><Badge tone={tone}>{label}</Badge></div></button>); })}</div>

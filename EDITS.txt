@@ -240,3 +240,4 @@ Batch: Invoice flow, TDS-free tidy-up, ITC on expenses (owner request)
 
 - Classes (owner): Undo uses an anti-clockwise circular arrow icon everywhere; the Move button becomes Reschedule with a clock icon; Attended, Reschedule and Cancel sit on one row.
 - Classes list (website and Manager): the third colour group picked up a heading style by accident (a clash between the colour class t3 and the heading class t3), so its text had a different size and weight. The colour classes are renamed so only the box fill differs.
+- Invoices page: remove the Paid filter; Unpaid and All merge into one toggle button (Show Unpaid / Show All); the sort control becomes a small up-down arrows icon that opens a dropdown of the options.

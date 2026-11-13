@@ -53,6 +53,13 @@ export function Fold({ title, children, open: start = false, tight = true, big =
 export const Stat = ({ label, value, sub, tone }) => (<div className={`ad-stat ${tone || ''}`}><span>{label}</span><b>{value}</b>{sub && <em>{sub}</em>}</div>);
 /** Keeps hyphenated words whole in lists ("pre-order" never splits across two lines) by using a hyphen that does not allow a break. */
 export const nb = (s) => (typeof s === 'string' ? s.replace(/(\p{L})-(?=\p{L})/gu, '$1\u2011') : s);
+/** A small icon button (up and down arrows) that opens a list of ways to sort. */
+export function SortMenu({ options, value, onChange, label = 'Sort' }) {
+  const [open, setOpen] = useState(false); const box = useRef();
+  useEffect(() => { if (!open) return; const out = (e) => { if (!box.current?.contains(e.target)) setOpen(false); }; const esc = (e) => e.key === 'Escape' && setOpen(false); document.addEventListener('pointerdown', out); document.addEventListener('keydown', esc); return () => { document.removeEventListener('pointerdown', out); document.removeEventListener('keydown', esc); }; }, [open]);
+  return (<div className="sortmenu" ref={box}><button type="button" className="ad-x ad-toggle" aria-label={label} aria-haspopup="menu" aria-expanded={open} title={label} onClick={() => setOpen((o) => !o)}><Icon n="sort" size={18} /></button>
+    {open && <div className="sortmenu-list" role="menu">{options.map(([k, t]) => <button key={k} type="button" role="menuitemradio" aria-checked={value === k} className={value === k ? 'on' : ''} onClick={() => { onChange(k); setOpen(false); }}><span>{t}</span>{value === k && <Icon n="check" size={16} />}</button>)}</div>}</div>);
+}
 /** The small detail line under a list item. Each detail is kept whole: when the line is too narrow, a whole detail moves to the next line instead of splitting ("3 in" / "stock"). */
 export function Segs({ items, className = '' }) {
   const parts = items.filter((x) => x !== null && x !== undefined && x !== false && x !== '');

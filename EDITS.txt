@@ -273,7 +273,7 @@ Batch: Invoice flow, TDS-free tidy-up, ITC on expenses (owner request)
 - Build passes; pushed to dev
 
 == Batch: Home/Invoice/Accounts improvements (Nov 2026) ==
-IN PROGRESS
+DONE — commit 445d235, pushed to dev
 
 Home:
 - Shortcuts: "Add Income" + "Add Expense" merged into one "Add Transaction" shortcut (uses qin icon, opens /manager/money?new=in); second shortcut changed to "Planner" (/manager/planner, qplanner icon)

@@ -35,8 +35,8 @@ export function AddOrder({ products, order, onClose, onSaved }) {
   const save = (e) => { e.preventDefault(); return run(async () => {
     if (!lines.length) throw new Error('Please choose at least one product.'); if (!f.v.name.trim()) throw new Error('Please add the customer name.');
     const paid = f.v.pay === 'paid'; const addr = { recipient: f.v.name, phone: f.v.phone, line1: f.v.line1, line2: f.v.line2, city: f.v.city, state: f.v.state, pincode: f.v.pincode };
-    if (!edit && paid) for (const l of lines) { const want = lines.filter((x) => x.p.id === l.p.id).reduce((t, x) => t + x.qty, 0);       // do not sell more than is on the shelf
-      if (!l.p.allow_preorder && want > l.p.stock) throw new Error(`Only ${l.p.stock} of "${l.p.title}" in stock. Add stock first, or save the order as not paid yet.`); }
+    if (!edit) for (const l of lines) { const want = lines.filter((x) => x.p.id === l.p.id).reduce((t, x) => t + x.qty, 0);       // do not sell more than is on the shelf
+      if (!l.p.allow_preorder && want > l.p.stock) throw new Error(`Only ${l.p.stock} of "${l.p.title}" in stock. Add stock first.`); }
     const itemRows = lines.map((l) => ({ product_id: l.p.id, title: l.p.title, unit_paise: l.unit, qty: l.qty, gst_paise: l.p.gst_mode === 'none' ? 0 : l.g.gst }));
     const body = { name: f.v.name, email: f.v.email || '', phone: f.v.phone || '', address: addr, subtotal_paise: subtotal, shipping_paise: ship, total_paise: total, items: itemRows };
     // Saved in one step in the database: the order, its items, the stock and the accounts entry go in together, or nothing does.

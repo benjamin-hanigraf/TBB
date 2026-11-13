@@ -9,18 +9,33 @@ import { IN_CATEGORIES, OUT_CATEGORIES, methodChoices, methodLabel, summarise, f
 export default function Money() {
   const sp = useSearchParams(); const toast = useToast(); const [fy, setFy] = useState(fyOf(todayISO())); const [view, setView] = useState(sp.get('view') === 'report' ? 'report' : 'list'); const [kind, setKind] = useState('all'); const [q, setQ] = useState(''); const [edit, setEdit] = useState(null);
   const { data, error, reload } = useLoad(async () => {
-    const c = sb(); const [e, s] = await Promise.all([every(() => c.from('ledger_entries').select('*').order('entry_date', { ascending: false }).order('created_at', { ascending: false }).order('id')), c.from('settings').select('value').eq('key', 'gst').maybeSingle()]);
-    return { entries: must(e), gst: s.data?.value || { enabled: false, rate_percent: 18 } };
+    const c = sb(); const [e, s, inv, bk, en, ord] = await Promise.all([
+      every(() => c.from('ledger_entries').select('*').order('entry_date', { ascending: false }).order('created_at', { ascending: false }).order('id')),
+      c.from('settings').select('value').eq('key', 'gst').maybeSingle(),
+      every(() => c.from('invoices').select('id,total_paise,status,doc_type,invoice_payments(amount_paise)').eq('doc_type', 'invoice').not('status', 'in', '("cancelled","draft")')),
+      every(() => c.from('bookings').select('amount_paise').eq('status', 'pending')),
+      every(() => c.from('class_enrolments').select('amount_paise').eq('status', 'pending')),
+      every(() => c.from('orders').select('total_paise').eq('status', 'pending')),
+    ]);
+    const invRows = inv.error ? [] : inv.data;
+    const receivables =
+      invRows.reduce((s, i) => { const paid = (i.invoice_payments || []).reduce((t, p) => t + p.amount_paise, 0); const bal = Math.max(0, (i.total_paise || 0) - paid); return s + bal; }, 0) +
+      (bk.error ? [] : bk.data).reduce((s, r) => s + (r.amount_paise || 0), 0) +
+      (en.error ? [] : en.data).reduce((s, r) => s + (r.amount_paise || 0), 0) +
+      (ord.error ? [] : ord.data).reduce((s, r) => s + (r.total_paise || 0), 0);
+    return { entries: must(e), gst: s.data?.value || { enabled: false, rate_percent: 18 }, receivables };
   });
   useEffect(() => { let on = true; let full = false; try { const last = Number(localStorage.getItem('tbb-sync-full') || 0); if (Date.now() - last > 6 * 3600e3) { full = true; localStorage.setItem('tbb-sync-full', String(Date.now())); } } catch {}   // the whole history is rechecked now and then; the rest of the time only recent payments
     syncPaymentsToLedger(sb(), { full }).then((n) => { if (on && n > 0) { toast(`${n} payment${n > 1 ? 's' : ''} added to your accounts`); reload(); } }).catch((e) => console.error('sync', e)); return () => { on = false; }; /* eslint-disable-next-line */ }, []);
-  useEffect(() => { const n = sp.get('new'); if (n === 'in' || n === 'out') setEdit({ kind: n }); }, [sp]);
+  useEffect(() => { const n = sp.get('new'); if (n === 'in' || n === 'out' || n === 'entry') setEdit({ kind: n === 'out' ? 'out' : 'in' }); }, [sp]);
   if (error) return <Page title="Accounts"><Err e={error} /></Page>; if (!data) return <Page title="Accounts"><Spin /></Page>;
   const sum = summarise(data.entries, fy); const choices = fyChoices(data.entries); const gstOn = data.gst.enabled;
   const rows = data.entries.filter((e) => inFY(e.entry_date, fy) && (kind === 'all' || e.kind === kind) && (!q || `${e.category} ${e.party || ''} ${e.description || ''}`.toLowerCase().includes(q.toLowerCase())));
-  return (<Page title="Accounts" action={<><Btn icon="plus" onClick={() => setEdit({ kind: 'in' })}>Income</Btn><Btn variant="ghost" icon="plus" onClick={() => setEdit({ kind: 'out' })}>Expense</Btn></>}>
-    <div className="ad-field" style={{ maxWidth: 240, marginBottom: 14 }}><span>Financial year (April to March)</span><select value={fy} onChange={(e) => setFy(e.target.value)} aria-label="Financial year">{choices.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
-    <div className="ad-grid"><Stat label="Income" value={moneyR(sum.moneyIn)} /><Stat label="Expense" value={moneyR(sum.moneyOut)} /><Stat label="Profit" value={moneyR(sum.profit)} tone={sum.profit < 0 ? 'bad' : 'good'} />
+  return (<Page title="Accounts" action={<>
+    <select className="ad-fy-sel" value={fy} onChange={(e) => setFy(e.target.value)} aria-label="Financial year">{choices.map((c) => <option key={c} value={c}>{c}</option>)}</select>
+    <Btn icon="plus" onClick={() => setEdit({ kind: 'in' })}>Add Entry</Btn>
+  </>}>
+    <div className="ad-grid"><Stat label="Income" value={moneyR(sum.moneyIn)} /><Stat label="Expense" value={moneyR(sum.moneyOut)} /><Stat label="Profit" value={moneyR(sum.profit)} tone={sum.profit < 0 ? 'bad' : ''} /><Stat label="Receivables" value={moneyR(data.receivables)} />
       {gstOn && <Stat label="GST to pay" value={moneyR(sum.gstPayable)} sub={`${moneyR(sum.gstCollected)} collected, ${moneyR(sum.gstPaid)} credit from purchases`} />}</div>
     <div className="ad-filterbar"><div className="ad-tabsbar" style={{ margin: 0 }}>{[['all', 'All'], ['in', 'Income'], ['out', 'Expense']].map(([k, t]) => <button key={k} className={kind === k ? 'on' : ''} onClick={() => setKind(k)}>{t}</button>)}</div>
       <button type="button" className="ad-x ad-toggle" aria-label={view === 'list' ? 'Show reports' : 'Show entries'} title={view === 'list' ? 'Reports' : 'Entries'} onClick={() => setView(view === 'list' ? 'report' : 'list')}><Icon n={view === 'list' ? 'chartpie' : 'list'} size={18} /></button></div>
@@ -28,7 +43,7 @@ export default function Money() {
       <input className="ad-search" type="search" placeholder="Search category, name or note" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search entries" />
       <Card tight>{rows.length ? <div className="ad-list">{rows.map((e) => (
         <button key={e.id} className="ad-row" onClick={() => setEdit(e)}><div className="main"><b>{nb(e.category)}</b><Segs items={[fmtD(e.entry_date), e.party, e.description]} /></div>
-          <div className="end"><b style={{ color: e.kind === 'in' ? '#14532d' : '#9b1c1c' }}>{e.kind === 'in' ? '+' : '−'}{money(e.amount_paise)}</b></div></button>))}</div> : <Empty>No entries in {fy}. Tap "Income" or "Expense" to add one. Online payments are added automatically.</Empty>}</Card></>)
+          <div className="end"><b style={{ color: e.kind === 'in' ? '#14532d' : '#9b1c1c' }}>{e.kind === 'in' ? '+' : '−'}{money(e.amount_paise)}</b></div></button>))}</div> : <Empty>No entries in {fy}. Tap "Add Entry" to add one. Online payments are added automatically.</Empty>}</Card></>)
     : (<Reports sum={sum} gstOn={gstOn} kind={kind} />)}
     {edit && <Entry e={edit} gst={data.gst} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); reload(); }} />}
   </Page>);
@@ -83,12 +98,12 @@ function Entry({ e, gst, onClose, onSaved }) {
     must(isNew ? await sb().from('ledger_entries').insert({ ...row, source: 'manual' }) : await sb().from('ledger_entries').update(row).eq('id', e.id)); onSaved();
   }, 'Saved'); };
   const del = () => run(async () => { must(await sb().from('ledger_entries').delete().eq('id', e.id)); onSaved(); }, 'Deleted');
-  return (<Modal title={isNew ? (f.v.kind === 'in' ? 'Income' : 'Expense') : 'Entry'} onClose={onClose}>
+  return (<Modal title={isNew ? 'Add Entry' : 'Entry'} onClose={onClose}>
     {link && <p className="ad-help" style={{ marginTop: 0 }}><a className="ad-linkbtn" href={link}>See where it came from</a></p>}
     {!editing && <><dl className="ad-view">{[['Type', e.kind === 'in' ? 'Income (received)' : 'Expense (spent)'], ['Date', fmtD(e.entry_date)], ['Amount', money(e.amount_paise)], ['Category', e.category], [e.kind === 'in' ? 'Received from' : 'Paid to', e.party], ['Paid by', methodLabel(e.method)], [e.kind === 'out' ? 'GST to claim back' : 'GST included', e.gst_paise > 0 ? money(e.gst_paise) : ''], ['Note', e.description]].filter(([, v]) => v).map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
       <div className="ad-actions full"><Btn icon="edit" onClick={() => setEditing(true)}>Edit</Btn></div></>}
     {editing && <form onSubmit={save} className="ad-form">
-      <F form={f} k="kind" label="Type" type="select" required options={[['in', 'Income (received)'], ['out', 'Expense (spent)']]} />
+      {isNew && <div className="full"><div className="ad-tabsbar" style={{ margin: 0 }}>{[['in', 'Income'], ['out', 'Expense']].map(([k, t]) => <button type="button" key={k} className={f.v.kind === k ? 'on' : ''} onClick={() => { f.set('kind', k); f.set('category', ''); }}>{t}</button>)}</div></div>}
       <F form={f} k="date" label="Date" type="date" required />
       <F form={f} k="amount" label="Amount (₹)" type="money" rule="money" required />
       <F form={f} k="category" label="Category" type="select" required options={cats} />

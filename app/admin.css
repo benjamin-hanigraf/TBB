@@ -19,6 +19,7 @@ body{background:#f5f5f7}html{overflow-x:hidden}.ad-lock{overflow:hidden}.ad-moda
 }
 .ad-page{max-width:1000px;margin:0 auto}
 .ad-head{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}.ad-head h1{font-size:clamp(26px,4vw,34px);letter-spacing:-.02em;flex:1 1 auto;min-width:min(max-content,100%)}.ad-act{display:flex;gap:8px;flex-wrap:wrap}
+.ad-fy-sel{height:40px;padding:0 10px;border:1px solid #d2d2d7;border-radius:980px;background:#fff;font:inherit;font-size:14px;color:#1d1d1f;cursor:pointer;white-space:nowrap;flex:none}
 .ad-back{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#fff}
 .ad-card{background:#fff;border-radius:20px;padding:20px;margin-bottom:16px}.ad-card.tight{padding:6px}
 .ad-card-h{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;min-height:28px}.ad-card-h h2,.ad-fold-h h2{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6e6e73}

@@ -68,7 +68,7 @@ export default function Dashboard() {
       <Link href="/manager/money?view=report"><Stat label="Profit this month" value={moneyR(d.month.profit)} tone={d.month.profit < 0 ? 'bad' : 'good'} sub={`This year: ${moneyR(d.sum.profit)}`} /></Link>
     </div>
     <div className="ad-quick">
-      {[['/manager/money?new=in', 'Add Income', 'qin'], ['/manager/money?new=out', 'Add Expense', 'qout'], ['/manager/calculator', 'Calculator', 'qcalc'], ['/manager/labels', 'Label Printer', 'qprint']].map(([h, t, i]) => <Link key={h} href={h}><Icon n={i} size={26} /><span>{t}</span></Link>)}
+      {[['/manager/money?new=in', 'Add Transaction', 'qin'], ['/manager/planner', 'Planner', 'qplanner'], ['/manager/calculator', 'Calculator', 'qcalc'], ['/manager/labels', 'Label Printer', 'qprint']].map(([h, t, i]) => <Link key={h} href={h}><Icon n={i} size={26} /><span>{t}</span></Link>)}
     </div>
     <Card title="Today">{day.length ? <div className="ad-list">{day.map((x) => x.task
       ? <div key={x.key} className={`ad-row todo-row ${mark[x.task] === 'leaving' ? 'leaving' : ''}`}><input type="checkbox" checked={!!mark[x.task]} onChange={() => (mark[x.task] ? undo(x.task) : tick(x.task))} aria-label={mark[x.task] ? 'Mark as not done' : 'Mark as done'} /><Link href={x.href} className="main todo-main"><b style={mark[x.task] ? { textDecoration: 'line-through', color: '#8e8e93' } : undefined}>{x.t}</b>{x.s && <small>{x.s}</small>}</Link>{mark[x.task] && <Btn variant="ghost" icon="undo" className="ad-btn ghost sm undo" onClick={() => undo(x.task)}>Undo</Btn>}</div>

@@ -77,7 +77,7 @@ export default function InvoiceTool() {
   const rows = useMemo(() => {
     if (!data) return []; const t = q.trim().toLowerCase();
     const keep = (i) => { const ty = typeOf(i); if (ty === 'quotation' && i.status === 'accepted') return false;       // already turned into an invoice: it lives under Invoices now
-      if (show === 'quotation') return ty === show; if (show === 'all') return true; if (ty !== 'invoice' || i.status === 'cancelled') return false; const b = balanceOf(i, data.payments); return show === 'paid' ? b.paid > 0 && b.balance === 0 : b.balance > 0; };
+      if (show === 'quotation') return ty === show; if (show === 'all') return true; if (ty !== 'invoice' || i.status === 'cancelled' || i.status === 'draft') return false; const b = balanceOf(i, data.payments); return show === 'paid' ? b.paid > 0 && b.balance === 0 : b.balance > 0; };
     const r = data.list.filter((i) => keep(i) && (!t || `${i.customer_name} ${i.invoice_no} ${i.customer_email || ''}`.toLowerCase().includes(t)));
     const by = { new: (a, b) => b.issue_date.localeCompare(a.issue_date) || b.created_at.localeCompare(a.created_at), old: (a, b) => a.issue_date.localeCompare(b.issue_date), high: (a, b) => b.total_paise - a.total_paise, low: (a, b) => a.total_paise - b.total_paise, name: (a, b) => a.customer_name.localeCompare(b.customer_name) };
     return r.sort(by[sort]);
@@ -123,7 +123,7 @@ function Editor({ inv, data, onBack, onOpen }) {
   const biz = { ...(st.business || {}), address: st.business?.address || ADDRESS_TEXT, name: st.business?.name || 'Thin Black Brush', gstin: gstSet.gstin || '' };
   const title = type === 'quotation' ? 'Quotation' : paidSum > 0 && balance === 0 ? 'Receipt' : 'Invoice';
   const doc = { no: f.v.no || f.v.preview || 'Preview', date: issue, due: type === 'invoice' ? dmyToISO(f.v.due) : null, title, biz, customer: { name: f.v.name, address: f.v.address, phone: f.v.phone, email: f.v.email, gstin: f.v.gstin }, calc, gstOn: f.v.gst, notes: [type === 'quotation' && f.v.due ? `Valid until ${f.v.due}.` : '', f.v.notes].filter(Boolean).join('\n'), terms: st.invoice?.terms || '',
-    paid: type === 'invoice' && paidSum > 0 && balance === 0, paidPaise: type === 'invoice' ? paidSum : 0, balance, method: payments.length === 1 ? payments[0].method : '', paidOn: payments.length ? payments[payments.length - 1].paid_on : null };
+    paid: type === 'invoice' && paidSum > 0 && balance === 0, paidPaise: type === 'invoice' ? paidSum : 0, balance, method: payments.length === 1 ? methodLabel(payments[0].method) : '', paidOn: payments.length ? payments[payments.length - 1].paid_on : null };
   const pick = (c) => f.setAll((v) => ({ ...v, name: c.name, phone: c.phone || v.phone, email: c.email || v.email, address: [c.address_line1, c.address_line2, [c.city, c.pincode].filter(Boolean).join(' - '), c.state].filter(Boolean).join('\n') || v.address }));
   const addNew = (name) => run(async () => { await ensureCustomer({ name, email: f.v.email, phone: f.v.phone, ...parseAddress(f.v.address) }); reloadCustomers(); }, `${name} added to customers`);
 

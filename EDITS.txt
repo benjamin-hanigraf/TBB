@@ -271,3 +271,26 @@ Batch: Invoice flow, TDS-free tidy-up, ITC on expenses (owner request)
   · ≥900px: 3-column grid [1fr | 98px badge | 320px pill]; sess-head is display:contents
   · overflow:hidden + text-overflow:ellipsis on .main and .c-no/.c-when at all widths — hard clipping prevents any bleed
 - Build passes; pushed to dev
+
+== Batch: Home/Invoice/Accounts improvements (Nov 2026) ==
+IN PROGRESS
+
+Home:
+- Shortcuts: "Add Income" + "Add Expense" merged into one "Add Transaction" shortcut (uses qin icon, opens /manager/money?new=in); second shortcut changed to "Planner" (/manager/planner, qplanner icon)
+
+Invoice:
+- UPI lowercase bug: InvoiceTool.js line 126 doc.method now wrapped with methodLabel() so "upi" shows as "UPI" on the invoice/receipt
+- Unpaid filter now excludes Draft invoices: keep() in InvoiceTool.js line 80 adds || i.status === 'draft' to exclusion
+
+Accounts (Money.js):
+- Two "Income"/"Expense" action buttons merged into one "Add Entry" button
+- Financial year selector moved from body into page header (same row as title and Add Entry)
+- Added .ad-fy-sel CSS class for the compact year select (admin.css)
+- Entry modal: Type select field replaced with an ad-tabsbar income/expense switcher at the top; modal title is always "Add Entry" for new entries, "Entry" for edits
+- Four stat tiles: Income, Expense, Profit (no green — only red when negative), Receivables
+- Receivables fetches: unpaid invoices (excl. draft/cancelled, using balanceOf), pending bookings, pending class_enrolments, pending orders
+- Empty text updated to reference "Add Entry"
+- Money.js useEffect handles new=in, new=out, new=entry (all open the modal; out sets kind=out, all others default to in)
+
+Orders:
+- Stock check for "not paid yet" orders: the check is now outside the paid=true gate so out-of-stock items cannot be added regardless of payment status

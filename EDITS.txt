@@ -217,3 +217,6 @@ Batch: Calculator (owner request, doubts clarified)
 - Every calculator section is a collapsible accordion like Settings, all collapsed by default.
 - Price and profit: Markup | Sale Price switcher (second field and results change); "Margin" becomes "Profit percentage", bracket text removed.
 - GST: Exclusive | Inclusive switcher. Discount: Customer | Supplier switcher with matching wording (You give away / Customer pays; You save / You pay).
+
+- Bug (owner): adding an invoice for a new customer created the customer twice (once with only the name, once with email and contact). Fix: a customer is recognised by name too when their email and phone do not contradict; the existing record is completed instead of a second one being made; names-only duplicates that already exist appear under Customers > Merge.
+- Invoice: the address typed on an invoice is now saved on the customer record too (parsed into address lines, city, state, pincode); only empty fields are filled, nothing is overwritten.

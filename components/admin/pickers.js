@@ -9,10 +9,14 @@ export const FIELDS = ['name', 'email', 'phone', 'address_line1', 'address_line2
 export const useCustomers = () => useLoad(async () => must(await every(() => sb().from('customers').select('id,name,email,phone,address_line1,address_line2,city,state,pincode,created_at').order('name').order('id'))));
 
 /** Finds this person by email or phone and fills any empty details; adds them as a new customer if they are not in the list yet. */
+const nameKey = (n) => String(n || '').toLowerCase().replace(/\s+/g, ' ').trim();
+/** Two records are the same person when the names match and neither email nor phone contradicts the other (a name-only record is completed by the fuller one). */
+const sameName = (a, b) => { if (!nameKey(a.name) || nameKey(a.name) !== nameKey(b.name)) return false; const ea = (a.email || '').toLowerCase(), eb = (b.email || '').toLowerCase(); const pa = digits10(a.phone), pb = digits10(b.phone);
+  return !(ea && eb && ea !== eb) && !(pa.length === 10 && pb.length === 10 && pa !== pb); };
 export async function ensureCustomer(c, source = 'manual') {
   const name = RULES.name.done(c.name || ''); const email = RULES.email.done(c.email || '') || null; const ph = digits10(c.phone); if (!name && !email && ph.length < 10) return null;
   const all = must(await every(() => sb().from('customers').select('*').order('id')));
-  const found = all.find((x) => email && x.email === email) || all.find((x) => ph.length === 10 && digits10(x.phone) === ph);
+  const found = all.find((x) => email && x.email === email) || all.find((x) => ph.length === 10 && digits10(x.phone) === ph) || all.find((x) => sameName(x, { name, email, phone: c.phone }));       // the same name with no contradicting contact is the same person
   const extra = Object.fromEntries(FIELDS.slice(3).map((k) => [k, c[k] || null]));
   if (found) { const patch = {}; for (const k of [...FIELDS.slice(1), ...FIELDS.slice(3)]) { const v = k === 'email' ? email : k === 'phone' ? c.phone : extra[k]; if (v && !found[k]) patch[k] = v; } if (Object.keys(patch).length) must(await sb().from('customers').update(patch).eq('id', found.id)); return found; }
   return must(await sb().from('customers').insert({ name: name || email || c.phone, email, phone: c.phone || null, ...extra, source }).select().single());
@@ -47,13 +51,14 @@ export function findDuplicates(rows) {
   const parent = new Map(rows.map((r) => [r.id, r.id])); const find = (x) => (parent.get(x) === x ? x : (parent.set(x, find(parent.get(x))), parent.get(x)));
   const link = (a, b) => parent.set(find(a), find(b)); const byE = new Map(), byP = new Map();
   for (const r of rows) { const e = (r.email || '').toLowerCase(); if (e) { if (byE.has(e)) link(r.id, byE.get(e)); else byE.set(e, r.id); } const p = digits10(r.phone); if (p.length === 10) { if (byP.has(p)) link(r.id, byP.get(p)); else byP.set(p, r.id); } }
+  const byN = new Map(); for (const r of rows) { const k = nameKey(r.name); if (!k) continue; for (const o of byN.get(k) || []) if (sameName(r, o)) link(r.id, o.id); (byN.get(k) || byN.set(k, []).get(k)).push(r); }       // same name, nothing contradicting
   const groups = new Map(); for (const r of rows) { const g = find(r.id); (groups.get(g) || groups.set(g, []).get(g)).push(r); }
   return [...groups.values()].filter((g) => g.length > 1);
 }
 export function MergeModal({ groups, onClose, onDone }) {
   const [run, busy] = useAction(); const [ask, setAsk] = useState(null);
   return (<Modal title="Possible duplicates" onClose={onClose}>
-    <p className="ad-help" style={{ marginTop: 0 }}>These customers share an email address or phone number. Merging keeps one customer with all the details.</p>
+    <p className="ad-help" style={{ marginTop: 0 }}>These customers share a name, an email address or a phone number. Merging keeps one customer with all the details.</p>
     {groups.map((g, i) => <div key={i} className="ad-card" style={{ background: '#f5f5f7' }}>{g.map((c) => <p key={c.id} style={{ margin: '4px 0' }}><b>{c.name}</b><br /><small className="ad-help">{[c.phone, c.email].filter(Boolean).join(' · ')}</small></p>)}
       <Btn variant="ghost" icon="user" onClick={() => setAsk(g)}>Merge these {g.length}</Btn></div>)}
     {!groups.length && <p className="ad-empty">No duplicates found.</p>}

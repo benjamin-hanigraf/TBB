@@ -11,7 +11,7 @@ import { METHOD_OPTIONS } from './ManualEntry';
 import { nextInvoiceNo, fyOf, todayISO, money, rupeesToPaise, toCSV, IN_CATEGORIES } from '@/lib/accounting';
 import { calcInvoice } from '@/lib/invoiceCalc';
 import { RULES } from '@/lib/format';
-import { ADDRESS_TEXT } from '@/lib/address';
+import { ADDRESS_TEXT, parseAddress } from '@/lib/address';
 import { adminClient as supabase } from '@/lib/supabase-admin';
 
 const param = (k) => { try { return new URLSearchParams(window.location.search).get(k); } catch { return null; } };   // a link from elsewhere in the app (e.g. Accounts) can open one item
@@ -108,7 +108,7 @@ function Editor({ inv, data, onBack, onOpen }) {
   const doc = { no: f.v.no || f.v.preview || 'Preview', date: issue, due: type === 'invoice' ? dmyToISO(f.v.due) : null, title, biz, customer: { name: f.v.name, address: f.v.address, phone: f.v.phone, email: f.v.email, gstin: f.v.gstin }, calc, gstOn: f.v.gst, notes: [type === 'quotation' && f.v.due ? `Valid until ${f.v.due}.` : '', f.v.notes].filter(Boolean).join('\n'), terms: st.invoice?.terms || '',
     paid: type === 'invoice' && paidSum > 0 && balance === 0, paidPaise: type === 'invoice' ? paidSum : 0, balance, method: payments.length === 1 ? payments[0].method : '', paidOn: payments.length ? payments[payments.length - 1].paid_on : null };
   const pick = (c) => f.setAll((v) => ({ ...v, name: c.name, phone: c.phone || v.phone, email: c.email || v.email, address: [c.address_line1, c.address_line2, [c.city, c.pincode].filter(Boolean).join(' - '), c.state].filter(Boolean).join('\n') || v.address }));
-  const addNew = (name) => run(async () => { await ensureCustomer({ name, email: f.v.email, phone: f.v.phone }); reloadCustomers(); }, `${name} added to customers`);
+  const addNew = (name) => run(async () => { await ensureCustomer({ name, email: f.v.email, phone: f.v.phone, ...parseAddress(f.v.address) }); reloadCustomers(); }, `${name} added to customers`);
 
   async function saveCore() {
     const v = f.v; if (!v.name.trim()) throw new Error('Please add the customer name.'); if (!clean.length || calc.total <= 0) throw new Error('Please add at least one item with a price.'); if (!dmyToISO(v.date)) throw new Error('Please enter the date as DD/MM/YYYY.');
@@ -127,7 +127,7 @@ function Editor({ inv, data, onBack, onOpen }) {
       must(await sb().from('invoices').update({ status: 'paid', paid_on: on, payment_method: v.method }).eq('id', saved.id));
       setPayments((a) => [...a, p]); f.set('payNow', 'no'); f.set('state', 'paid');
     }
-    await ensureCustomer({ name: v.name, email: v.email, phone: v.phone }).catch(() => {});
+    await ensureCustomer({ name: v.name, email: v.email, phone: v.phone, ...parseAddress(v.address) }).catch(() => {});
     return saved;
   }
   const email = (saved, kind = 'invoice') => { const to = RULES.email.done(f.v.email); if (!to) throw new Error('Please add the customer email first.'); return managerPost({ type: kind, invoice_id: saved.id, to }); };

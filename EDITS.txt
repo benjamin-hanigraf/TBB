@@ -211,3 +211,9 @@ Batch: Accounts and Invoices overhaul (owner request)
 - Accounts decisions (owner): no partial refunds; automatic entries not locked and the "Automatic" tag removed; cancelling an invoice that has payments asks what to do with the money (give it back / remove the payment / keep it); the system prevents mismatches by itself (no check button); no per-method totals; simplify first.
 - Done: the database now keeps the income entry of every paid order, booking and class in step by itself (paid makes it, "not paid yet" removes it, deleting the item removes it, a hand-edited entry is not overwritten by later changes such as shipping); an entry for a payment that still exists cannot be deleted by hand (the message says to mark it not paid); payments and rent-outs that are deleted take their entries with them. Sign-ups paid by hand can be set back to Not paid yet. Invoice: Cancel invoice button asks about the money; deleting an invoice that has payments is refused. Scenario tests in tests/accounts.test.sql.
 - Fixed: Students window (a missing import) and a check that catches this kind of mistake; Home's four cards are always four in a row or two and two.
+
+Batch: Calculator (owner request, doubts clarified)
+- Plain number boxes (rupee amounts and counts, not percentages or rates) accept + and - sums such as 400+520 or 500-250+100; spaces, commas and decimals are fine; moving away shows the result (920), coming back shows the typed sum again; a negative or unfinished sum leaves the answers blank / on the last valid value. Calculator only.
+- Every calculator section is a collapsible accordion like Settings, all collapsed by default.
+- Price and profit: Markup | Sale Price switcher (second field and results change); "Margin" becomes "Profit percentage", bracket text removed.
+- GST: Exclusive | Inclusive switcher. Discount: Customer | Supplier switcher with matching wording (You give away / Customer pays; You save / You pay).

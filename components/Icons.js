@@ -26,6 +26,8 @@ const P = {
   qcalc: <><rect x="3" y="3" width="18" height="18" rx="4" /><rect x="7" y="6.5" width="10" height="3.5" rx="1" /><path d="M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01M16 17.5h.01" /></>,
   qinvoice: <><path d="M4.5 3h10l5 5v13h-15z" /><path d="M14.5 3v5h5M8 13h8M8 17h8" /></>,
   qprint: <><path d="M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2" /><path d="M7 9V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v5" /><rect x="7" y="14" width="10" height="7" rx="1" /></>,
+  undo: <><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1" /><path d="M3.5 4v4.6h4.6" /></>,
+  clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3.2 2" /></>,
   calendardays: <><rect x="3.5" y="5" width="17" height="15" rx="3" /><path d="M8 3v4M16 3v4M3.5 10h17" /><path d="M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01" /></>,
   whatsapp: <><path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" /><path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" /></>,
   close: <path d="M6 6l12 12M18 6 6 18" />,

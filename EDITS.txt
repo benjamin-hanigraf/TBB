@@ -231,3 +231,12 @@ Batch: Invoice/quotation number prefilled; quantity optional (owner request)
 - Payment methods list everywhere becomes: UPI, Cash, Bank/Card, TDS (owner request).
 - Accounts reports: new section 'TDS deducted by customers' (customer-wise totals and a summary for the selected financial year), read from payments recorded with method TDS. No other TDS mechanism.
 - TDS is offered only when recording a payment on an invoice (UPI, Cash, Bank/Card everywhere else). Quarterly split and PAN/TAN fields are not wanted.
+
+Batch: Invoice flow, TDS-free tidy-up, ITC on expenses (owner request)
+- Invoice/quotation form: remove the status and payment fields. A saved document is Draft; a "Sent" button marks it Sent (unpaid) and only then shows the Payments section; payments mark it Part paid or Paid.
+- "Turn into invoice": temporary Undo to avoid accidental presses.
+- Payments summary line ("Total · Paid · Left to pay") shown neatly and simply.
+- Add/edit expense: ask in simple words whether the GST credit can be claimed; if yes ask for the GST amount (not the rate); the accounts use it as GST credit.
+
+- Classes (owner): Undo uses an anti-clockwise circular arrow icon everywhere; the Move button becomes Reschedule with a clock icon; Attended, Reschedule and Cancel sit on one row.
+- Classes list (website and Manager): the third colour group picked up a heading style by accident (a clash between the colour class t3 and the heading class t3), so its text had a different size and weight. The colour classes are renamed so only the box fill differs.

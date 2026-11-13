@@ -28,7 +28,7 @@ export default function Classes() {
   const reorder = async (arr) => { try { for (let i = 0; i < arr.length; i++) if (arr[i].sort_order !== i + 1) must(await sb().from('class_levels').update({ sort_order: i + 1 }).eq('id', arr[i].id)); toast('Order saved'); reload(); } catch (e) { toast(e.message || 'Could not save the order.', 'err'); } };
   return (<Page title="Classes" action={<Btn icon="plus" onClick={() => setEdit({})}>Add Class</Btn>}>
     <Card tight>{data.levels.length ? <Sortable className="cls-list" items={data.levels} onReorder={reorder} render={(c, grip) => (
-      <div className={`cls-box t${tone(c.track)}`}><span {...grip}><Icon n="grip" size={18} /></span>
+      <div className={`cls-box tone${tone(c.track)}`}><span {...grip}><Icon n="grip" size={18} /></span>
         <button type="button" className="main cls-main" onClick={() => setView(c)}><b>{nb(c.title)} ({nb(c.level)})</b><small>{c.track}</small><small className="cls-n"><span className="seg">{c.sessions} classes · {data.n[c.id] || 0} {(data.n[c.id] || 0) === 1 ? 'student' : 'students'}</span></small></button>
         <div className="end"><span className="cls-tags">{!c.active && <Badge>Hidden</Badge>}{data.loose[c.id] > 0 && <Badge tone="warn">{data.loose[c.id]} to schedule</Badge>}</span><b className="cls-amt">{money(c.price_paise)}</b><Btn variant="ghost" className="ad-btn ghost sm" onClick={() => setPeople(c)}>Students</Btn></div></div>)} /> : <Empty>No levels yet.</Empty>}</Card>
     {data.levels.length > 1 && <p className="ad-help" style={{ textAlign: 'center' }}>Drag the handle to change the order on the website. "To schedule" means students who paid but have no class dates yet: open Students, then Classes.</p>}

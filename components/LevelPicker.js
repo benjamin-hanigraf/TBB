@@ -33,7 +33,7 @@ export default function LevelPicker({ classes, phone, whatsapp }) {
   const wa = `${whatsapp}?text=${encodeURIComponent(chosen ? `Hi, I would like to join ${label} (${rupees(chosen.price)}).` : 'Hi, I would like to know more about the writing classes.')}`;
   return (<>
     <div className="levels" role="radiogroup" aria-label="Class level">{classes.map((c) => (
-      <label key={c.slug} className={`level ${c.tone ? `t${c.tone}` : ''} ${sel === c.slug ? 'sel' : ''}`}>
+      <label key={c.slug} className={`level ${c.tone ? `tone${c.tone}` : ''} ${sel === c.slug ? 'sel' : ''}`}>
         <input type="radio" className="sr" name="level" value={c.slug} checked={sel === c.slug} onChange={() => { setSel(c.slug); setErr(''); showPay(); }} />
         <span className="tag">{c.level}</span>
         <h3>{c.title}</h3><p className="desc">{c.text}</p>

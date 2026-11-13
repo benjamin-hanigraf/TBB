@@ -33,6 +33,7 @@ export function statusOf(inv, payments = []) {
   if (inv.status === 'cancelled') return ['Cancelled', 'bad'];
   if (t === 'quotation') return inv.status === 'accepted' ? ['Accepted', 'ok'] : inv.status === 'sent' ? ['Sent', 'info'] : ['Draft', ''];
   if (t === 'credit_note') return ['Credit note', ''];          // no longer made; any older one still shows
+  if (inv.status === 'draft') return ['Draft', ''];
   const { paid, balance } = balanceOf(inv, payments);
   if (paid > 0 && balance === 0) return ['Paid', 'ok'];
   if (paid > 0) return ['Part paid', 'warn'];
@@ -100,8 +101,8 @@ function Editor({ inv, data, onBack, onOpen }) {
   const isNew = !inv.id; const [editing, setEditing] = useState(!inv.id); const snap = useRef(null); const sheetBox = useRef(); const [cancel, setCancel] = useState(false); const st = data.st; const gstSet = st.gst || {}; const [run, busy] = useAction(); const { data: customers, reload: reloadCustomers } = useCustomers();
   const [payments, setPayments] = useState(() => data.payments.filter((p) => p.invoice_id === inv.id)); const [payForm, setPayForm] = useState(false);
   const f = useForm({ type: typeOf(inv), name: inv.customer_name || '', email: inv.customer_email || '', phone: inv.customer_phone || '', address: inv.customer_address || '', gstin: inv.customer_gstin || '', date: isoToDMY(inv.issue_date || todayISO()), due: isoToDMY(inv.due_date),
-    no: inv.invoice_no || '', discount: inv.discount_paise ? String(inv.discount_paise / 100) : '', gst: isNew && !inv.items ? !!gstSet.enabled : !!inv.gst_enabled, notes: inv.notes || '', state: inv.status || 'draft',
-    payNow: 'no', method: 'upi', paidOn: isoToDMY(todayISO()), category: 'Services' });
+    no: inv.invoice_no || '', discount: inv.discount_paise ? String(inv.discount_paise / 100) : '', gst: isNew && !inv.items ? !!gstSet.enabled : !!inv.gst_enabled, notes: inv.notes || '' });
+  const [status, setStatus] = useState(inv.status || 'draft');       // draft after saving, sent when you press Sent; paid, part paid and unpaid follow from the payments
   const [items, setItems] = useState((inv.items?.length ? inv.items : [{ desc: '', qty: 1, unit_paise: 0, gst_rate: 18, hsn: '' }]).map((x) => ({ desc: x.desc, qty: x.qty === null || x.qty === undefined ? '' : String(x.qty), price: x.unit_paise ? String(x.unit_paise / 100) : '', rate: String(x.gst_rate ?? 18), hsn: x.hsn || '' })));
   const type = f.v.type; const issue = dmyToISO(f.v.date) || todayISO();
   const [numbered, setNumbered] = useState(!!inv.invoice_no);
@@ -113,7 +114,8 @@ function Editor({ inv, data, onBack, onOpen }) {
   const setItem = (i, k, v) => setItems((a) => a.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
   const clean = items.filter((x) => x.desc.trim() || x.price).map((x) => ({ desc: RULES.title.done(x.desc), qty: String(x.qty).trim() === '' ? null : (Number(x.qty) || 1), unit_paise: rupeesToPaise(x.price), gst_rate: Number(x.rate) || 0, hsn: x.hsn.trim() }));
   const calc = calcInvoice(clean, rupeesToPaise(f.v.discount), f.v.gst);
-  const paidSum = payments.reduce((s, p) => s + p.amount_paise, 0) || (type === 'invoice' && f.v.state === 'paid' ? calc.total : 0); const balance = Math.max(0, calc.total - paidSum);
+  const paidSum = payments.reduce((s, p) => s + p.amount_paise, 0) || (type === 'invoice' && status === 'paid' ? calc.total : 0); const balance = Math.max(0, calc.total - paidSum);
+  const curStatus = statusOf({ ...inv, status, total_paise: calc.total, due_date: dmyToISO(f.v.due) }, payments);
   const biz = { ...(st.business || {}), address: st.business?.address || ADDRESS_TEXT, name: st.business?.name || 'Thin Black Brush', gstin: gstSet.gstin || '' };
   const title = type === 'quotation' ? 'Quotation' : paidSum > 0 && balance === 0 ? 'Receipt' : 'Invoice';
   const doc = { no: f.v.no || f.v.preview || 'Preview', date: issue, due: type === 'invoice' ? dmyToISO(f.v.due) : null, title, biz, customer: { name: f.v.name, address: f.v.address, phone: f.v.phone, email: f.v.email, gstin: f.v.gstin }, calc, gstOn: f.v.gst, notes: [type === 'quotation' && f.v.due ? `Valid until ${f.v.due}.` : '', f.v.notes].filter(Boolean).join('\n'), terms: st.invoice?.terms || '',
@@ -126,18 +128,11 @@ function Editor({ inv, data, onBack, onOpen }) {
     if (v.due && !dmyToISO(v.due)) throw new Error(`Please enter the ${type === 'quotation' ? 'valid until' : 'due'} date as DD/MM/YYYY.`);
     let no = v.no.trim(); if (!no || (isNew && no === sug.current)) no = await nextNumber(type, issue, data.list, st);       // an unchanged suggestion is the next number in the series: it is used up now
     if (data.list.some((x) => x.invoice_no === no && x.id !== inv.id)) throw new Error('That number is already used.');
-    const status = type === 'invoice' ? (v.state === 'cancelled' ? 'cancelled' : paidSum > 0 && paidSum >= calc.total ? 'paid' : v.state === 'paid' ? 'sent' : v.state) : v.state;
+    const status = isNew ? 'draft' : type === 'invoice' ? (inv.status === 'cancelled' ? 'cancelled' : paidSum > 0 && paidSum >= calc.total ? 'paid' : inv.status === 'paid' ? 'sent' : inv.status || 'draft') : (inv.status || 'draft');       // a new document is a Draft; Sent is a button; Paid follows the payments
     const row = { doc_type: type, invoice_no: no, issue_date: issue, due_date: dmyToISO(v.due), customer_name: v.name, customer_email: v.email || null, customer_phone: v.phone || null, customer_address: v.address || null, customer_gstin: v.gst ? v.gstin || null : null, items: clean, discount_paise: calc.discount, gst_enabled: v.gst, gst_rate: Number(clean[0]?.gst_rate) || 18,
       subtotal_paise: calc.subtotal, gst_paise: calc.gst, total_paise: calc.total, notes: v.notes || null, status, paid_on: type === 'invoice' ? (status === 'paid' ? payments[payments.length - 1]?.paid_on || null : null) : null, payment_method: type === 'invoice' && status === 'paid' ? payments[payments.length - 1]?.method || null : null };
     const saved = isNew ? must(await sb().from('invoices').insert(row).select().single()) : (must(await sb().from('invoices').update(row).eq('id', inv.id)), { ...inv, ...row });
     f.set('no', no); setNumbered(true);
-    if (type === 'invoice' && v.payNow === 'yes' && balance > 0 && status !== 'cancelled') {   // marked paid in full while saving: record the rest as one payment
-      const on = dmyToISO(v.paidOn); if (!on) throw new Error('Please enter the payment date as DD/MM/YYYY.');
-      const p = must(await sb().from('invoice_payments').insert({ invoice_id: saved.id, amount_paise: balance, paid_on: on, method: v.method }).select().single());
-      must(await sb().from('ledger_entries').insert({ entry_date: on, kind: 'in', category: v.category, description: `Invoice ${no}`, amount_paise: balance, gst_paise: calc.total ? Math.round(calc.gst * balance / calc.total) : 0, method: v.method, party: v.name, source: 'invoice', source_id: p.id }));
-      must(await sb().from('invoices').update({ status: 'paid', paid_on: on, payment_method: v.method }).eq('id', saved.id));
-      setPayments((a) => [...a, p]); f.set('payNow', 'no'); f.set('state', 'paid');
-    }
     await ensureCustomer({ name: v.name, email: v.email, phone: v.phone, ...parseAddress(v.address) }).catch(() => {});
     return saved;
   }
@@ -149,16 +144,22 @@ function Editor({ inv, data, onBack, onOpen }) {
   const removePayment = (p) => run(async () => {
     await sb().from('ledger_entries').delete().eq('source', 'invoice').eq('source_id', p.id); must(await sb().from('invoice_payments').delete().eq('id', p.id));
     const left = payments.filter((x) => x.id !== p.id); setPayments(left);
-    if (inv.status === 'paid' || f.v.state === 'paid') { await sb().from('invoices').update({ status: 'sent', paid_on: null, payment_method: null }).eq('id', inv.id); f.set('state', 'sent'); } }, 'Payment removed');
-  const toInvoice = () => run(async () => {           // a quotation the customer accepted becomes a new invoice with the same items
-    const saved = await saveCore(); if (f.v.state !== 'accepted') must(await sb().from('invoices').update({ status: 'accepted' }).eq('id', saved.id));
+    if (status === 'paid') { await sb().from('invoices').update({ status: 'sent', paid_on: null, payment_method: null }).eq('id', inv.id); setStatus('sent'); } }, 'Payment removed');
+  // Turn into invoice: the quotation becomes a new invoice with the same items. For a few seconds an Undo button is shown; nothing is created until they have passed.
+  const [turning, setTurning] = useState(false); const turn = useRef(null);
+  const makeInvoice = async () => {
+    const saved = await saveCore(); if (status !== 'accepted') { must(await sb().from('invoices').update({ status: 'accepted' }).eq('id', saved.id)); setStatus('accepted'); }
     const no = await nextNumber('invoice', todayISO(), data.list, st);
     const { id, created_at, ...rest } = { ...saved, status: 'accepted' };
     const created = must(await sb().from('invoices').insert({ ...rest, doc_type: 'invoice', invoice_no: no, against_no: null, issue_date: todayISO(), due_date: null, status: 'draft', notes: [saved.notes, `From quotation ${saved.invoice_no}.`].filter(Boolean).join('\n') }).select().single());
-    onOpen(created); }, 'Invoice made from the quotation');
+    onOpen(created);
+  };
+  const toInvoice = () => { if (turn.current) return; setTurning(true); turn.current = setTimeout(() => { turn.current = null; setTurning(false); run(makeInvoice, 'Invoice made from the quotation'); }, 6000); };
+  const undoTurn = () => { clearTimeout(turn.current); turn.current = null; setTurning(false); };
+  useEffect(() => () => { if (turn.current) { clearTimeout(turn.current); turn.current = null; makeInvoice().catch(() => {}); } }, []);       // leaving the page does not lose the click
+  const markSent = () => run(async () => { must(await sb().from('invoices').update({ status: 'sent' }).eq('id', inv.id)); setStatus('sent'); }, 'Marked as sent');
+  const cancelQuote = () => run(async () => { must(await sb().from('invoices').update({ status: 'cancelled' }).eq('id', inv.id)); setStatus('cancelled'); }, 'Quotation cancelled');
 
-  const STATE_OPTS = type === 'quotation' ? [['draft', 'Draft'], ['sent', 'Sent'], ['accepted', 'Accepted'], ['cancelled', 'Cancelled']] : [['draft', 'Draft'], ['sent', 'Sent'], ...(f.v.state === 'cancelled' ? [['cancelled', 'Cancelled']] : [])];       // an invoice is cancelled with the Cancel invoice button, which asks about the money
-  useEffect(() => { if (!STATE_OPTS.some(([k]) => k === f.v.state) && !(type === 'invoice' && f.v.state === 'paid')) f.set('state', STATE_OPTS[0][0]); /* eslint-disable-next-line */ }, [type]);
   const heading = isNew ? `New ${TYPE_NAME[type].toLowerCase()}` : inv.invoice_no;
 
   const startEdit = () => { snap.current = { v: f.v, items }; setEditing(true); };
@@ -166,11 +167,14 @@ function Editor({ inv, data, onBack, onOpen }) {
   const bar = (<>{!editing && <Btn icon="edit" onClick={startEdit}>Edit</Btn>}<Btn variant="ghost" onClick={onBack}>Close</Btn></>);
   const printSheet = () => printElement(sheetBox.current.querySelector('.inv-sheet'), { title: doc.no });
   return (<Page title={heading} action={bar}>
+    {!editing && inv.id && <div className="ad-noprint"><p style={{ margin: '0 0 12px' }}><Badge tone={curStatus[1]}>{curStatus[0]}</Badge></p>{turning && <div className="undo-bar"><span>Making an invoice from this quotation…</span><Btn variant="ghost" icon="undo" className="ad-btn ghost sm undo" onClick={undoTurn}>Undo</Btn></div>}</div>}
     {!editing && <div className="ad-noprint"><div className="ad-actions" style={{ marginBottom: 14 }}>
+      {inv.id && status === 'draft' && <Btn icon="send" busy={busy} onClick={markSent}>Sent</Btn>}
       <Btn variant="ghost" icon="print" onClick={printSheet}>Print</Btn>
-      {inv.customer_email && <Btn variant="ghost" busy={busy} icon="mail" onClick={() => run(async () => { await email(inv); }, 'Emailed')}>Email</Btn>}
-      {type === 'quotation' && <Btn variant="ghost" busy={busy} icon="note" onClick={toInvoice}>Turn into invoice</Btn>}
-      {type === 'invoice' && inv.id && f.v.state !== 'cancelled' && <Btn variant="ghost" icon="close" onClick={() => setCancel(true)}>Cancel invoice</Btn>}</div></div>}
+      {inv.customer_email && <Btn variant="ghost" busy={busy} icon="mail" onClick={() => run(async () => { await email(inv); if (status === 'draft') { must(await sb().from('invoices').update({ status: 'sent' }).eq('id', inv.id)); setStatus('sent'); } }, 'Emailed')}>Email</Btn>}
+      {type === 'quotation' && inv.id && status !== 'cancelled' && <Btn variant="ghost" busy={busy} icon="note" onClick={toInvoice}>Turn into invoice</Btn>}
+      {type === 'quotation' && inv.id && status !== 'cancelled' && <Confirm icon="close" onYes={cancelQuote}>Cancel quotation</Confirm>}
+      {type === 'invoice' && inv.id && status !== 'cancelled' && <Btn variant="ghost" icon="close" onClick={() => setCancel(true)}>Cancel invoice</Btn>}</div></div>}
     <div className="ad-noprint">{editing && <Card><form className="ad-form" onSubmit={(e) => { e.preventDefault(); run(async () => { const sv = await saveCore(); if (isNew) onOpen(sv); setEditing(false); snap.current = null; }, 'Saved'); }}>
       {isNew && <div className="full"><div className="ad-tabsbar" style={{ margin: 0 }}>{TYPES.map(([k, t]) => <button type="button" key={k} className={type === k ? 'on' : ''} onClick={() => f.set('type', k)}>{t}</button>)}</div></div>}
       <CustomerSuggest value={f.v.name} onType={(v) => f.set('name', v)} onPick={pick} onAddNew={addNew} customers={customers} required />
@@ -179,7 +183,6 @@ function Editor({ inv, data, onBack, onOpen }) {
       <F form={f} k="no" label="Number" rule="code" hint={isNew && !numbered ? 'The next number in your series. You can change it.' : undefined} />
       <F form={f} k="date" label="Date" type="date" required />
       <F form={f} k="due" label={type === 'quotation' ? 'Valid until' : 'Due date'} type="date" />
-      <F form={f} k="state" label="Status" type="select" required options={type === 'invoice' && f.v.state === 'paid' ? [['paid', 'Paid'], ...STATE_OPTS] : STATE_OPTS} />
       <div className="full"><F form={f} k="gst" label="Collect GST on this document" type="check" /></div>
       {f.v.gst && <F form={f} k="gstin" label="Customer GSTIN" rule="code" maxLength={15} />}
       <div className="full"><p className="ad-section-t">Items (prices before GST)</p>
@@ -193,25 +196,22 @@ function Editor({ inv, data, onBack, onOpen }) {
           <button type="button" className="ad-x" aria-label="Remove item" onClick={() => setItems((a) => (a.length > 1 ? a.filter((_, j) => j !== i) : a))}>✕</button></div>))}
         <div className="ad-actions"><Btn type="button" variant="ghost" className="ad-btn ghost sm" icon="plus" onClick={() => setItems((a) => [...a, { desc: '', qty: '1', price: '', rate: '18', hsn: '' }])}>Add item</Btn></div></div>
       <F form={f} k="discount" label="Discount (₹)" type="money" rule="money" />
-      {type === 'invoice' && balance > 0 && f.v.state !== 'cancelled' && <F form={f} k="payNow" label="Payment" type="select" required options={[['no', paidSum ? 'Part paid (add payments below)' : 'Not paid yet'], ['yes', paidSum ? `Paid the rest (${money(balance)}) now` : 'Paid in full']]} />}
-      {f.v.payNow === 'yes' && type === 'invoice' && <><F form={f} k="method" label="Paid by" type="select" required options={INVOICE_METHODS} /><F form={f} k="paidOn" label="Paid on" type="date" required /><F form={f} k="category" label="Counts as income under" type="select" required options={IN_CATEGORIES} /></>}
       <div className="full"><F form={f} k="notes" label="Notes" type="textarea" rule="sentence" rows={2} /></div>
       <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn>
         {!isNew && <Btn type="button" variant="ghost" onClick={stopEdit}>Cancel</Btn>}
         <Btn type="button" variant="ghost" busy={busy} icon="mail" onClick={() => run(async () => { const s = await saveCore(); await email(s); onBack(); }, 'Saved and emailed')}>Email</Btn>
         {!isNew && <Confirm onYes={del}>Delete</Confirm>}</div>
-      {inv.last_reminder_at && <p className="ad-sub full">Last reminder sent {fmtDT(inv.last_reminder_at)}</p>}</form></Card>}
+      </form></Card>}
 
-      {type === 'invoice' && (<Card title="Payments" action={!isNew && balance > 0 && <Btn variant="ghost" icon="plus" onClick={() => setPayForm(true)}>Add payment</Btn>}>
-        {isNew ? <Empty>Choose "Paid in full" above, or save first and add payments here as they come in.</Empty> : <>
-          {payments.length ? <div className="ad-list">{payments.map((p) => (<div key={p.id} className="ad-row"><div className="main"><b>{money(p.amount_paise)}</b><Segs items={[fmtD(p.paid_on), methodLabel(p.method), p.note]} /></div><div className="end"><Confirm onYes={() => removePayment(p)}>Remove</Confirm></div></div>))}</div> : <Empty>No payments yet.</Empty>}
-          <p className="ad-sub">Total {money(calc.total)} · Paid {money(paidSum)} · <b>{balance > 0 ? `Left to pay ${money(balance)}` : 'Fully paid'}</b></p></>}
+      {type === 'invoice' && !isNew && status !== 'draft' && (<Card title="Payments" action={balance > 0 && status !== 'cancelled' && <Btn variant="ghost" icon="plus" onClick={() => setPayForm(true)}>Add payment</Btn>}>
+        {payments.length ? <div className="ad-list">{payments.map((p) => (<div key={p.id} className="ad-row"><div className="main"><b>{money(p.amount_paise)}</b><Segs items={[fmtD(p.paid_on), methodLabel(p.method), p.note]} /></div><div className="end"><Confirm onYes={() => removePayment(p)}>Remove</Confirm></div></div>))}</div> : <Empty>No payments yet.</Empty>}
+        <div className="pay-sum"><div><span>Total</span><b>{money(calc.total)}</b></div><div><span>Paid</span><b>{money(paidSum)}</b></div><div className={balance > 0 ? 'due' : 'ok'}><span>{balance > 0 ? 'Left to pay' : 'Fully paid'}</span><b>{money(balance)}</b></div></div>
       </Card>)}
     </div>
     <div ref={sheetBox}><FitA4 fill><InvoiceSheet d={doc} /></FitA4></div>
-    {cancel && <CancelInvoice inv={inv} payments={payments} onClose={() => setCancel(false)} onDone={(gone) => { setCancel(false); if (gone) setPayments([]); f.set('state', 'cancelled'); onOpen({ ...inv, status: 'cancelled' }); }} />}
+    {cancel && <CancelInvoice inv={inv} payments={payments} onClose={() => setCancel(false)} onDone={(gone) => { setCancel(false); if (gone) setPayments([]); setStatus('cancelled'); onOpen({ ...inv, status: 'cancelled' }); }} />}
     {payForm && <PaymentForm inv={{ ...inv, invoice_no: f.v.no || inv.invoice_no, customer_name: f.v.name }} balance={balance} total={calc.total} gst={calc.gst} onClose={() => setPayForm(false)}
-      onSaved={(p, fullyPaid) => { setPayForm(false); setPayments((a) => [...a, p]); if (fullyPaid) f.set('state', 'paid'); }} />}
+      onSaved={(p, fullyPaid) => { setPayForm(false); setPayments((a) => [...a, p]); if (fullyPaid) setStatus('paid'); }} />}
   </Page>);
 }
 

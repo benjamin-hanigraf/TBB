@@ -47,8 +47,8 @@ export function OneOnOneModal({ e, level, onClose, onChanged }) {
     {data.length ? <div className="ad-list">{data.map((s) => { const past = s.on_date < today;
       return (<div key={s.id} className="ad-row" style={{ cursor: 'default', alignItems: 'flex-start' }}><div className="main"><b>Class {s.no} · {fmtDay(s.on_date)}{s.time_text ? ` · ${s.time_text}` : ''}</b>
         <Segs items={[s.moved_from ? `Moved from ${fmtDay(s.moved_from)}` : s.status === 'scheduled' && past ? 'Not marked yet' : s.on_date === today && s.status === 'scheduled' ? 'Today' : '', s.note]} />
-        <div className="row-actions">
-          {s.status === 'scheduled' && <><Btn variant="ghost" busy={busy} onClick={() => setStatus(s, 'done')}>Attended</Btn><Btn variant="ghost" onClick={() => setMove(s)}>Move</Btn><Confirm onYes={() => setStatus(s, 'cancelled')}>Cancel</Confirm></>}
+        <div className="row-actions sess-actions">
+          {s.status === 'scheduled' && <><Btn variant="ghost" busy={busy} onClick={() => setStatus(s, 'done')}>Attended</Btn><Btn variant="ghost" onClick={() => setMove(s)}>Reschedule</Btn><Confirm onYes={() => setStatus(s, 'cancelled')}>Cancel</Confirm></>}
           {s.status === 'done' && <Btn variant="ghost" busy={busy} onClick={() => setStatus(s, 'scheduled')}>Undo</Btn>}
           {s.status === 'cancelled' && <><Btn variant="ghost" busy={busy} onClick={() => setStatus(s, 'scheduled')}>Restore</Btn><Confirm onYes={() => remove(s)}>Delete</Confirm></>}</div></div>
         <div className="end"><Badge tone={s.status === 'cancelled' ? 'bad' : s.status === 'done' ? 'ok' : ''}>{s.status === 'cancelled' ? 'Cancelled' : s.status === 'done' ? 'Attended' : 'Scheduled'}</Badge></div></div>); })}</div>
@@ -65,8 +65,8 @@ function MoveOne({ s, student, check, onClose, onSaved }) {
   const [run, busy] = useAction(); const f = useForm({ date: isoToDMY(s.on_date), time: s.time_text || '' });
   const save = () => run(async () => { const d = dmyToISO(f.v.date); if (!d) throw new Error('Please enter the new date as DD/MM/YYYY.'); const time = f.v.time.trim() || null;
     if (!(await check([{ date: d, slot: parseSlot(time), label: `Class: ${student}` }], { kind: 'class', id: s.id }))) return;
-    must(await sb().from('class_sessions').update({ on_date: d, time_text: time, ...(d !== s.on_date ? { moved_from: s.moved_from || s.on_date } : {}) }).eq('id', s.id)); await onSaved(); }, 'Class moved');
-  return (<Modal title={`Move class ${s.no}`} onClose={onClose}><p className="ad-help" style={{ marginTop: 0 }}>Now on <b>{fmtDay(s.on_date)}{s.time_text ? `, ${s.time_text}` : ''}</b>. The student is not told automatically.</p>
+    must(await sb().from('class_sessions').update({ on_date: d, time_text: time, ...(d !== s.on_date ? { moved_from: s.moved_from || s.on_date } : {}) }).eq('id', s.id)); await onSaved(); }, 'Class rescheduled');
+  return (<Modal title={`Reschedule class ${s.no}`} onClose={onClose}><p className="ad-help" style={{ marginTop: 0 }}>Now on <b>{fmtDay(s.on_date)}{s.time_text ? `, ${s.time_text}` : ''}</b>. The student is not told automatically.</p>
     <div className="ad-form"><F form={f} k="date" label="New date" type="date" required /><F form={f} k="time" label="Time" rule="text" /></div>
-    <div className="row-actions" style={{ marginTop: 16 }}><Btn busy={busy} icon="check" onClick={save}>Move</Btn><Btn variant="ghost" onClick={onClose}>Cancel</Btn></div></Modal>);
+    <div className="row-actions" style={{ marginTop: 16 }}><Btn busy={busy} icon="clock" onClick={save}>Reschedule</Btn><Btn variant="ghost" onClick={onClose}>Cancel</Btn></div></Modal>);
 }

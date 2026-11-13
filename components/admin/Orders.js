@@ -91,7 +91,7 @@ function OrderModal({ o, st, products, onClose, onSaved }) {
       {toShip(o) && <Btn icon="box" onClick={() => setStep('ship')}>Shipped</Btn>}
       {toShip(o) && <Confirm icon="circle" onYes={unpay}>Not paid</Confirm>}
       {shipped && o.tracking_number && <Btn variant="ghost" busy={busy} onClick={email} icon="mail">Email tracking</Btn>}
-      {o.status === 'shipped' && <Confirm icon="left" onYes={unship}>Undo shipped</Confirm>}
+      {o.status === 'shipped' && <Confirm icon="undo" onYes={unship}>Undo shipped</Confirm>}
       {paid && <Link className="ad-btn ghost" href={`/manager/labels?order=${o.id}`}><Icon n="print" size={16} /><span>Print label</span></Link>}
       {paid && <Btn variant="ghost" icon="file" onClick={() => setReceipt(true)}>Receipt</Btn>}
       {manual && !isOff(o) && <Btn variant="ghost" icon="edit" onClick={() => setEdit(true)}>Edit</Btn>}

@@ -56,7 +56,7 @@ function Form({ c, types, count, onClose, onSaved }) {
     const { count } = await sb().from('class_enrolments').select('id', { count: 'exact', head: true }).eq('class_id', c.id); if (count > 0) { setBlocked(count); return; }
     must(await sb().from('class_levels').delete().eq('id', c.id)); onSaved(); }, 'Deleted');
   const hide = () => run(async () => { must(await sb().from('class_levels').update({ active: false }).eq('id', c.id)); onSaved(); }, 'Hidden from the website');
-  return (<Modal title={isNew ? 'Add level' : 'Edit level'} onClose={onClose} wide>
+  return (<Modal title={isNew ? 'Add class' : 'Edit class'} onClose={onClose} wide>
     <form onSubmit={save} className="ad-form">
       <F form={f} k="title" label="Course name" rule="title" required /><F form={f} k="level" label="Level" rule="title" required placeholder="e.g. Level 1" />
       <label className="ad-field"><span>Type <i> *</i></span><select value={f.v.track} required onChange={(e) => { if (e.target.value === '__new') setNewType(true); else f.set('track', e.target.value); }}>{names.map((n) => <option key={n} value={n}>{n}</option>)}<option value="__new">+ Add type…</option></select></label>

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Icon from '@/components/Icons';
-import { nb, useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Modal, ViewModal, Btn, F, useForm, useAction, Confirm, Sortable, slugify, useToast } from './kit';
+import { Segs, nb, useLoad, sb, must, every, Page, Card, Badge, Empty, Spin, Err, Modal, ViewModal, Btn, F, useForm, useAction, Confirm, Sortable, slugify, useToast } from './kit';
 import { GST_MODES } from '@/lib/gst';
 import { AddEnrol, EnrolModal } from './ManualEntry';
 import { OneOnOneModal } from './OneOnOne';

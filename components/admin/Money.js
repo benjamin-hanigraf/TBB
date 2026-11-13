@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import Icon from '@/components/Icons';
 import { nb, Segs, useLoad, useToast, sb, must, every, Page, Card, Stat, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, dmyToISO, isoToDMY, fmtD, download } from './kit';
 import { syncPaymentsToLedger } from '@/lib/ledgerSync';
-import { IN_CATEGORIES, OUT_CATEGORIES, METHODS, summarise, fyChoices, fyOf, inFY, fyRange, todayISO, money, moneyR, monthLabel, rupeesToPaise, gstInside } from '@/lib/accounting';
+import { IN_CATEGORIES, OUT_CATEGORIES, methodChoices, methodLabel, summarise, fyChoices, fyOf, inFY, fyRange, todayISO, money, moneyR, monthLabel, rupeesToPaise, gstInside } from '@/lib/accounting';
 
 export default function Money() {
   const sp = useSearchParams(); const toast = useToast(); const [fy, setFy] = useState(fyOf(todayISO())); const [view, setView] = useState(sp.get('view') === 'report' ? 'report' : 'list'); const [kind, setKind] = useState('all'); const [q, setQ] = useState(''); const [edit, setEdit] = useState(null);
@@ -68,7 +68,7 @@ async function sourceLink(e) {
 function Entry({ e, gst, onClose, onSaved }) {
   const isNew = !e.id; const auto = e.source && e.source !== 'manual'; const [run, busy] = useAction(); const [link, setLink] = useState(null); const [editing, setEditing] = useState(isNew);
   useEffect(() => { if (auto) sourceLink(e).then(setLink).catch(() => {}); /* eslint-disable-next-line */ }, [e.id]);
-  const f = useForm({ kind: e.kind || 'in', date: isoToDMY(e.entry_date || todayISO()), amount: e.amount_paise ? String(e.amount_paise / 100) : '', hasGst: e.gst_paise > 0, gstAmt: e.gst_paise ? String(e.gst_paise / 100) : '', category: e.category || '', party: e.party || '', method: e.method || 'upi', description: e.description || '' });
+  const f = useForm({ kind: e.kind || 'in', date: isoToDMY(e.entry_date || todayISO()), amount: e.amount_paise ? String(e.amount_paise / 100) : '', hasGst: e.gst_paise > 0, gstAmt: e.gst_paise ? String(e.gst_paise / 100) : '', category: e.category || '', party: e.party || '', method: e.method === 'card' ? 'bank' : e.method || 'upi', description: e.description || '' });
   const cats = f.v.kind === 'in' ? IN_CATEGORIES : OUT_CATEGORIES;
   const suggest = () => f.v.amount && gst.enabled ? String(gstInside(rupeesToPaise(f.v.amount), gst.rate_percent || 18) / 100) : '';
   const save = (ev) => { ev.preventDefault(); return run(async () => {
@@ -80,7 +80,7 @@ function Entry({ e, gst, onClose, onSaved }) {
   const del = () => run(async () => { must(await sb().from('ledger_entries').delete().eq('id', e.id)); onSaved(); }, 'Deleted');
   return (<Modal title={isNew ? (f.v.kind === 'in' ? 'Income' : 'Expense') : 'Entry'} onClose={onClose}>
     {link && <p className="ad-help" style={{ marginTop: 0 }}><a className="ad-linkbtn" href={link}>See where it came from</a></p>}
-    {!editing && <><dl className="ad-view">{[['Type', e.kind === 'in' ? 'Income (received)' : 'Expense (spent)'], ['Date', fmtD(e.entry_date)], ['Amount', money(e.amount_paise)], ['Category', e.category], [e.kind === 'in' ? 'Received from' : 'Paid to', e.party], ['Paid by', e.method === 'upi' ? 'UPI' : e.method ? e.method[0].toUpperCase() + e.method.slice(1) : ''], ['GST included', e.gst_paise > 0 ? money(e.gst_paise) : ''], ['Note', e.description]].filter(([, v]) => v).map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+    {!editing && <><dl className="ad-view">{[['Type', e.kind === 'in' ? 'Income (received)' : 'Expense (spent)'], ['Date', fmtD(e.entry_date)], ['Amount', money(e.amount_paise)], ['Category', e.category], [e.kind === 'in' ? 'Received from' : 'Paid to', e.party], ['Paid by', methodLabel(e.method)], ['GST included', e.gst_paise > 0 ? money(e.gst_paise) : ''], ['Note', e.description]].filter(([, v]) => v).map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
       <div className="ad-actions full"><Btn icon="edit" onClick={() => setEditing(true)}>Edit</Btn></div></>}
     {editing && <form onSubmit={save} className="ad-form">
       <F form={f} k="kind" label="Type" type="select" required options={[['in', 'Income (received)'], ['out', 'Expense (spent)']]} />
@@ -88,7 +88,7 @@ function Entry({ e, gst, onClose, onSaved }) {
       <F form={f} k="amount" label="Amount (₹)" type="money" rule="money" required />
       <F form={f} k="category" label="Category" type="select" required options={cats} />
       <F form={f} k="party" label={f.v.kind === 'in' ? 'Received from' : 'Paid to'} rule="name" />
-      <F form={f} k="method" label="Paid by" type="select" required options={METHODS.map((m) => [m, m === 'upi' ? 'UPI' : m[0].toUpperCase() + m.slice(1)])} />
+      <F form={f} k="method" label="Paid by" type="select" required options={methodChoices(e.method)} />
       {gst.enabled && <><div className="full"><F form={f} k="hasGst" label="This amount includes GST" type="check" /></div>{f.v.hasGst && <F form={f} k="gstAmt" label="GST included (₹)" type="money" rule="money" placeholder={suggest()} hint={`Leave empty to use ${gst.rate_percent || 18}% of the amount`} />}</>}
       <div className="full"><F form={f} k="description" label="Note" rule="sentence" /></div>
       <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn>{!isNew && <Btn type="button" variant="ghost" onClick={() => { f.reset(); setEditing(false); }}>Cancel</Btn>}{!isNew && <Confirm onYes={del}>Delete</Confirm>}</div>

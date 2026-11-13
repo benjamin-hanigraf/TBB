@@ -7,7 +7,7 @@ import { InvoiceSheet, FitA4 } from './InvoiceSheet';
 import { printElement } from '@/lib/printDoc';
 import Icon from '@/components/Icons';
 import { METHOD_OPTIONS } from './ManualEntry';
-import { nextInvoiceNo, fyOf, todayISO, money, rupeesToPaise, toCSV, IN_CATEGORIES } from '@/lib/accounting';
+import { nextInvoiceNo, fyOf, todayISO, money, rupeesToPaise, toCSV, IN_CATEGORIES, methodLabel } from '@/lib/accounting';
 import { calcInvoice } from '@/lib/invoiceCalc';
 import { formatFor, formatNumber, nextNumberInList } from '@/lib/numbering';
 import { RULES } from '@/lib/format';
@@ -205,7 +205,7 @@ function Editor({ inv, data, onBack, onOpen }) {
 
       {type === 'invoice' && (<Card title="Payments" action={!isNew && balance > 0 && <Btn variant="ghost" icon="plus" onClick={() => setPayForm(true)}>Add payment</Btn>}>
         {isNew ? <Empty>Choose "Paid in full" above, or save first and add payments here as they come in.</Empty> : <>
-          {payments.length ? <div className="ad-list">{payments.map((p) => (<div key={p.id} className="ad-row"><div className="main"><b>{money(p.amount_paise)}</b><Segs items={[fmtD(p.paid_on), METHOD_OPTIONS.find(([k]) => k === p.method)?.[1] || p.method, p.note]} /></div><div className="end"><Confirm onYes={() => removePayment(p)}>Remove</Confirm></div></div>))}</div> : <Empty>No payments yet.</Empty>}
+          {payments.length ? <div className="ad-list">{payments.map((p) => (<div key={p.id} className="ad-row"><div className="main"><b>{money(p.amount_paise)}</b><Segs items={[fmtD(p.paid_on), methodLabel(p.method), p.note]} /></div><div className="end"><Confirm onYes={() => removePayment(p)}>Remove</Confirm></div></div>))}</div> : <Empty>No payments yet.</Empty>}
           <p className="ad-sub">Total {money(calc.total)} · Paid {money(paidSum)} · <b>{balance > 0 ? `Left to pay ${money(balance)}` : 'Fully paid'}</b></p></>}
       </Card>)}
     </div>

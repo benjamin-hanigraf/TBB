@@ -5,16 +5,16 @@
 import { useState } from 'react';
 import { Modal, Btn, F, useForm, useAction, Badge, Empty } from './kit';
 import { adminPost } from '@/lib/adminApi';
-import { money } from '@/lib/accounting';
+import { money, PAY_METHODS } from '@/lib/accounting';
 
-export const SENT_OPTIONS = [['upi', 'UPI'], ['bank', 'Bank transfer'], ['cash', 'Cash'], ['card', 'Card'], ['other', 'Other']];
+export const SENT_OPTIONS = PAY_METHODS;
 const online = (r) => !!r.razorpay_payment_id;          // the provider's payment id (column name kept from the first provider)
 const amountOf = (kind, r) => (kind === 'order' ? r.total_paise : r.amount_paise);
 
 /** kind: 'order' | 'booking' | 'enrolment'. rows: the paid items to refund. */
 export function RefundDialog({ kind, rows, title, cancelled = kind !== 'order', reasonDefault = '', onClose, onDone }) {
   const anyOnline = rows.some(online); const [run, busy] = useAction(); const [res, setRes] = useState(null);
-  const first = rows[0] || {}; const startMethod = SENT_OPTIONS.some(([k]) => k === first.payment_method) ? first.payment_method : 'upi';
+  const first = rows[0] || {}; const startMethod = first.payment_method === 'card' ? 'bank' : SENT_OPTIONS.some(([k]) => k === first.payment_method) ? first.payment_method : 'upi';
   const f = useForm({ how: anyOnline ? 'online' : 'sent', method: startMethod, reason: reasonDefault, notify: true, restock: '' });
   const total = rows.reduce((s, r) => s + amountOf(kind, r), 0);
   const go = () => run(async () => {

@@ -227,3 +227,5 @@ Batch: Invoice/quotation number prefilled; quantity optional (owner request)
 - Invoice view: the PDF button is removed (Print stays). The totals block (subtotal, discount, GST, total) always sits at the bottom of the page above the footer, for invoices, quotations and receipts.
 - Invoice/quotation preview: its width always matches the sections above it (it grows or shrinks to fit, keeping the A4 shape).
 - Invoices: the Send reminder button is removed (owner will not use it).
+
+- Payment methods list everywhere becomes: UPI, Cash, Bank/Card, TDS (owner request).

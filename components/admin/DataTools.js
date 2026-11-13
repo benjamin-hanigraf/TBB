@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { sb, must, every, Btn, useAction, useToast, download, isoToDMY } from './kit';
 import ImportCsv from './ImportCsv';
-import { toCSV } from '@/lib/accounting';
+import { toCSV, methodLabel } from '@/lib/accounting';
 import { orderNumber } from '@/lib/numbering';
 
 const ist = (iso) => new Date(new Date(iso).getTime() + 5.5 * 3600e3);
@@ -47,7 +47,7 @@ const LISTS = [
   { key: 'accounts', name: 'Accounts', note: 'Every money in and money out entry', file: 'accounts.csv',
     rows: () => get(() => sb().from('ledger_entries').select('*').order('entry_date').order('id')),
     cols: [{ label: 'Date', get: (r) => isoToDMY(r.entry_date) }, { label: 'Type', get: (r) => (r.kind === 'in' ? 'Income' : 'Expense') }, { label: 'Category', key: 'category' }, { label: 'Party', key: 'party' }, { label: 'Description', key: 'description' },
-      { label: 'Amount', get: (r) => rup(r.amount_paise) }, { label: 'GST included', get: (r) => rup(r.gst_paise) }, { label: 'Paid by', key: 'method' }] },
+      { label: 'Amount', get: (r) => rup(r.amount_paise) }, { label: 'GST included', get: (r) => rup(r.gst_paise) }, { label: 'Paid by', get: (r) => methodLabel(r.method) }] },
   { key: 'bookings', name: 'Workshop participants', note: 'Everyone who booked, for every workshop', file: 'workshop-participants.csv',
     rows: () => get(() => sb().from('bookings').select('*,workshops(title,starts_at)').order('created_at').order('id')),
     cols: [{ label: 'Workshop', get: (r) => r.workshops?.title }, { label: 'Workshop date', get: (r) => dmy(r.workshops?.starts_at) }, { label: 'Name', key: 'name' }, { label: 'Email', key: 'email' }, { label: 'Phone', key: 'phone' }, { label: 'Seats', key: 'seats' },

@@ -293,12 +293,14 @@ create table if not exists ledger_entries (
   description text,
   amount_paise integer not null check (amount_paise > 0),  -- full amount, GST included
   gst_paise integer not null default 0 check (gst_paise >= 0),   -- GST contained in the amount
-  method text default 'other' check (method in ('upi','cash','card','bank','razorpay','other')),
+  method text default 'other' check (method in ('upi','cash','card','bank','tds','razorpay','other')),
   party text,                                              -- customer or supplier name
   source text not null default 'manual',
   source_id uuid,
   created_at timestamptz not null default now()
 );
+alter table ledger_entries drop constraint if exists ledger_entries_method_check;
+alter table ledger_entries add constraint ledger_entries_method_check check (method is null or method in ('upi','cash','card','bank','tds','razorpay','other'));      -- tds added; card is shown as Bank/Card
 alter table ledger_entries drop constraint if exists ledger_entries_source_check;
 alter table ledger_entries add constraint ledger_entries_source_check check (source in ('manual','invoice','order','booking','enrolment','refund','fee','rentout'));
 create unique index if not exists ledger_source_once on ledger_entries (source, source_id) where source_id is not null;
@@ -572,7 +574,7 @@ begin
     cat := 'Classes';
   else return; end if;
   if keep is null then return; end if;                                                         -- the item does not exist
-  if meth not in ('upi','cash','card','bank','razorpay','other') then meth := 'other'; end if;
+  if meth not in ('upi','cash','card','bank','tds','razorpay','other') then meth := 'other'; end if;
   if keep and amt > 0 then
     if p_update then
       insert into ledger_entries (entry_date, kind, category, description, amount_paise, gst_paise, method, party, source, source_id)
@@ -684,12 +686,12 @@ begin
            where not exists (select 1 from ledger_entries l where l.source = 'invoice' and l.source_id = ip.id) loop
     insert into ledger_entries (entry_date, kind, category, description, amount_paise, gst_paise, method, party, source, source_id)
     values (p.paid_on, 'in', 'Services', 'Invoice ' || p.invoice_no, p.amount_paise, case when p.total_paise > 0 then round(p.gst_paise::numeric * p.amount_paise / p.total_paise)::int else 0 end,
-            case when p.method in ('upi','cash','card','bank','razorpay','other') then p.method else 'other' end, p.customer_name, 'invoice', p.id) on conflict do nothing; added := added + 1;
+            case when p.method in ('upi','cash','card','bank','tds','razorpay','other') then p.method else 'other' end, p.customer_name, 'invoice', p.id) on conflict do nothing; added := added + 1;
   end loop;
   for p in select rp.id, rp.amount_paise, rp.paid_on, rp.method, ro.name, ro.purpose from rentout_payments rp join rentouts ro on ro.id = rp.rentout_id
            where not exists (select 1 from ledger_entries l where l.source = 'rentout' and l.source_id = rp.id) loop
     insert into ledger_entries (entry_date, kind, category, description, amount_paise, gst_paise, method, party, source, source_id)
-    values (p.paid_on, 'in', 'Studio rent-outs', 'Rent-out: ' || coalesce(p.purpose, 'studio'), p.amount_paise, 0, case when p.method in ('upi','cash','card','bank','razorpay','other') then p.method else 'other' end, p.name, 'rentout', p.id) on conflict do nothing; added := added + 1;
+    values (p.paid_on, 'in', 'Studio rent-outs', 'Rent-out: ' || coalesce(p.purpose, 'studio'), p.amount_paise, 0, case when p.method in ('upi','cash','card','bank','tds','razorpay','other') then p.method else 'other' end, p.name, 'rentout', p.id) on conflict do nothing; added := added + 1;
   end loop;
   if p_amounts then
     for r in select * from accounts_check_rows() where kind = 'amount' loop

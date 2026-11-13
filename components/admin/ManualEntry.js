@@ -5,11 +5,11 @@ import { sb, must, every, Modal, Btn, F, useForm, useAction, useToast, useLoad, 
 import { CustomerSuggest, useCustomers, ensureCustomer } from './pickers';
 import { syncPaymentsToLedger } from '@/lib/ledgerSync';
 import { gstLine } from '@/lib/gst';
-import { money, rupeesToPaise, todayISO } from '@/lib/accounting';
+import { money, rupeesToPaise, todayISO, PAY_METHODS } from '@/lib/accounting';
 import { RULES } from '@/lib/format';
 
 export const PAY_OPTIONS = [['paid', 'Paid'], ['pending', 'Not paid yet']];
-export const METHOD_OPTIONS = [['upi', 'UPI'], ['cash', 'Cash'], ['bank', 'Bank transfer'], ['card', 'Card'], ['other', 'Other']];
+export const METHOD_OPTIONS = PAY_METHODS;
 const nowISO = () => new Date().toISOString();
 
 function Person({ f, customers, extra }) {

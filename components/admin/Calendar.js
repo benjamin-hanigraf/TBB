@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/Icons';
 import { nb, Segs, useLoad, sb, must, every, Card, Fold, Empty, Spin, Err, Badge, Modal, ViewModal, Btn, F, useForm, useAction, Confirm, dmyToISO, isoToDMY, fmtD } from './kit';
-import { todayISO, rupeesToPaise, money } from '@/lib/accounting';
+import { todayISO, rupeesToPaise, money, methodLabel } from '@/lib/accounting';
 import { addDays } from '@/lib/dates';
 import { parseSlot } from '@/lib/clash';
 import { useClash } from './Clash';
@@ -97,7 +97,7 @@ export function PlanView({ kind, item, onEdit, onClose }) {
   return (<ViewModal title={`Rent-out · ${item.name}`} onEdit={onEdit} onClose={onClose}
     rows={[['Hired by', item.name], ['Phone', item.phone], ['Email', item.email], ['For', item.purpose], ['Date', item.end_date && item.end_date > item.on_date ? `${fmtD(item.on_date)} to ${fmtD(item.end_date)}` : fmtD(item.on_date)], ['Time', item.time_text],
       ['Amount', item.amount_paise ? money(item.amount_paise) : ''], ['Paid so far', item.amount_paise ? `${money(paid)}${left ? ` · ${money(left)} still to pay` : ' · fully paid'}` : ''], ['Note', item.note]]}>
-    {pays.length > 0 && <div className="ad-list" style={{ marginBottom: 12 }}>{pays.map((p) => <div key={p.id} className="ad-row" style={{ cursor: 'default' }}><div className="main"><b>{money(p.amount_paise)}</b><Segs items={[fmtD(p.paid_on), METHOD_OPTIONS.find(([k]) => k === p.method)?.[1] || p.method, p.note]} /></div></div>)}</div>}
+    {pays.length > 0 && <div className="ad-list" style={{ marginBottom: 12 }}>{pays.map((p) => <div key={p.id} className="ad-row" style={{ cursor: 'default' }}><div className="main"><b>{money(p.amount_paise)}</b><Segs items={[fmtD(p.paid_on), methodLabel(p.method), p.note]} /></div></div>)}</div>}
   </ViewModal>);
 }
 
@@ -148,7 +148,7 @@ export function PlanForm({ kind: startKind, item = {}, onClose, onSaved }) {
     <F form={f} k="time" label="Time" rule="text" placeholder={rent ? 'e.g. 10 am to 2 pm' : 'e.g. 3 pm'} hint={rent ? 'Leave empty if it takes the whole day' : undefined} />
     {rent && <F form={f} k="amount" label="Amount (₹)" type="money" rule="money" />}
     {rent && <div className="full"><p className="ad-section-t">Payments</p>
-      {pays.length > 0 && <div className="ad-list" style={{ marginTop: 8 }}>{pays.map((p) => <div key={p.id} className="ad-row" style={{ cursor: 'default' }}><div className="main"><b>{money(p.amount_paise)}</b><Segs items={[fmtD(p.paid_on), METHOD_OPTIONS.find(([k]) => k === p.method)?.[1] || p.method, p.note]} /></div><button type="button" className="ad-x" aria-label="Remove payment" onClick={() => setPays((l) => l.filter((x) => x.id !== p.id))}>✕</button></div>)}</div>}
+      {pays.length > 0 && <div className="ad-list" style={{ marginTop: 8 }}>{pays.map((p) => <div key={p.id} className="ad-row" style={{ cursor: 'default' }}><div className="main"><b>{money(p.amount_paise)}</b><Segs items={[fmtD(p.paid_on), methodLabel(p.method), p.note]} /></div><button type="button" className="ad-x" aria-label="Remove payment" onClick={() => setPays((l) => l.filter((x) => x.id !== p.id))}>✕</button></div>)}</div>}
       {amount > 0 && <p className="ad-help" style={{ margin: '8px 0 0' }}>Paid {money(paidSum)} of {money(amount)} · {amount > paidSum ? `${money(amount - paidSum)} still to pay` : 'fully paid'}</p>}</div>}
     {rent && (amount === 0 || paidSum < amount) && <div className="full"><div className="ad-form pay-add"><F form={f} k="pAmount" label="Add a payment (₹)" type="money" rule="money" /><F form={f} k="pOn" label="Received on" type="date" /><F form={f} k="pMethod" label="Paid by" type="select" options={METHOD_OPTIONS} /><F form={f} k="pNote" label="Note" rule="sentence" placeholder="e.g. Advance" />
       <div className="ad-actions"><Btn type="button" variant="ghost" icon="plus" onClick={addPay}>Add payment</Btn></div></div></div>}

@@ -334,22 +334,28 @@ html,body{overscroll-behavior-x:none}
 @media(max-width:480px){.ad-actions,.ad-actions.full,.ad-actions.eq,.ad-actions:has(>:nth-child(5)){grid-auto-flow:row;grid-template-columns:minmax(0,1fr)}}
 .todo-add .ad-actions{display:flex}
 .sess-actions .ad-btn.asking{background:#b42318;color:#fff}
-/* sess-actions pill sits beside the head only on wide screens; at 480-699px it drops below as a full-width row */
+/* session badge: fixed width so all tags line up */
 .sess-head .ad-badge{min-width:98px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;text-align:center}
 .sess-actions>.ad-btn+.ad-btn,.sess-actions>.ad-btn+.ad-confirm,.sess-actions>.ad-confirm+.ad-btn,.sess-actions>.ad-confirm+.ad-confirm{border-left:1px solid #c7c7cc}
-/* class row: details + tag share one flex row; pill is always on its own full-width row below on narrow/mid screens. Wide screens: 3-column grid so everything is on one line. */
+/* class row layout
+   <900px  : sess-head (details + badge) on row 1; pill full-width on row 2. No overlap possible.
+   ≥900px  : 3-column grid [details | 98px badge | 320px pill] all on one line.
+   overflow:hidden on .main prevents any text from ever bleeding into the badge column. */
 .sess-head{align-items:center}
-.sess-head .main{display:grid;gap:3px}
-.sess-head .c-no{display:block}.sess-head .c-when{display:block;font-weight:400;color:#515154;font-size:14px;white-space:nowrap}
+.sess-head .main{display:grid;gap:3px;min-width:0;overflow:hidden}
+.sess-head .c-no{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sess-head .c-when{display:block;font-weight:400;color:#515154;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 i.c-dot{font-style:normal;white-space:pre}
-@media(max-width:699px){.sess-head .c-dot{display:none}}
-/* narrow/mid (<700px): pill is a full-width second row, never beside the badge */
-@media(max-width:699px){
+/* narrow/mid (<900px): pill always on its own full-width row; dot hidden */
+@media(max-width:899px){
  .ad-row.sess-row{grid-template-columns:minmax(0,1fr);gap:10px}
- .sess-actions{width:100%}}
-/* wide (≥700px): 3-column grid — details | 98px badge | pill */
-@media(min-width:700px){
- .ad-row.sess-row{grid-template-columns:minmax(0,1fr) 98px 400px;column-gap:14px;align-items:center}
+ .sess-actions{width:100%}
+ .sess-head .c-dot{display:none}}
+/* wide (≥900px): 3-column grid — details | badge | pill */
+@media(min-width:900px){
+ .ad-row.sess-row{grid-template-columns:minmax(0,1fr) 98px 320px;column-gap:14px;align-items:center}
  .sess-head{display:contents}
- .sess-head .main>b{display:flex;gap:0;font-weight:600;white-space:nowrap}.sess-head .c-no,.sess-head .c-when{display:inline;font-size:inherit;font-weight:inherit;color:inherit}
+ .sess-head .main{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .sess-head .main>b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+ .sess-head .c-no,.sess-head .c-when{display:inline;font-size:inherit;font-weight:inherit;color:inherit;white-space:nowrap}
  .sess-head .ad-badge{grid-column:2}.sess-actions{grid-column:3;width:auto}}

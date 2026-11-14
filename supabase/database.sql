@@ -942,8 +942,8 @@ drop table if exists addresses cascade;
 
 -- class levels are not shown in the accounts any more: take ", Level 1" out of earlier entries (safe to run again)
 update ledger_entries le set description = replace(le.description, ', ' || l.level, '')
-  from class_enrolments e join class_levels l on l.id = e.class_id
-  where le.source in ('enrolment','refund','fee') and le.source_id = e.id and l.level <> '' and le.description like '%' || ', ' || l.level || '%';
+  from class_levels l
+  where l.level <> '' and le.description like '%' || l.title || ', ' || l.level || '%';
 
 -- brings the accounts up to date once: only missing entries are added (nothing is changed or removed)
 select ledger_repair(false, false);

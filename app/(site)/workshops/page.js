@@ -7,7 +7,7 @@ import gallery from '@/lib/gallery.json';
 export const metadata = { title: 'Workshops', description: 'Beginner-friendly calligraphy and watercolour workshops with every material included. See upcoming dates and book online.' };
 export const revalidate = 60;
 const Card = ({ w, off }) => (<Link href={`/workshops/${w.slug}`} className="card"><div className="ph"><Pic src={w.image} alt={w.title} eager={!off} /></div>
-  <div className="body"><span className={`tag ${off ? 'off' : ''}`}>{w.cancelled ? 'Cancelled' : off ? 'Ended' : 'Book now'}</span><h3>{w.title}</h3><p className="small">{fmtDate(w.starts_at)}</p><p className="small">{w.venue}</p>{w.regularPrice && !off && <p className="small early"><b>Early bird {rupees(w.price)}</b> <s className="muted">{rupees(w.regularPrice)}</s> · until {fmtDate(w.earlyUntil)}</p>}</div></Link>);
+  <div className="body"><h3>{w.title}</h3><p className="small">{fmtDate(w.starts_at)}</p><p className="small">{w.venue}</p>{w.regularPrice && !off && <p className="small early">Early bird offer till {fmtDate(w.earlyUntil)}</p>}<span className={`tag ${off ? 'off' : ''}`} style={{ marginTop: 12 }}>{w.cancelled ? 'Cancelled' : off ? 'Ended' : 'Book now'}</span></div></Link>);
 export default async function Workshops() {
   const all = await getWorkshops();
   const up = all.filter(w => !isPast(w) && !w.cancelled), past = all.filter(w => isPast(w) || w.cancelled).sort((a, b) => new Date(b.starts_at) - new Date(a.starts_at)).slice(0, 3);

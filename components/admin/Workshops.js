@@ -55,7 +55,7 @@ function WorkshopForm({ w, onClose, onSaved }) {
   const f = useForm({ title: w.title || '', kind: w.kind || 'workshop', summary: w.summary || '', description: w.description || '', venue_name: w.venue_name || '', venue_address: w.venue_address || '', map_link: w.map_link || '',
     date: t.date, endDate: w.kind === 'course' && w.ends_at ? te.date : '', h: t.h, m: t.m, ap: t.ap, price: w.price_paise != null ? String(w.price_paise / 100) : '', friend: w.friend_price_paise ? String(w.friend_price_paise / 100) : '',
     gst_mode: w.gst_mode || 'none', early: w.early_price_paise != null ? String(w.early_price_paise / 100) : '', earlyUntil: isoToDMY(w.early_until), capacity: String(w.capacity || 12),
-    includes: (w.includes || []).join('\n'), learn: (w.learn || []).join('\n'), note: w.note || '', image: w.image_path ? [w.image_path] : [] });
+    includes: (w.includes || []).join('\n'), learn: (w.learn || []).join('\n'), note: w.note || '', image: w.images?.length ? w.images : w.image_path ? [w.image_path] : [] });
   const status = w.status || 'draft';
   const save = (e, nextStatus) => { e?.preventDefault(); return run(async () => {
     const v = f.v; const starts = fromIST(v.date, v.h, v.m, v.ap); if (!starts) throw new Error('Please enter the date as DD/MM/YYYY.');
@@ -72,7 +72,7 @@ function WorkshopForm({ w, onClose, onSaved }) {
       for (let d = first; d < last && dates.length < 60;) { const n = new Date(`${d}T00:00:00Z`); n.setUTCDate(n.getUTCDate() + 1); d = n.toISOString().slice(0, 10); dates.push(d); }
       if (!(await check(dates.map((d) => ({ date: d, slot: slotFromStart(ist.getUTCHours() * 60 + ist.getUTCMinutes()), label: `Workshop: ${v.title}` })), { kind: 'workshop', id: w.id }))) return; }
     const row = { title: v.title, kind: v.kind, summary: v.summary || null, description: v.description || null, venue_name: v.venue_name || null, venue_address: v.venue_address || null, map_link: v.map_link || null, starts_at: starts, ends_at: ends,
-      price_paise: price, friend_price_paise: v.friend ? rupeesToPaise(v.friend) : null, early_price_paise: v.early ? rupeesToPaise(v.early) : null, early_until: eu, gst_mode: v.gst_mode, capacity: +v.capacity, includes: lines(v.includes), learn: lines(v.learn), note: v.note || null, image_path: v.image[0] || null, status: nextStatus || status };
+      price_paise: price, friend_price_paise: v.friend ? rupeesToPaise(v.friend) : null, early_price_paise: v.early ? rupeesToPaise(v.early) : null, early_until: eu, gst_mode: v.gst_mode, capacity: +v.capacity, includes: lines(v.includes), learn: lines(v.learn), note: v.note || null, image_path: v.image[0] || null, images: v.image, status: nextStatus || status };
     if (isNew) { let slug = slugify(v.title); const tryInsert = async (s) => sb().from('workshops').insert({ ...row, slug: s });
       let r = await tryInsert(slug); if (r.error?.code === '23505') r = await tryInsert(`${slug}-${Math.random().toString(36).slice(2, 6)}`); must(r); }
     else {
@@ -113,7 +113,7 @@ function WorkshopForm({ w, onClose, onSaved }) {
       <F form={f} k="learn" label="What participants will learn" type="textarea" rule="sentence" hint="One point per line" />
       <F form={f} k="includes" label="What is included in the kit" type="textarea" rule="sentence" hint="One item per line" />
       <div className="full"><F form={f} k="note" label="Note" rule="sentence" /></div>
-      <PhotoField label="Photo" paths={f.v.image} onChange={(p) => f.set('image', p)} folder="workshops" />
+      <PhotoField label="Photos" paths={f.v.image} onChange={(p) => f.set('image', p)} folder="workshops" max={8} />
       <div className="ad-actions full"><Btn busy={busy} icon="check">{isNew ? 'Save draft' : 'Save'}</Btn>
         {status === 'published' ? <Btn type="button" variant="ghost" busy={busy} onClick={() => save(null, 'draft')}>Unpublish</Btn> : status === 'cancelled' ? <Btn type="button" variant="ghost" busy={busy} onClick={() => save(null, 'draft')}>Reopen as draft</Btn> : <Btn type="button" variant="ghost" busy={busy} onClick={() => save(null, 'published')}>Publish</Btn>}
         {!isNew && status !== 'cancelled' && <Btn type="button" variant="ghost" onClick={() => setCancelling(true)}>Cancel workshop</Btn>}

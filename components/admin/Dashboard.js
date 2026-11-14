@@ -13,7 +13,7 @@ const MAX_ATTENTION = 10;
 export default function Dashboard() {
   const toast = useToast(); const [mark, setMark] = useState({}); const [gone, setGone] = useState({}); const timers = useRef({});        // a ticked task stays a few seconds with an Undo button, then slides away
   const { data: d, error } = useLoad(async () => {
-    const c = sb(); const today = todayISO(); const fy = fyOf(today); const lvl = (l) => `${l?.title || 'Class'}${l?.level ? ` (${l.level})` : ''}`;
+    const c = sb(); const today = todayISO(); const fy = fyOf(today); const lvl = (l) => l?.title || 'Class';
     const [ledger, toPack, inbox, ws, recentO, recentB, low, recentE, todos, near, sess, late, inv] = await Promise.all([
       every(() => c.from('ledger_entries').select('entry_date,kind,category,amount_paise,gst_paise').gte('entry_date', `${fy.slice(0, 4)}-04-01`).order('id')),
       c.from('orders').select('id', { count: 'exact', head: true }).in('status', ['paid', 'packed']),          // same as "To ship" on the Orders page

@@ -211,6 +211,10 @@ alter table class_enrolments drop column if exists batch_id;
 alter table class_levels drop column if exists starts_on;
 alter table class_levels drop column if exists days;
 alter table class_levels drop column if exists time_text;
+
+-- a workshop can have several photos; the first is the cover (menus, home page, lists). image_path always holds that first one
+alter table workshops add column if not exists images text[] not null default '{}';
+update workshops set images = array[image_path] where image_path is not null and image_path <> '' and cardinality(images) = 0;
 delete from class_sessions where enrolment_id is null;
 alter table class_sessions alter column enrolment_id set not null;
 create unique index if not exists sessions_enrolment_no on class_sessions (enrolment_id, no) where enrolment_id is not null;
@@ -419,6 +423,32 @@ create table if not exists todos (
 );
 create index if not exists todos_open on todos (done, due_on);
 
+-- repeating tasks: ticking one off creates the next one by itself; un-ticking removes it again (if it is still untouched)
+alter table todos add column if not exists repeat text;
+alter table todos drop constraint if exists todos_repeat_check;
+alter table todos add constraint todos_repeat_check check (repeat is null or repeat in ('daily','weekdays','weekly','fortnightly','monthly','quarterly','yearly'));
+alter table todos add column if not exists next_id uuid;
+create or replace function todos_repeat() returns trigger language plpgsql as $f$
+declare base date; nxt date; today date := (now() at time zone 'Asia/Kolkata')::date; step interval; nid uuid;
+begin
+  if new.repeat is not null and new.done and not old.done and new.next_id is null then
+    base := coalesce(new.due_on, today);
+    step := case new.repeat when 'daily' then interval '1 day' when 'weekdays' then interval '1 day' when 'weekly' then interval '7 days' when 'fortnightly' then interval '14 days'
+                            when 'monthly' then interval '1 month' when 'quarterly' then interval '3 months' else interval '1 year' end;
+    nxt := (base + step)::date;
+    while nxt <= today or (new.repeat = 'weekdays' and extract(isodow from nxt) > 5) loop nxt := (nxt + step)::date; end loop;
+    nid := gen_random_uuid();
+    insert into todos (id, title, note, due_on, repeat) values (nid, new.title, new.note, nxt, new.repeat);
+    new.next_id := nid;
+  elsif not new.done and old.done and new.next_id is not null then
+    delete from todos where id = new.next_id and not done;
+    new.next_id := null;
+  end if;
+  return new;
+end $f$;
+drop trigger if exists todos_repeat on todos;
+create trigger todos_repeat before update on todos for each row execute function todos_repeat();
+
 create table if not exists site_images (
   key text primary key,
   label text not null,
@@ -569,7 +599,7 @@ begin
   elsif p_kind = 'enrolment' then
     select e.amount_paise, coalesce(e.gst_paise, 0), (coalesce(e.paid_at, e.created_at) at time zone 'Asia/Kolkata')::date,
            coalesce(nullif(e.payment_method,''), case when e.razorpay_payment_id is not null then 'razorpay' else 'other' end), e.name,
-           coalesce((select l.title || ', ' || l.level from class_levels l where l.id = e.class_id), 'Writing class') || ' for ' || e.student_name,
+           coalesce((select l.title from class_levels l where l.id = e.class_id), 'Writing class') || ' for ' || e.student_name,
            e.status in ('paid','transferred','refunded'), e.status = 'pending'
       into amt, g, d, meth, who, descr, keep, gone from class_enrolments e where e.id = p_id;
     cat := 'Classes';
@@ -909,6 +939,11 @@ end $seed$;
 
 -- old versions of this database also had a saved-addresses table; it is not used any more
 drop table if exists addresses cascade;
+
+-- class levels are not shown in the accounts any more: take ", Level 1" out of earlier entries (safe to run again)
+update ledger_entries le set description = replace(le.description, ', ' || l.level, '')
+  from class_enrolments e join class_levels l on l.id = e.class_id
+  where le.source in ('enrolment','refund','fee') and le.source_id = e.id and l.level <> '' and le.description like '%' || ', ' || l.level || '%';
 
 -- brings the accounts up to date once: only missing entries are added (nothing is changed or removed)
 select ledger_repair(false, false);

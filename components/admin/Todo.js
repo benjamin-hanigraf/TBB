@@ -5,7 +5,7 @@ import { todayISO } from '@/lib/accounting';
 
 const Wrap = ({ embedded, title, action, children }) => (embedded ? <div id="todo" className="ad-embed"><div className="ad-embed-row"><h2 className="ad-embed-h">{title}</h2>{action}</div>{children}</div> : <Page title={title} action={action}>{children}</Page>);
 export default function Todo({ embedded = false, onChanged }) {
-  const [edit, setEdit] = useState(null); const [run, busy] = useAction(); const toast = useToast(); const add = useForm({ title: '', due: '' }); const [adding, setAdding] = useState(false);
+  const [edit, setEdit] = useState(null); const [run, busy] = useAction(); const toast = useToast(); const add = useForm({ title: '', due: '', rep: false, every: 'weekly' }); const [adding, setAdding] = useState(false);
   const [local, setLocal] = useState({}); const [leaving, setLeaving] = useState({}); const [undoing, setUndoing] = useState({}); const timers = useRef({});            // local: ticks shown at once; undoing: ticked a moment ago (5 s to uncheck before it slides out); leaving: rows sliding away
   const { data, error, reload } = useLoad(async () => must(await every(() => sb().from('todos').select('*').order('due_on', { nullsFirst: false }).order('created_at', { ascending: false }).order('id'))));
   useEffect(() => { setLocal((l) => Object.fromEntries(Object.entries(l).filter(([id]) => undoing[id]))); setLeaving({}); /* eslint-disable-next-line */ }, [data]);                                       // fresh data from the database replaces what was shown meanwhile
@@ -28,14 +28,15 @@ export default function Todo({ embedded = false, onChanged }) {
   const undo = async (t) => { clearTimeout(timers.current[t.id]); setLocal((l) => ({ ...l, [t.id]: false })); setUndoing((u) => { const n = { ...u }; delete n[t.id]; return n; }); if (await save(t, false)) { reload(); onChanged?.(); } };
   const create = (e) => { e.preventDefault(); return run(async () => {
     if (!add.v.title.trim()) throw new Error('Please type the task.'); const due = add.v.due ? dmyToISO(add.v.due) : null; if (add.v.due && !due) throw new Error('Please enter the date as DD/MM/YYYY.');
-    must(await sb().from('todos').insert({ title: add.v.title.trim(), due_on: due })); add.reset({ title: '', due: '' }); setAdding(false); reload(); onChanged?.(); }, 'Task added'); };
+    must(await sb().from('todos').insert({ title: add.v.title.trim(), due_on: add.v.rep && !due ? todayISO() : due, repeat: add.v.rep ? add.v.every : null })); add.reset({ title: '', due: '', rep: false, every: 'weekly' }); setAdding(false); reload(); onChanged?.(); }, 'Task added'); };
   const row = (t) => (<div key={t.id} className={`ad-row todo-row ${leaving[t.id] ? 'leaving' : ''}`} style={{ cursor: 'default' }}>
     <input type="checkbox" checked={t.done || !!leaving[t.id]} onChange={() => toggle(t)} aria-label={t.done ? 'Mark as not done' : 'Mark as done'} />
-    <button type="button" className="main todo-main" onClick={() => setEdit(t)}><b style={t.done ? { textDecoration: 'line-through', color: '#8e8e93' } : undefined}>{nb(t.title)}</b>{(t.due_on || t.note) && <Segs className={!t.done && t.due_on && t.due_on < today ? 'late' : ''} items={[t.due_on && (!t.done && t.due_on < today ? `Overdue · ${fmtD(t.due_on)}` : fmtD(t.due_on)), t.note]} />}</button></div>);
+    <button type="button" className="main todo-main" onClick={() => setEdit(t)}><b style={t.done ? { textDecoration: 'line-through', color: '#8e8e93' } : undefined}>{nb(t.title)}</b>{(t.due_on || t.note || t.repeat) && <Segs className={!t.done && t.due_on && t.due_on < today ? 'late' : ''} items={[t.due_on && (!t.done && t.due_on < today ? `Overdue · ${fmtD(t.due_on)}` : fmtD(t.due_on)), t.repeat && `Repeats ${repeatName(t.repeat)}`, t.note]} />}</button></div>);
   return (<Wrap embedded={embedded} title="Tasks" action={<Btn variant="ghost" icon={adding ? 'close' : 'plus'} onClick={() => setAdding((a) => !a)}>{adding ? 'Close' : 'Add'}</Btn>}>
     {adding && <Card><form className="ad-form todo-add" onSubmit={create}>
       <F form={add} k="title" label="New task" rule="sentence" placeholder="e.g. Order paper for the next workshop" required autoFocus />
-      <F form={add} k="due" label="Due on" type="date" />
+      <F form={add} k="due" label={add.v.rep ? 'First due on' : 'Due on'} type="date" />
+      <div className="full"><F form={add} k="rep" label="Repeats" type="check" /></div>{add.v.rep && <F form={add} k="every" label="How often" type="select" options={REPEATS} />}
       <div className="ad-actions"><Btn busy={busy} icon="plus">Add</Btn></div></form></Card>}
     {now.length ? <Card title="Today" tight><div className="ad-list">{now.map(row)}</div></Card> : <Card title="Today"><Empty>Nothing to do right now.</Empty></Card>}
     {later.length > 0 && <Fold title="Coming up"><div className="ad-list">{later.map(row)}</div></Fold>}
@@ -43,13 +44,16 @@ export default function Todo({ embedded = false, onChanged }) {
     {edit && <EditTask t={edit} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); reload(); onChanged?.(); }} />}
   </Wrap>);
 }
+const REPEATS = [['daily', 'Every day'], ['weekdays', 'Every weekday (Mon to Fri)'], ['weekly', 'Every week'], ['fortnightly', 'Every 2 weeks'], ['monthly', 'Every month'], ['quarterly', 'Every 3 months'], ['yearly', 'Every year']];
+const repeatName = (v) => (REPEATS.find((x) => x[0] === v)?.[1] || '').replace('Every ', 'every ');
 function EditTask({ t, onClose, onSaved }) {
-  const [run, busy] = useAction(); const f = useForm({ title: t.title, note: t.note || '', due: isoToDMY(t.due_on) });
+  const [run, busy] = useAction(); const f = useForm({ title: t.title, note: t.note || '', due: isoToDMY(t.due_on), rep: !!t.repeat, every: t.repeat || 'weekly' });
   const save = (e) => { e.preventDefault(); return run(async () => { if (!f.v.title.trim()) throw new Error('Please type the task.'); const due = f.v.due ? dmyToISO(f.v.due) : null; if (f.v.due && !due) throw new Error('Please enter the date as DD/MM/YYYY.');
-    must(await sb().from('todos').update({ title: f.v.title.trim(), note: f.v.note || null, due_on: due }).eq('id', t.id)); onSaved(); }, 'Saved'); };
+    must(await sb().from('todos').update({ title: f.v.title.trim(), note: f.v.note || null, due_on: f.v.rep && !due ? todayISO() : due, repeat: f.v.rep ? f.v.every : null }).eq('id', t.id)); onSaved(); }, 'Saved'); };
   const del = () => run(async () => { must(await sb().from('todos').delete().eq('id', t.id)); onSaved(); }, 'Deleted');
   return (<Modal title="Edit task" onClose={onClose}><form className="ad-form" onSubmit={save}>
     <div className="full"><F form={f} k="title" label="Task" rule="sentence" required /></div><F form={f} k="due" label="Due on" type="date" />
+    <div className="full"><F form={f} k="rep" label="Repeats" type="check" /></div>{f.v.rep && <F form={f} k="every" label="How often" type="select" options={REPEATS} />}
     <div className="full"><F form={f} k="note" label="Note" type="textarea" rule="sentence" rows={3} /></div>
     <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn><Confirm onYes={del}>Delete</Confirm></div></form></Modal>);
 }

@@ -370,11 +370,17 @@ i.c-dot{font-style:normal;white-space:pre}
 @media(prefers-reduced-motion:reduce){.mail-row{transition:none}}
 /* Accounts list: payer or payee first, what it was for below, category tag in its own fixed column (tags line up), amount with the date under it */
 .ad-row.tx-row{display:grid;grid-template-columns:minmax(0,1fr) 190px auto;column-gap:14px;align-items:center}
-.tx-row .tx-tag{min-width:0}.tx-row .tx-tag .ad-badge{display:block;width:fit-content;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-@media(max-width:700px){.ad-row.tx-row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"main end" "tag end";row-gap:8px}.tx-row .main{grid-area:main}.tx-row .tx-tag{grid-area:tag}.tx-row .end{grid-area:end;align-self:start}}
+.tx-row .tx-tag{min-width:0}.tx-row .tx-tag .ad-badge{display:block;margin-left:auto;width:fit-content;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:700px){.ad-row.tx-row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"main end" "tag end";row-gap:8px}.tx-row .main{grid-area:main}.tx-row .tx-tag{grid-area:tag}.tx-row .tx-tag .ad-badge{margin-left:0}.tx-row .end{grid-area:end;align-self:start}}
 /* Keyboard: a clear black ring wherever focus lands (only for keyboard use, not for taps or clicks) */
 .ad-app a:focus-visible,.ad-app button:focus-visible,.ad-app select:focus-visible,.ad-app input:focus-visible,.ad-app textarea:focus-visible,.ad-app [tabindex]:focus-visible,.ad-modal-bg a:focus-visible,.ad-modal-bg button:focus-visible,.ad-modal-bg select:focus-visible,.ad-modal-bg input:focus-visible,.ad-modal-bg textarea:focus-visible,.ad-modal-bg [tabindex]:focus-visible{outline:2px solid #000;outline-offset:2px}
 .ad-row:focus-visible,.ad-fold-h:focus-visible,.ad-side nav a:focus-visible,.ad-tabs a:focus-visible,.suggest-list button:focus-visible,.sortmenu-list button:focus-visible{outline-offset:-2px;background:#f5f5f7}
 .ad-modal:focus,.ad-main:focus{outline:none}
 .ad-skip{position:absolute;left:-9999px;top:8px;background:#000;color:#fff;padding:10px 16px;border-radius:980px;z-index:200;font-size:14px;text-decoration:none}.ad-skip:focus{left:8px}
 @media print{.ad-skip{display:none!important}}
+
+/* reports: stacked bar, month chart, legend */
+.ad-stack-bar{display:flex;height:22px;border-radius:11px;overflow:hidden;background:#f0f0f3;margin-bottom:14px}.ad-stack-bar i{display:block;height:100%;min-width:3px;border-right:2px solid #fff}.ad-stack-bar i:last-child{border-right:0}
+.ad-stack ul{list-style:none;padding:0;margin:0;display:grid;gap:8px}.ad-stack li{display:grid;grid-template-columns:12px minmax(0,1fr) auto auto;gap:10px;align-items:center;font-size:14px}.ad-stack li i{width:12px;height:12px;border-radius:3px}.ad-stack li small{color:#6e6e73;min-width:70px;text-align:right}
+.ad-mchart{margin-bottom:10px}.ad-mchart svg{width:100%;height:auto;display:block}.ad-legend{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;font-size:13px;color:#6e6e73;margin:6px 0 0}.ad-legend span{display:inline-flex;align-items:center;gap:6px}.ad-legend i{width:12px;height:12px;border-radius:3px;display:inline-block}.ad-legend i.ln{height:3px;width:18px;border-radius:2px;background:#0071e3}
+.ad-table tr.tot td{border-top:1px solid #d2d2d7;border-bottom:0}

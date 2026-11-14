@@ -262,3 +262,8 @@ input.is-invalid,select.is-invalid,textarea.is-invalid{border-color:#b42318!impo
 
 /* early-bird price on workshops */
 .early{color:var(--ink);font-size:15px}.early b{font-weight:600}.early s{text-decoration-thickness:1px}
+
+/* workshop price block: every line starts at the same left edge and shares one baseline rhythm */
+.facts li>.pricebox{display:grid;gap:8px;text-wrap:wrap}.pricebox .pr-main{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:8px;line-height:1.35}
+.pricebox .pr-main b{font-size:19px;font-weight:600;color:var(--ink)}.pricebox .pr-main s{color:var(--mute);text-decoration-thickness:1px}.pricebox .pr-main span{color:#424245}
+.pricebox .pr-line{display:flex;flex-wrap:wrap;align-items:center;column-gap:10px;row-gap:4px;font-size:15px;line-height:1.35;color:var(--ink)}.pricebox .pr-line.muted{color:var(--mute)}.pricebox .pr-line .tag{flex:none}

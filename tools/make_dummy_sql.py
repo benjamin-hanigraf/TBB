@@ -43,18 +43,18 @@ def w(n, **k): k['id'] = did(1, n); W.append(k)
 img = ['/img/16cc08c542.webp', '/img/26928ebd04.webp', '/img/31648a2db3.webp', '/img/cb028c51a9.webp', '/img/5c8f647552.webp', '/img/a399441366.webp']
 studio = ('Thin Black Brush Studio', '2nd Floor, Berachah Building, 13/7, 1st Cross St, Trustpuram, Kodambakkam, Chennai - 600024')
 blr = ('The Bangalore Local', '1st Cross Road, 1st Block Koramangala, Bengaluru, Karnataka')
-w(1, slug='demo-brush-lettering-basics', title='Brush Lettering Basics', kind='workshop', at=21, price=180000, friend=160000, cap=12, gst='none', status='published', venue=studio, early=150000, early_until=7)
-w(2, slug='demo-watercolour-florals', title='Watercolour Florals', kind='workshop', at=10, price=250000, cap=6, gst='included', status='published', venue=studio)   # sold out
-w(3, slug='demo-copperplate-course', title='Copperplate Calligraphy Course', kind='course', at=30, end=58, price=1200000, cap=8, gst='add', status='published', venue=studio)
-w(4, slug='demo-gouache-landscapes', title='Gouache Landscapes', kind='workshop', at=-20, price=220000, cap=10, gst='none', status='published', venue=blr)    # already happened
-w(5, slug='demo-kids-doodle-camp', title='Kids Doodle Camp (ages 6 to 12)', kind='course', at=40, end=44, price=350000, cap=15, gst='none', status='published', venue=studio, early=300000, early_until=20)
-w(6, slug='demo-ink-and-wash', title='Ink and Wash Painting', kind='workshop', at=50, price=200000, cap=10, gst='none', status='draft', venue=studio)        # not public yet
-w(7, slug='demo-gift-tag-lettering', title='Gift Tag Lettering', kind='workshop', at=15, price=150000, cap=12, gst='none', status='cancelled', venue=blr)
-w(8, slug='demo-free-open-studio', title='Free Open Studio Evening', kind='workshop', at=5, hm='17:30', price=0, cap=20, gst='none', status='published', venue=studio)
-w(9, slug='demo-gothic-blackletter', title='Gothic Blackletter', kind='workshop', at=-60, price=230000, cap=12, gst='included', status='published', venue=studio)
-w(10, slug='demo-wedding-envelope-addressing', title='Wedding Envelope Addressing', kind='workshop', at=70, price=280000, friend=250000, cap=8, gst='add', status='published', venue=blr)
-w(11, slug='demo-pointed-pen-flourishing', title='Pointed Pen Flourishing', kind='workshop', at=2, hm='11:00', price=240000, cap=4, gst='none', status='published', venue=studio)   # almost full
-w(12, slug='demo-corporate-team-session', title='Corporate Team Lettering Session', kind='workshop', at=90, price=150000, cap=30, gst='add', status='draft', venue=blr)
+w(1, slug='brush-lettering-basics', title='Brush Lettering Basics', kind='workshop', at=21, price=180000, friend=160000, cap=12, gst='none', status='published', venue=studio, early=150000, early_until=7)
+w(2, slug='watercolour-florals', title='Watercolour Florals', kind='workshop', at=10, price=250000, cap=6, gst='included', status='published', venue=studio)   # sold out
+w(3, slug='copperplate-course', title='Copperplate Calligraphy Course', kind='course', at=30, end=58, price=1200000, cap=8, gst='add', status='published', venue=studio)
+w(4, slug='gouache-landscapes', title='Gouache Landscapes', kind='workshop', at=-20, price=220000, cap=10, gst='none', status='published', venue=blr)    # already happened
+w(5, slug='kids-doodle-camp', title='Kids Doodle Camp (ages 6 to 12)', kind='course', at=40, end=44, price=350000, cap=15, gst='none', status='published', venue=studio, early=300000, early_until=20)
+w(6, slug='ink-and-wash', title='Ink and Wash Painting', kind='workshop', at=50, price=200000, cap=10, gst='none', status='draft', venue=studio)        # not public yet
+w(7, slug='gift-tag-lettering', title='Gift Tag Lettering', kind='workshop', at=15, price=150000, cap=12, gst='none', status='cancelled', venue=blr)
+w(8, slug='free-open-studio', title='Free Open Studio Evening', kind='workshop', at=5, hm='17:30', price=0, cap=20, gst='none', status='published', venue=studio)
+w(9, slug='gothic-blackletter', title='Gothic Blackletter', kind='workshop', at=-60, price=230000, cap=12, gst='included', status='published', venue=studio)
+w(10, slug='wedding-envelope-addressing', title='Wedding Envelope Addressing', kind='workshop', at=70, price=280000, friend=250000, cap=8, gst='add', status='published', venue=blr)
+w(11, slug='pointed-pen-flourishing', title='Pointed Pen Flourishing', kind='workshop', at=2, hm='11:00', price=240000, cap=4, gst='none', status='published', venue=studio)   # almost full
+w(12, slug='corporate-team-session', title='Corporate Team Lettering Session', kind='workshop', at=90, price=150000, cap=30, gst='add', status='draft', venue=blr)
 rows = []
 for i, x in enumerate(W):
     rows.append({'id': x['id'], 'slug': x['slug'], 'title': x['title'], 'kind': x['kind'], 'summary': 'A test workshop made for trying out the website. Remove with dummy-remove.sql.',
@@ -68,12 +68,12 @@ sql.append('-- workshops: published, draft, cancelled, past, sold out, almost fu
 sql.append(ins('workshops', list(rows[0].keys()), rows))
 
 # ---------- products (12) ----------
-P = [('demo-sketchbook-a5', 'A5 Sketchbook', 65000, 25, False, True, 'none'), ('demo-nib-set', 'Calligraphy Nib Set of 5', 90000, 3, False, True, 'included'),
-     ('demo-sumi-ink', 'Sumi Ink 60 ml', 45000, 0, False, True, 'none'), ('demo-custom-holder', 'Custom Engraved Holder (pre-order)', 210000, 0, True, True, 'add'),
-     ('demo-practice-pad', 'Practice Pad 100 Sheets', 35000, 40, False, True, 'none'), ('demo-gift-box', 'Lettering Gift Box', 320000, 6, False, True, 'add'),
-     ('demo-brush-pen-trio', 'Brush Pen Trio', 55000, 1, False, True, 'included'), ('demo-old-planner', 'Old Planner (hidden)', 80000, 5, False, False, 'none'),
-     ('demo-watercolour-tin', 'Watercolour Tin of 12', 150000, 12, False, True, 'add'), ('demo-paper-sampler', 'Handmade Paper Sampler', 25000, 50, False, True, 'none'),
-     ('demo-gold-ink', 'Gold Pearl Ink', 60000, 8, False, True, 'none'), ('demo-lightbox', 'A4 LED Lightbox', 280000, 2, True, True, 'included')]
+P = [('sketchbook-a5', 'A5 Sketchbook', 65000, 25, False, True, 'none'), ('nib-set', 'Calligraphy Nib Set of 5', 90000, 3, False, True, 'included'),
+     ('sumi-ink', 'Sumi Ink 60 ml', 45000, 0, False, True, 'none'), ('custom-holder', 'Custom Engraved Holder (pre-order)', 210000, 0, True, True, 'add'),
+     ('practice-pad', 'Practice Pad 100 Sheets', 35000, 40, False, True, 'none'), ('gift-box', 'Lettering Gift Box', 320000, 6, False, True, 'add'),
+     ('brush-pen-trio', 'Brush Pen Trio', 55000, 1, False, True, 'included'), ('old-planner', 'Old Planner (hidden)', 80000, 5, False, False, 'none'),
+     ('watercolour-tin', 'Watercolour Tin of 12', 150000, 12, False, True, 'add'), ('paper-sampler', 'Handmade Paper Sampler', 25000, 50, False, True, 'none'),
+     ('gold-ink', 'Gold Pearl Ink', 60000, 8, False, True, 'none'), ('lightbox', 'A4 LED Lightbox', 280000, 2, True, True, 'included')]
 pimg = ['/img/4aab591127.webp', '/img/33e1b05fd6.webp', '/img/42e66b73f9.webp', '/img/e36ba5ccbd.webp']
 rows = [{'id': did(2, i + 1), 'slug': s, 'title': t, 'description': 'A dummy product for testing the store, the bag and checkout.', 'details': ['Test detail one', 'Test detail two'], 'price_paise': p, 'stock': st,
          'allow_preorder': pre, 'images': [pimg[i % 4], pimg[(i + 1) % 4]], 'shipping_note': 'Ships in 8 days.' if pre else None, 'active': act, 'sort_order': 100 + i, 'gst_mode': g} for i, (s, t, p, st, pre, act, g) in enumerate(P)]
@@ -85,11 +85,11 @@ PRICE = {did(2, i + 1): (t, p, g) for i, (s, t, p, st, pre, act, g) in enumerate
 sql.append('-- class types (the drop-down on the class form)')
 sql.append(ins('class_types', ['id', 'name', 'sort_order'], [{'id': did(0x12, i + 1), 'name': n, 'sort_order': 100 + i} for i, n in enumerate(
     ['Cursive', 'Brush Lettering', 'Copperplate', 'Italic', 'Gothic', 'Faux Calligraphy', 'Print Handwriting', 'Kids Art', 'Watercolour', 'Sketching'])]))
-L = [('demo-cursive-1', 'Cursive', 'Cursive Writing', 'Level 1', 500000, 8, True, 'none', [2, 4], '4:30 to 5:30 pm'), ('demo-cursive-2', 'Cursive', 'Cursive Writing', 'Level 2', 550000, 8, True, 'none', [2, 4], '5:30 to 6:30 pm'),
-     ('demo-brush-1', 'Brush Lettering', 'Brush Lettering', 'Beginner', 650000, 6, True, 'included', [6], '11 am to 12:30 pm'), ('demo-brush-2', 'Brush Lettering', 'Brush Lettering', 'Intermediate', 700000, 6, True, 'add', [6], '2 to 3:30 pm'),
-     ('demo-copperplate-1', 'Copperplate', 'Copperplate', 'Foundation', 900000, 10, True, 'add', [1, 3], '7 to 8 pm'), ('demo-italic-1', 'Italic', 'Italic Hand', 'Level 1', 600000, 8, True, 'none', [5], '4 to 5 pm'),
-     ('demo-kids-art', 'Kids Art', 'Kids Art Club', 'Ages 5 to 8', 400000, 12, True, 'none', [0], '10 to 11 am'), ('demo-watercolour-1', 'Watercolour', 'Watercolour', 'Beginner', 800000, 8, True, 'included', [3], '6 to 7:30 pm'),
-     ('demo-gothic-1', 'Gothic', 'Gothic Script', 'Level 1', 750000, 8, False, 'none', [2], '7 to 8 pm'), ('demo-sketching-1', 'Sketching', 'Urban Sketching', 'Open level', 450000, 4, True, 'add', [0, 6], '7 to 9 am')]
+L = [('cursive-1', 'Cursive', 'Cursive Writing', 'Level 1', 500000, 8, True, 'none', [2, 4], '4:30 to 5:30 pm'), ('cursive-2', 'Cursive', 'Cursive Writing', 'Level 2', 550000, 8, True, 'none', [2, 4], '5:30 to 6:30 pm'),
+     ('brush-1', 'Brush Lettering', 'Brush Lettering', 'Beginner', 650000, 6, True, 'included', [6], '11 am to 12:30 pm'), ('brush-2', 'Brush Lettering', 'Brush Lettering', 'Intermediate', 700000, 6, True, 'add', [6], '2 to 3:30 pm'),
+     ('copperplate-1', 'Copperplate', 'Copperplate', 'Foundation', 900000, 10, True, 'add', [1, 3], '7 to 8 pm'), ('italic-1', 'Italic', 'Italic Hand', 'Level 1', 600000, 8, True, 'none', [5], '4 to 5 pm'),
+     ('kids-art', 'Kids Art', 'Kids Art Club', 'Ages 5 to 8', 400000, 12, True, 'none', [0], '10 to 11 am'), ('watercolour-1', 'Watercolour', 'Watercolour', 'Beginner', 800000, 8, True, 'included', [3], '6 to 7:30 pm'),
+     ('gothic-1', 'Gothic', 'Gothic Script', 'Level 1', 750000, 8, False, 'none', [2], '7 to 8 pm'), ('sketching-1', 'Sketching', 'Urban Sketching', 'Open level', 450000, 4, True, 'add', [0, 6], '7 to 9 am')]
 rows = [{'id': did(3, i + 1), 'slug': s, 'track': tr, 'title': t, 'level': lv, 'description': 'A dummy class level for testing enrolments and one-on-one classes.', 'covers': ['Posture and grip', 'Basic strokes', 'Letters and joins'],
          'price_paise': p, 'sessions': n, 'active': a, 'sort_order': 100 + i, 'gst_mode': g} for i, (s, tr, t, lv, p, n, a, g, d, tm) in enumerate(L)]
 sql.append('-- class levels: several tracks, active and hidden, every GST option')
@@ -131,7 +131,7 @@ for i, (wn, pi, seats, st, ch, meth, ago) in enumerate(BK):
     if wk['gst'] == 'add': amt += g
     paid = st in ('paid', 'refunded', 'transferred')
     rows.append({'id': did(7, i + 1), 'workshop_id': wk['id'], 'name': nm(pi), 'email': em(pi), 'phone': ph(pi), 'seats': seats, 'amount_paise': amt, 'gst_paise': g, 'status': st, 'channel': ch,
-                 'payment_method': meth if paid else None, 'razorpay_order_id': f'order_demo_bk{i + 1:03d}' if ch == 'website' else None, 'razorpay_payment_id': f'pay_demo_bk{i + 1:03d}' if ch == 'website' and paid else None,
+                 'payment_method': meth if paid else None, 'razorpay_order_id': f'order_bk{i + 1:03d}' if ch == 'website' else None, 'razorpay_payment_id': f'pay_bk{i + 1:03d}' if ch == 'website' and paid else None,
                  'invoice_no': 9001 + i, 'notes': 'Coming with a friend' if seats > 1 else None, 'created_at': TS(ago, '12:00'), 'paid_at': TS(ago, '12:05') if paid else None})
 sql.append('-- workshop bookings: paid online and by hand, unpaid, cancelled, refunded, transferred, several seats; "Watercolour Florals" is sold out')
 sql.append(ins('bookings', list(rows[0].keys()), rows))
@@ -149,7 +149,7 @@ for i, (lv, bt, grp, kid, age, pi, st, ch) in enumerate(EN):
     paid = st in ('paid', 'refunded', 'transferred')
     rows.append({'id': did(6, i + 1), 'class_id': did(3, lv), 'student_name': kid if grp == 'child' else nm(pi), 'student_group': grp, 'student_age': age,
                  'name': nm(pi), 'email': em(pi), 'phone': ph(pi), 'amount_paise': amt, 'gst_paise': g, 'status': st, 'channel': ch, 'payment_method': ('razorpay' if ch == 'website' else ['upi', 'cash', 'bank'][i % 3]) if paid else None,
-                 'razorpay_order_id': f'order_demo_en{i + 1:03d}' if ch == 'website' else None, 'razorpay_payment_id': f'pay_demo_en{i + 1:03d}' if ch == 'website' and paid else None,
+                 'razorpay_order_id': f'order_en{i + 1:03d}' if ch == 'website' else None, 'razorpay_payment_id': f'pay_en{i + 1:03d}' if ch == 'website' and paid else None,
                  'invoice_no': 9101 + i, 'notes': 'Needs a left-handed holder' if i == 3 else None, 'created_at': TS(-25 + i, '18:00'), 'paid_at': TS(-25 + i, '18:10') if paid else None})
 sql.append('-- class enrolments: children 5 to 15 and adults; paid, unpaid, refunded, cancelled, transferred')
 sql.append(ins('class_enrolments', list(rows[0].keys()), rows))
@@ -187,7 +187,7 @@ for i, (st, ch, items, ship, pi, gift, track, note) in enumerate(O):
     paid = st not in ('pending', 'cancelled'); n, e, p, city, state, pin = PEOPLE[pi]
     orows.append({'id': oid, 'name': n, 'email': em(pi), 'phone': ph(pi), 'shipping_address': {'recipient': n, 'phone': ph(pi), 'line1': f'{10 + pi}, Test Street', 'line2': '', 'city': city, 'state': state, 'pincode': pin},
                   'subtotal_paise': sub, 'shipping_paise': ship, 'total_paise': sub + ship, 'gift_message': gift, 'status': st, 'tracking_carrier': track[0] if track else None, 'tracking_number': track[1] if track else None,
-                  'razorpay_order_id': f'order_demo_or{i + 1:03d}' if ch == 'website' else None, 'razorpay_payment_id': f'pay_demo_or{i + 1:03d}' if ch == 'website' and paid else None, 'invoice_no': 9201 + i,
+                  'razorpay_order_id': f'order_or{i + 1:03d}' if ch == 'website' else None, 'razorpay_payment_id': f'pay_or{i + 1:03d}' if ch == 'website' and paid else None, 'invoice_no': 9201 + i,
                   'channel': ch, 'payment_method': ('razorpay' if ch == 'website' else ['upi', 'cash'][i % 2]) if paid else None, 'notes': note, 'created_at': TS(-40 + i * 2, '20:00'), 'paid_at': TS(-40 + i * 2, '20:03') if paid else None})
 sql.append('-- orders: every status (to pack, packed, shipped, delivered, unpaid, cancelled, refunded), online and by hand, gift messages, tracking, private notes, free and paid shipping')
 sql.append(ins('orders', list(orows[0].keys()), orows))
@@ -195,10 +195,10 @@ sql.append(ins('order_items', list(irows[0].keys()), irows))
 
 # ---------- enquiries (12) ----------
 E = [('contact', 'Do you have weekend slots?', {'topic': 'Classes'}), ('invitation', 'Wedding invitations for 250 guests, hand lettered names.', {'event': 'Wedding', 'quantity': 250, 'date': 'February'}),
-     ('service', 'Live calligraphy at our store launch.', {'service': 'Live event', 'city': 'Chennai'}), ('collaboration', 'Brand collaboration for Diwali hampers.', {'brand': 'Demo Sweets Co.'}),
+     ('service', 'Live calligraphy at our store launch.', {'service': 'Live event', 'city': 'Chennai'}), ('collaboration', 'Brand collaboration for Diwali hampers.', {'brand': 'Sweets Co.'}),
      ('hiring', 'I would love to teach kids art on weekends.', {'role': 'Teacher', 'portfolio': 'https://example.com/portfolio'}), ('contact', 'Is the nib set compatible with my holder?', {'topic': 'Store'}),
      ('invitation', 'Baby shower invitations, pastel colours.', {'event': 'Baby shower', 'quantity': 60}), ('service', 'Corporate workshop for 30 people.', {'service': 'Corporate workshop', 'people': 30}),
-     ('contact', 'Can I pay by bank transfer?', {'topic': 'Payments'}), ('collaboration', 'School art week partnership.', {'organisation': 'Demo Public School'}),
+     ('contact', 'Can I pay by bank transfer?', {'topic': 'Payments'}), ('collaboration', 'School art week partnership.', {'organisation': 'Public School'}),
      ('hiring', 'Internship for the summer?', {'role': 'Intern'}), ('contact', 'Please call me back about the kids camp.', {'topic': 'Workshops'})]
 rows = [{'id': did(0xc, i + 1), 'kind': k, 'name': nm(i), 'email': em(i), 'phone': ph(i), 'message': m, 'details': d, 'handled': i % 3 == 0, 'read_at': TS(-i * 2, '12:00') if i % 3 == 0 or i % 4 == 1 else None, 'created_at': TS(-i * 2, '11:00')} for i, (k, m, d) in enumerate(E)]
 sql.append('-- inbox: every kind of enquiry: unread, read but not dealt with, and dealt with')
@@ -211,7 +211,7 @@ EV = [('Meeting with the printer', 1, None, '3 pm'), ('Stall at the Sunday marke
 sql.append('-- calendar events: today, past, upcoming, several days long, with and without a time')
 sql.append(ins('events', ['id', 'title', 'note', 'on_date', 'end_date', 'time_text'], [{'id': did(0xd, i + 1), 'title': t, 'note': 'Dummy event' if i % 2 else None, 'on_date': D(a), 'end_date': D(b) if b else None, 'time_text': tm} for i, (t, a, b, tm) in enumerate(EV)]))
 TD = [('Order more sumi ink', 2, False), ('Reply to wedding enquiry', -1, False), ('Post workshop photos', 0, False), ('Renew domain', 30, False), ('Call the framer', None, False),
-      ('Update class timings', 5, False), ('Print certificates', -5, True), ('Pack Rohan order', -2, True), ('Buy tea for the studio', None, True), ('Send invoice to Demo Public School', 3, False),
+      ('Update class timings', 5, False), ('Print certificates', -5, True), ('Pack Rohan order', -2, True), ('Buy tea for the studio', None, True), ('Send invoice to Public School', 3, False),
       ('Book venue in Bengaluru', 14, False), ('Clean brushes', -10, True)]
 sql.append('-- to-dos: overdue, due today, upcoming, no date, done')
 sql.append(ins('todos', ['id', 'title', 'note', 'due_on', 'done', 'done_at'], [{'id': did(0xe, i + 1), 'title': t, 'note': 'Dummy to-do' if i % 3 == 0 else None, 'due_on': D(d) if d is not None else None, 'done': dn, 'done_at': TS(-1, '18:00') if dn else None} for i, (t, d, dn) in enumerate(TD)]))
@@ -226,21 +226,21 @@ def calc(items, discount, gst_on):  # same maths as lib/invoiceCalc.js
     return sub, disc, gst, taxable + gst
 it = lambda d, q_, p, r=18, h='': {'desc': d, 'qty': q_, 'unit_paise': p, 'gst_rate': r, 'hsn': h}
 INV = [  # (type, no, customer, items, discount, gst, status, issue, due, against, payments [(amount or 'rest', days ago, method)], notes)
-    ('invoice', 'DEMO/2026-27/001', 0, [it('Wedding invitation design', 1, 1500000, 18, '998391'), it('Printed invitations', 250, 4000, 12, '4911')], 0, True, 'paid', -30, -15, None, [('rest', -20, 'bank')], 'Thank you for your business.'),
-    ('invoice', 'DEMO/2026-27/002', 1, [it('Corporate lettering workshop (30 people)', 1, 4500000, 18, '999293')], 500000, True, 'sent', -12, 3, None, [(2000000, -10, 'bank'), (500000, -5, 'upi')], 'Advance received. Balance on the day.'),   # part paid
-    ('invoice', 'DEMO/2026-27/003', 2, [it('Live calligraphy at store launch', 4, 600000)], 0, False, 'sent', -40, -10, None, [(200000, -30, 'cash')], None),   # overdue, small part paid
-    ('invoice', 'DEMO/2026-27/004', 3, [it('Custom name cards', 120, 2500), it('Envelope addressing', 120, 3000)], 0, False, 'draft', -1, 14, None, [], None),
-    ('invoice', 'DEMO/2026-27/005', 4, [it('Logo lettering', 1, 2500000, 18, '998391')], 0, True, 'paid', -60, -45, None, [(1000000, -58, 'upi'), (1000000, -50, 'upi'), ('rest', -44, 'bank')], 'Paid in three parts.'),
-    ('invoice', 'DEMO/2026-27/006', 5, [it('Signage hand lettering', 2, 800000)], 0, False, 'cancelled', -25, -5, None, [], 'Cancelled by the client.'),
-    ('invoice', 'DEMO/2026-27/007', 6, [it('School art week, 5 sessions', 5, 400000, 18, '999293')], 0, True, 'sent', -3, 27, None, [(500000, -2, 'cash'), (500000, -1, 'upi')], None),
-    ('invoice', 'DEMO/2026-27/008', 7, [it('Gift hampers with lettered tags', 40, 45000, 12)], 200000, True, 'paid', -15, 0, None, [('rest', -14, 'card')], None),
-    ('invoice', 'DEMO/2026-27/009', 8, [it('Mural sketch consultation', 1, 300000)], 0, False, 'sent', -5, 10, None, [(100000, -2, 'upi')], 'Token advance paid.'),
-    ('quotation', 'DEMO-Q/2026-27/001', 9, [it('Bulk invitation printing', 500, 3500, 12, '4911')], 0, True, 'sent', -4, 26, None, [], 'Prices valid for 30 days.'),
-    ('quotation', 'DEMO-Q/2026-27/002', 10, [it('Brand collaboration: Diwali packaging', 1, 6000000, 18)], 0, True, 'accepted', -20, 10, None, [], None),
-    ('quotation', 'DEMO-Q/2026-27/003', 11, [it('Kids camp for 40 children', 40, 250000)], 1000000, False, 'draft', 0, 30, None, [], None),
-    ('quotation', 'DEMO-Q/2026-27/004', 12, [it('Wall art', 1, 1800000)], 0, False, 'cancelled', -50, -20, None, [], 'Client went with another artist.'),
-    ('invoice', 'DEMO/2026-27/010', 7, [it('Calligraphy name tags', 60, 3000, 12, '4911')], 0, True, 'paid', -9, -2, None, [('rest', -8, 'upi')], None),
-    ('invoice', 'DEMO/2026-27/011', 0, [it('Seating chart lettering', 1, 400000)], 0, False, 'sent', -2, 12, None, [], 'Half now, half on delivery.')]
+    ('invoice', 'INV/2026-27/001', 0, [it('Wedding invitation design', 1, 1500000, 18, '998391'), it('Printed invitations', 250, 4000, 12, '4911')], 0, True, 'paid', -30, -15, None, [('rest', -20, 'bank')], 'Thank you for your business.'),
+    ('invoice', 'INV/2026-27/002', 1, [it('Corporate lettering workshop (30 people)', 1, 4500000, 18, '999293')], 500000, True, 'sent', -12, 3, None, [(2000000, -10, 'bank'), (500000, -5, 'upi')], 'Advance received. Balance on the day.'),   # part paid
+    ('invoice', 'INV/2026-27/003', 2, [it('Live calligraphy at store launch', 4, 600000)], 0, False, 'sent', -40, -10, None, [(200000, -30, 'cash')], None),   # overdue, small part paid
+    ('invoice', 'INV/2026-27/004', 3, [it('Custom name cards', 120, 2500), it('Envelope addressing', 120, 3000)], 0, False, 'draft', -1, 14, None, [], None),
+    ('invoice', 'INV/2026-27/005', 4, [it('Logo lettering', 1, 2500000, 18, '998391')], 0, True, 'paid', -60, -45, None, [(1000000, -58, 'upi'), (1000000, -50, 'upi'), ('rest', -44, 'bank')], 'Paid in three parts.'),
+    ('invoice', 'INV/2026-27/006', 5, [it('Signage hand lettering', 2, 800000)], 0, False, 'cancelled', -25, -5, None, [], 'Cancelled by the client.'),
+    ('invoice', 'INV/2026-27/007', 6, [it('School art week, 5 sessions', 5, 400000, 18, '999293')], 0, True, 'sent', -3, 27, None, [(500000, -2, 'cash'), (500000, -1, 'upi')], None),
+    ('invoice', 'INV/2026-27/008', 7, [it('Gift hampers with lettered tags', 40, 45000, 12)], 200000, True, 'paid', -15, 0, None, [('rest', -14, 'card')], None),
+    ('invoice', 'INV/2026-27/009', 8, [it('Mural sketch consultation', 1, 300000)], 0, False, 'sent', -5, 10, None, [(100000, -2, 'upi')], 'Token advance paid.'),
+    ('quotation', 'QUO/2026-27/001', 9, [it('Bulk invitation printing', 500, 3500, 12, '4911')], 0, True, 'sent', -4, 26, None, [], 'Prices valid for 30 days.'),
+    ('quotation', 'QUO/2026-27/002', 10, [it('Brand collaboration: Diwali packaging', 1, 6000000, 18)], 0, True, 'accepted', -20, 10, None, [], None),
+    ('quotation', 'QUO/2026-27/003', 11, [it('Kids camp for 40 children', 40, 250000)], 1000000, False, 'draft', 0, 30, None, [], None),
+    ('quotation', 'QUO/2026-27/004', 12, [it('Wall art', 1, 1800000)], 0, False, 'cancelled', -50, -20, None, [], 'Client went with another artist.'),
+    ('invoice', 'INV/2026-27/010', 7, [it('Calligraphy name tags', 60, 3000, 12, '4911')], 0, True, 'paid', -9, -2, None, [('rest', -8, 'upi')], None),
+    ('invoice', 'INV/2026-27/011', 0, [it('Seating chart lettering', 1, 400000)], 0, False, 'sent', -2, 12, None, [], 'Half now, half on delivery.')]
 irows, prows, ledger_inv = [], [], []; pn = 0
 for i, (ty, no, pi, items, disc, gst_on, st, issue, due, against, pays, notes) in enumerate(INV):
     sub, d, gst, total = calc(items, disc, gst_on); iid = did(0xf, i + 1); paid_sum = 0; last = None
@@ -275,12 +275,12 @@ ledger_rent = [{'entry_date': D(a), 'kind': 'in', 'category': 'Studio rent-outs'
                for i, (n_, pu, a, b, t, am, pd, m) in enumerate(RT) if pd]
 
 # ---------- accounts ----------
-MAN = [('in', 'Custom invitations', 'Name cards paid in cash', 450000, 0, 'cash', 'Walk-in customer', -33), ('in', 'Collaborations', 'Brand collaboration fee', 2500000, 381356, 'bank', 'Demo Sweets Co.', -18),
-       ('in', 'Other income', 'Sold old easels', 300000, 0, 'upi', 'Neighbour', -9), ('out', 'Materials and supplies', 'Paper and ink stock', 1250000, 190678, 'bank', 'Demo Art Supplies', -27),
-       ('out', 'Printing', 'Workshop handouts', 180000, 0, 'upi', 'Demo Print Shop', -22), ('out', 'Venue rent', 'Bengaluru venue', 800000, 0, 'bank', 'The Bangalore Local', -21),
+MAN = [('in', 'Custom invitations', 'Name cards paid in cash', 450000, 0, 'cash', 'Walk-in customer', -33), ('in', 'Collaborations', 'Brand collaboration fee', 2500000, 381356, 'bank', 'Sweets Co.', -18),
+       ('in', 'Other income', 'Sold old easels', 300000, 0, 'upi', 'Neighbour', -9), ('out', 'Materials and supplies', 'Paper and ink stock', 1250000, 190678, 'bank', 'Art Supplies', -27),
+       ('out', 'Printing', 'Workshop handouts', 180000, 0, 'upi', 'Print Shop', -22), ('out', 'Venue rent', 'Bengaluru venue', 800000, 0, 'bank', 'The Bangalore Local', -21),
        ('out', 'Teacher or helper pay', 'Assistant for kids camp', 600000, 0, 'upi', 'Helper', -15), ('out', 'Shipping and courier', 'India Post charges', 95000, 0, 'cash', 'India Post', -12),
        ('out', 'Marketing', 'Instagram ads', 200000, 30508, 'card', 'Meta', -8), ('out', 'Software and subscriptions', 'Website hosting', 150000, 22881, 'card', 'Hosting company', -6),
-       ('out', 'Equipment', 'New light box', 450000, 68644, 'upi', 'Demo Electronics', -4), ('out', 'Utilities', 'Studio electricity', 320000, 0, 'bank', 'TNEB', -2),
+       ('out', 'Equipment', 'New light box', 450000, 68644, 'upi', 'Electronics', -4), ('out', 'Utilities', 'Studio electricity', 320000, 0, 'bank', 'TNEB', -2),
        ('out', 'Travel', 'Cab to Bengaluru venue', 250000, 0, 'upi', 'Cab', -20), ('out', 'Taxes and fees', 'Professional tax', 125000, 0, 'bank', 'Corporation', -40)]
 ledger = [{'entry_date': D(ago), 'kind': k, 'category': c, 'description': ds, 'amount_paise': a, 'gst_paise': g, 'method': m, 'party': p, 'source': 'manual', 'source_id': None} for (k, c, ds, a, g, m, p, ago) in MAN] + ledger_inv + ledger_rent
 for j, r in enumerate(ledger): r['id'] = did(0x11, j + 1)

@@ -12,13 +12,13 @@ delete from class_enrolments where id::text like 'dededede-%' or email ilike '%@
 
 -- 2. accounts entries: the dummy ones, and any linked to a dummy order, booking, enrolment, invoice or invoice payment
 delete from ledger_entries where id::text like 'dededede-%' or source_id::text like 'dededede-%'
-  or source_id in (select id from invoice_payments where invoice_id in (select id from invoices where id::text like 'dededede-%' or invoice_no like 'DEMO%'))
+  or source_id in (select id from invoice_payments where invoice_id in (select id from invoices where id::text like 'dededede-%' ))
   or source_id in (select id from orders where email ilike '%@example.com')
   or source_id in (select id from bookings where email ilike '%@example.com')
   or source_id in (select id from class_enrolments where email ilike '%@example.com');
 
 -- 3. invoices, quotations and credit notes (their payments go with them)
-delete from invoices where id::text like 'dededede-%' or invoice_no like 'DEMO%';
+delete from invoices where id::text like 'dededede-%' ;
 
 -- 4. classes (each student's dated classes went with their enrolment), class types, workshops, products
 delete from class_levels where id::text like 'dededede-%';

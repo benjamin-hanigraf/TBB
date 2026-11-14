@@ -1,5 +1,6 @@
 'use client';
 // Orders, workshop sign-ups and class enrolments that were agreed directly (not through the website).
+import { withCo } from '@/lib/names';
 import { useState } from 'react';
 import { sb, must, every, Modal, Btn, F, useForm, useAction, useToast, useLoad, fmtD } from './kit';
 import { CustomerSuggest, useCustomers, ensureCustomer } from './pickers';
@@ -85,7 +86,7 @@ export function AddEnrol({ level, onClose, onSaved }) {
   return (<Modal title={`Add enrolment · ${level.title}, ${level.level}`} onClose={onClose}><form className="ad-form" onSubmit={save}>
     <F form={f} k="group" label="Who is attending?" type="select" required options={[['child', 'A child (5 to 15)'], ['adult', 'An adult']]} />
     {f.v.group === 'child' && <><F form={f} k="student" label="Participant's name" rule="name" required /><F form={f} k="age" label="Participant's age" rule="digits" required inputMode="numeric" /></>}
-    <CustomerSuggest value={f.v.name} onType={(v) => f.set('name', v)} onPick={(c) => f.setAll((v) => ({ ...v, name: c.name, email: c.email || '', phone: c.phone || '' }))} customers={customers} required label={f.v.group === 'child' ? "Parent or guardian's name" : 'Name'} />
+    <CustomerSuggest value={f.v.name} onType={(v) => f.set('name', v)} onPick={(c) => f.setAll((v) => ({ ...v, name: c.name, email: c.email || '', phone: c.phone || '' }))} customers={customers} required label={f.v.group === 'child' ? "Parent's name (C/o)" : 'Name'} />
     <F form={f} k="phone" label="Phone" type="tel" rule="phone" /><F form={f} k="email" label="Email" type="email" rule="email" />
     <F form={f} k="amount" label="Amount (₹)" type="money" rule="money" required /><PaymentFields f={f} />
     <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn><Btn type="button" variant="ghost" onClick={onClose}>Cancel</Btn></div></form></Modal>);
@@ -156,10 +157,10 @@ function TransferDialog({ b, onClose, onDone }) {
 export function EnrolModal({ e, onClose, onSaved }) {
   const f = useForm({ status: e.status, method: e.payment_method || 'upi' }); const [refund, setRefund] = useState(false); const [editing, setEditing] = useState(false); const [receipt, setReceipt] = useState(false);
   const [save, busy] = useStatusSave({ table: 'class_enrolments', row: e, f, label: 'Enrolment updated', onSaved }); const wa = waLink(e.phone);
-  return (<Modal title={e.student_name} onClose={onClose}>
+  return (<Modal title={withCo(e.student_name, e.student_group === 'child' ? e.name : '')} onClose={onClose}>
     <p style={{ marginTop: 0 }}><b>{e.class_levels?.title}</b><br />{e.student_group === 'child' ? `Child, age ${e.student_age}` : 'Adult'} · {money(e.amount_paise)}</p>
     {e.notes && <p className={e.notes.includes('ATTENTION') ? 'ad-err' : 'ad-help'} style={{ whiteSpace: 'pre-wrap' }}>{e.notes}</p>}
-    <p className="ad-help">{e.student_group === 'child' ? `Parent or guardian: ${e.name} · ` : ''}{e.email} · {e.phone}<br />{fmtDT(e.created_at)}{e.channel === 'manual' ? ' · added manually' : ''}{e.razorpay_payment_id ? ` · Payment ID ${e.razorpay_payment_id}` : ''}</p>
+    <p className="ad-help">{e.email} · {e.phone}<br />{fmtDT(e.created_at)}{e.channel === 'manual' ? ' · added manually' : ''}{e.razorpay_payment_id ? ` · Payment ID ${e.razorpay_payment_id}` : ''}</p>
     {editing ? <div className="ad-form"><F form={f} k="status" label="Status" type="select" required options={statusOptions(e.status, 'Transferred', !!e.razorpay_payment_id)} />
       {e.status === 'pending' && ['paid', 'transferred'].includes(f.v.status) && <F form={f} k="method" label="Paid by" type="select" required options={METHOD_OPTIONS} />}
     </div> : <p style={{ margin: '0 0 8px' }}><Badge tone={STATUS[e.status]?.[1]}>{STATUS[e.status]?.[0] || e.status}</Badge></p>}

@@ -1,4 +1,5 @@
 'use client';
+import { withCo } from '@/lib/names';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/Icons';
@@ -26,7 +27,7 @@ export function buildEvents({ workshops = [], sessions = [], todos = [], events 
     for (const d of span(s, e, 120)) ev.push({ date: d, title: w.title, kind: 'workshop', time: d === s ? istTime(w.starts_at) : '', note: w.venue_name || '', draft: w.status === 'draft', href: '/manager/workshops' });
   }
   for (const s of sessions) { if (s.status === 'cancelled') continue; const en = s.class_enrolments; const lv = en?.class_levels;     // a class shows the student's name; the class details are in the list below
-    ev.push({ date: s.on_date, title: en?.student_name || 'Class', kind: 'class', time: s.time_text || '', note: `${lv?.title || 'Class'} · Class ${s.no}${s.status === 'done' ? ' · attended' : ''}${s.moved_from ? ' · moved' : ''}`, href: '/manager/classes' }); }
+    ev.push({ date: s.on_date, title: withCo(en?.student_name, en?.student_group === 'child' ? en?.name : '') || 'Class', kind: 'class', time: s.time_text || '', note: `${lv?.title || 'Class'} · Class ${s.no}${s.status === 'done' ? ' · attended' : ''}${s.moved_from ? ' · moved' : ''}`, href: '/manager/classes' }); }
   for (const t of todos) if (t.due_on && !t.done) ev.push({ date: t.due_on, title: t.title, kind: 'todo', time: '', note: t.note || '', href: `/manager/planner?todo=${t.id}` });
   for (const e of events) for (const d of span(e.on_date, e.end_date && e.end_date > e.on_date ? e.end_date : e.on_date, 60)) ev.push({ date: d, title: e.title, kind: 'event', time: d === e.on_date ? e.time_text || '' : '', note: e.note || '', event: e });
   for (const r of rentouts) for (const d of span(r.on_date, r.end_date && r.end_date > r.on_date ? r.end_date : r.on_date, 60)) ev.push({ date: d, title: r.name, kind: 'rentout', time: d === r.on_date ? r.time_text || '' : '', note: [r.purpose, r.amount_paise ? (r.paid ? `${money(r.amount_paise)} paid` : `${money(r.amount_paise)} not paid yet`) : ''].filter(Boolean).join(' · '), rentout: r });
@@ -47,7 +48,7 @@ export default function CalendarPanel({ version = 0, ym, setYm, sel, setSel, onO
     const rent = async () => { const r = await every(() => c.from('rentouts').select('*,rentout_payments(*)').gte('on_date', loW).lte('on_date', hi).order('on_date').order('id')); return r.error ? every(() => c.from('rentouts').select('*').gte('on_date', loW).lte('on_date', hi).order('on_date').order('id')) : r; };
     const [w, s, t, e, r] = await Promise.all([
       every(() => c.from('workshops').select('id,title,kind,starts_at,ends_at,venue_name,status').gte('starts_at', `${loW}T00:00:00+05:30`).lte('starts_at', `${hi}T23:59:59+05:30`).order('starts_at').order('id')),
-      every(() => c.from('class_sessions').select('*,class_enrolments(student_name,class_levels(title,level))').gte('on_date', lo).lte('on_date', hi).order('on_date').order('id')),
+      every(() => c.from('class_sessions').select('*,class_enrolments(student_name,name,student_group,class_levels(title,level))').gte('on_date', lo).lte('on_date', hi).order('on_date').order('id')),
       every(() => c.from('todos').select('id,title,note,due_on,done').eq('done', false).not('due_on', 'is', null).order('id')),
       every(() => c.from('events').select('*').gte('on_date', loW).lte('on_date', hi).order('on_date').order('id')),
       rent()]);

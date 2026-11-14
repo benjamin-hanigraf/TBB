@@ -2,6 +2,7 @@
 // One way to refund, used for orders, workshop bookings and class enrolments (one or many at once).
 // "Refund online" asks the payment provider to send the money back (only for payments made online).
 // "I sent it back myself" just records a refund already made by UPI, cash, bank transfer and so on.
+import { withCo } from '@/lib/names';
 import { useState } from 'react';
 import { Modal, Btn, F, useForm, useAction, Badge, Empty } from './kit';
 import { adminPost } from '@/lib/adminApi';
@@ -24,7 +25,7 @@ export function RefundDialog({ kind, rows, title, cancelled = kind !== 'order', 
       if (!r.ok) throw new Error(r.status === 403 ? 'Please sign in again.' : 'Could not refund. Nothing was changed.'); out.push(...r.results); };
     await send(onl, 'online'); await send(rest, 'sent'); setRes(out); });
   const finish = () => (res?.some((x) => x.ok) && onDone ? onDone() : onClose());   // the parent reloads once the results have been read
-  const name = (id) => { const r = rows.find((x) => x.id === id); return r?.student_name || r?.name || ''; };
+  const name = (id) => { const r = rows.find((x) => x.id === id); return withCo(r?.student_name, r?.student_group === 'child' ? r?.name : '') || r?.name || ''; };
   const someSent = f.v.how === 'sent' || rows.some((r) => !online(r));
   return (<Modal title={title || 'Refund'} onClose={finish}>
     {res ? <><p style={{ marginTop: 0 }}><b>{res.filter((x) => x.ok).length}</b> of {res.length} refunded.</p>

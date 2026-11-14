@@ -315,3 +315,5 @@ BATCH: class level only on website + Classes page; tx tag alignment; repeating t
 - Reports: "Who owes you" (customer-wise), GST summary with output / input / to pay by month; pies replaced by one stacked horizontal bar; month chart = income + expense bars with profit line.
 - Workshops: workshops.images (up to 8, first = cover, image_path stays the first); website detail page shows a gallery when there are several.
 - Website: workshop cards show date, venue, "Early bird offer till <date>" (no prices), then the Book now tag; detail price block re-laid out on one grid.
+
+- Children's classes: the parent's name is shown as "Myra (C/o Neha Joshi)" after the student's name in the Classes list, student windows, Planner, Home and refunds (lib/names.js withCo). The "parent ..." text and "Parent or guardian" labels are gone (forms say "Parent's name (C/o)").

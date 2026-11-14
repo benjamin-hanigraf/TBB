@@ -1,4 +1,5 @@
 'use client';
+import { withCo } from '@/lib/names';
 import Link from 'next/link';
 import Icon from '@/components/Icons';
 import { useRef, useState } from 'react';
@@ -25,8 +26,8 @@ export default function Dashboard() {
       c.from('class_enrolments').select('id,name,amount_paise,paid_at,class_levels(title,level)').not('paid_at', 'is', null).order('paid_at', { ascending: false }).limit(5),
       c.from('todos').select('id,title,due_on').eq('done', false).or(`due_on.lte.${today},due_on.is.null`).order('due_on'),
       c.from('workshops').select('id,title,kind,starts_at,ends_at,status').neq('status', 'cancelled').gte('starts_at', new Date(Date.now() - 60 * 864e5).toISOString()).lte('starts_at', new Date(Date.now() + 2 * 864e5).toISOString()),
-      c.from('class_sessions').select('*,class_enrolments(student_name,class_levels(title,level))').eq('on_date', today).neq('status', 'cancelled'),
-      c.from('class_sessions').select('id,no,on_date,enrolment_id,class_enrolments(student_name,class_id)').lt('on_date', today).eq('status', 'scheduled').order('on_date').limit(MAX_ATTENTION),
+      c.from('class_sessions').select('*,class_enrolments(student_name,name,student_group,class_levels(title,level))').eq('on_date', today).neq('status', 'cancelled'),
+      c.from('class_sessions').select('id,no,on_date,enrolment_id,class_enrolments(student_name,name,student_group,class_id)').lt('on_date', today).eq('status', 'scheduled').order('on_date').limit(MAX_ATTENTION),
       every(() => c.from('invoices').select('id,customer_name,total_paise,due_date,status,doc_type,invoice_payments(amount_paise)').eq('doc_type', 'invoice').eq('status', 'sent').order('id'))]);
     const unread = inbox.error ? await c.from('enquiries').select('id', { count: 'exact', head: true }).eq('handled', false) : inbox;   // before the database was updated
     const w = must(ws); let taken = {};
@@ -36,14 +37,14 @@ export default function Dashboard() {
     // Today: workshops on today (a course counts on every day it runs), classes on today, and pending tasks
     const day = [
       ...soft(near).filter((x) => { const s = istDay(x.starts_at), e = x.kind === 'course' && x.ends_at ? istDay(x.ends_at) : s; return s <= today && today <= e; }).map((x) => ({ key: `w${x.id}`, t: x.title, s: `${istDay(x.starts_at) === today ? istTime(x.starts_at) : 'Course day'}${x.status === 'draft' ? ' · draft' : ''}`, kind: 'Workshop', href: '/manager/workshops' })),
-      ...soft(sess).map((x) => { const en = x.class_enrolments || {}; return { key: `c${x.id}`, t: en.student_name || 'Class', s: [x.time_text, lvl(en.class_levels)].filter(Boolean).join(' · '), kind: 'Class', href: '/manager/classes' }; }),
+      ...soft(sess).map((x) => { const en = x.class_enrolments || {}; return { key: `c${x.id}`, t: withCo(en.student_name, en.student_group === 'child' ? en.name : '') || 'Class', s: [x.time_text, lvl(en.class_levels)].filter(Boolean).join(' · '), kind: 'Class', href: '/manager/classes' }; }),
       ...td.map((x) => ({ key: `t${x.id}`, t: x.title, s: x.due_on && x.due_on < today ? `Overdue since ${fmtD(x.due_on)}` : '', kind: 'Task', task: x.id, href: `/manager/planner?todo=${x.id}` }))];      // pending tasks: due today, overdue, or with no date (the same ones the Planner shows under Today)
     // Receivables: what customers still owe on invoices (all unpaid ones, not only late ones)
     const owing = must(inv).map((i) => ({ ...i, left: i.total_paise - (i.invoice_payments || []).reduce((s, p) => s + p.amount_paise, 0) })).filter((i) => i.left > 0);
     // Needs attention: things that are late or running out, each one opens exactly that item
     const attention = [
       ...owing.filter((i) => i.due_date && i.due_date < today).map((i) => ({ key: `i${i.id}`, t: `${i.customer_name}: invoice overdue`, s: money(i.left), href: `/manager/invoices?open=${i.id}` })),
-      ...soft(late).map((x) => ({ key: `a${x.id}`, t: `${x.class_enrolments?.student_name || 'Student'}: class ${x.no} not marked`, s: fmtD(x.on_date), href: `/manager/classes?student=${x.enrolment_id}` })),
+      ...soft(late).map((x) => ({ key: `a${x.id}`, t: `${withCo(x.class_enrolments?.student_name, x.class_enrolments?.student_group === 'child' ? x.class_enrolments?.name : '') || 'Student'}: class ${x.no} not marked`, s: fmtD(x.on_date), href: `/manager/classes?student=${x.enrolment_id}` })),
       ...must(low).map((p) => ({ key: `p${p.id}`, t: p.stock === 0 ? `${p.title} is out of stock` : `${p.title}: only ${p.stock} left`, s: '', href: `/manager/products?open=${p.id}` }))];
     return { sum: summarise(all.map((e) => ({ ...e })), fy), month: summarise(all.filter((e) => e.entry_date.startsWith(month)), fy), toPack: toPack.count || 0, inbox: unread.count || 0, owed: owing.reduce((s, i) => s + i.left, 0), owedN: owing.length, ws: w, taken, recent, day, attention };
   });

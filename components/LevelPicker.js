@@ -49,7 +49,7 @@ export default function LevelPicker({ classes, phone, whatsapp }) {
           {group === 'child' ? <>
             <label><span>Participant's name <i>*</i></span><input name="student" required autoComplete="off" {...ruleProps('name')} /></label>
             <label><span>Participant's age <i>*</i></span><input name="age" required inputMode="numeric" pattern="([5-9]|1[0-5])" title="Age between 5 and 15" {...ruleProps('digits')} /></label>
-            <label><span>Parent or guardian's name <i>*</i></span><input name="name" required defaultValue={pre.name} key={'n' + pre.name} autoComplete="off" {...ruleProps('name')} /></label></>
+            <label><span>Parent's name (C/o) <i>*</i></span><input name="name" required defaultValue={pre.name} key={'n' + pre.name} autoComplete="off" {...ruleProps('name')} /></label></>
           : <label><span>Your name <i>*</i></span><input name="name" required defaultValue={pre.name} key={'na' + pre.name} autoComplete="off" {...ruleProps('name')} /></label>}
           <label><span>Email <i>*</i></span><input name="email" type="email" required defaultValue={pre.email} key={'e' + pre.email} autoComplete="off" {...ruleProps('email')} /></label>
           <label><span>Phone <i>*</i></span><input name="phone" type="tel" required defaultValue={pre.phone} key={'p' + pre.phone} pattern="[0-9+\s\-]{10,16}" autoComplete="off" {...ruleProps('phone')} /></label>

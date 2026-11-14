@@ -55,10 +55,19 @@ export const Stat = ({ label, value, sub, tone }) => (<div className={`ad-stat $
 export const nb = (s) => (typeof s === 'string' ? s.replace(/(\p{L})-(?=\p{L})/gu, '$1\u2011') : s);
 /** A small icon button (up and down arrows) that opens a list of ways to sort. */
 export function SortMenu({ options, value, onChange, label = 'Sort' }) {
-  const [open, setOpen] = useState(false); const box = useRef();
-  useEffect(() => { if (!open) return; const out = (e) => { if (!box.current?.contains(e.target)) setOpen(false); }; const esc = (e) => e.key === 'Escape' && setOpen(false); document.addEventListener('pointerdown', out); document.addEventListener('keydown', esc); return () => { document.removeEventListener('pointerdown', out); document.removeEventListener('keydown', esc); }; }, [open]);
-  return (<div className="sortmenu" ref={box}><button type="button" className="ad-x ad-toggle" aria-label={label} aria-haspopup="menu" aria-expanded={open} title={label} onClick={() => setOpen((o) => !o)}><Icon n="sort" size={18} /></button>
-    {open && <div className="sortmenu-list" role="menu">{options.map(([k, t]) => <button key={k} type="button" role="menuitemradio" aria-checked={value === k} className={value === k ? 'on' : ''} onClick={() => { onChange(k); setOpen(false); }}><span>{t}</span>{value === k && <Icon n="check" size={16} />}</button>)}</div>}</div>);
+  const [open, setOpen] = useState(false); const box = useRef(); const btn = useRef();
+  useEffect(() => { if (!open) return; const out = (e) => { if (!box.current?.contains(e.target)) setOpen(false); }; document.addEventListener('pointerdown', out); return () => document.removeEventListener('pointerdown', out); }, [open]);
+  useEffect(() => { if (open) box.current?.querySelector('[role=menuitemradio].on, [role=menuitemradio]')?.focus(); }, [open]);       // the chosen way (or the first) is ready for the arrow keys
+  const items = () => [...(box.current?.querySelectorAll('[role=menuitemradio]') || [])];
+  const menuKey = (e) => {                                                        // Down / Up / Home / End move, Esc closes and returns to the button, Tab closes
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setOpen(false); btn.current?.focus(); return; }
+    if (e.key === 'Tab') { setOpen(false); return; }
+    const l = items(); const i = l.indexOf(document.activeElement); let n = -1;
+    if (e.key === 'ArrowDown') n = (i + 1) % l.length; else if (e.key === 'ArrowUp') n = (i - 1 + l.length) % l.length; else if (e.key === 'Home') n = 0; else if (e.key === 'End') n = l.length - 1;
+    if (n >= 0) { e.preventDefault(); l[n]?.focus(); }
+  };
+  return (<div className="sortmenu" ref={box} onKeyDown={open ? menuKey : undefined}><button ref={btn} type="button" className="ad-x ad-toggle" aria-label={label} aria-haspopup="menu" aria-expanded={open} title={label} onClick={() => setOpen((o) => !o)} onKeyDown={(e) => { if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !open) { e.preventDefault(); setOpen(true); } }}><Icon n="sort" size={18} /></button>
+    {open && <div className="sortmenu-list" role="menu">{options.map(([k, t]) => <button key={k} type="button" role="menuitemradio" aria-checked={value === k} className={value === k ? 'on' : ''} onClick={() => { onChange(k); setOpen(false); btn.current?.focus(); }}><span>{t}</span>{value === k && <Icon n="check" size={16} />}</button>)}</div>}</div>);
 }
 /** The small detail line under a list item. Each detail is kept whole: when the line is too narrow, a whole detail moves to the next line instead of splitting ("3 in" / "stock"). */
 export function Segs({ items, className = '' }) {
@@ -84,12 +93,33 @@ const unlockPage = () => { locks = Math.max(0, locks - 1); if (locks === 0) docu
 // Swipe back (left to right) closes the top-most window first, then goes up one level. Windows and views register here.
 export const backStack = [];
 export function useBack(fn) { const f = useRef(fn); f.current = fn; useEffect(() => { const h = { close: () => f.current() }; backStack.push(h); return () => { const i = backStack.indexOf(h); if (i >= 0) backStack.splice(i, 1); }; }, []); }
+const openModals = [];
+const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]):not([type=hidden]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+const shown = (el) => el.getClientRects().length > 0;
 export function Modal({ title, onClose, children, wide, tools }) {
-  const ref = useRef(); useBack(onClose);
-  useEffect(() => { lockPage(); ref.current?.focus(); return unlockPage; }, []);
-  useEffect(() => { const k = (e) => e.key === 'Escape' && onClose(); document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k); }, [onClose]);
+  const ref = useRef(); useBack(onClose); const closeRef = useRef(onClose); closeRef.current = onClose;
+  useEffect(() => {
+    const before = document.activeElement; lockPage(); openModals.push(ref);
+    // On a computer the first empty box is ready to type in; on a touch screen nothing is focused, so the keyboard does not pop up by itself
+    const fine = window.matchMedia?.('(pointer: fine)').matches; const first = fine && ref.current?.querySelector('.ad-modal-b input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([disabled]),.ad-modal-b textarea:not([disabled]),.ad-modal-b select:not([disabled])');
+    (first || ref.current)?.focus({ preventScroll: true });
+    // Esc still works if focus was lost to the page behind (only the top window reacts)
+    const k = (e) => { if (e.key === 'Escape' && !e.defaultPrevented && openModals[openModals.length - 1] === ref && !ref.current?.contains(document.activeElement)) closeRef.current(); };
+    document.addEventListener('keydown', k);
+    return () => { document.removeEventListener('keydown', k); const i = openModals.indexOf(ref); if (i >= 0) openModals.splice(i, 1); unlockPage(); try { if (before?.isConnected) before.focus({ preventScroll: true }); } catch {} };       // focus goes back to what opened the window
+  }, []);
+  const keys = (e) => {
+    if (e.key === 'Escape' && !e.defaultPrevented) { e.stopPropagation(); onClose(); return; }
+    if (e.key === 'Tab') {                                                       // Tab stays inside the window
+      e.stopPropagation(); const f = [...ref.current.querySelectorAll(FOCUSABLE)].filter(shown); if (!f.length) { e.preventDefault(); return; }
+      const a = document.activeElement; if (e.shiftKey && (a === f[0] || a === ref.current)) { e.preventDefault(); f[f.length - 1].focus(); } else if (!e.shiftKey && a === f[f.length - 1]) { e.preventDefault(); f[0].focus(); } return;
+    }
+    if ((e.metaKey || e.ctrlKey) && !e.altKey && (e.key === 's' || e.key === 'S' || e.key === 'Enter')) {         // Ctrl or Cmd + S / Enter saves the form in this window
+      const form = e.target.closest?.('form') || ref.current.querySelector('.ad-modal-b form'); if (!form) return; e.preventDefault(); e.stopPropagation(); form.requestSubmit?.();
+    }
+  };
   return (<div className="ad-modal-bg" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-    <div className={`ad-modal ${wide ? 'ad-wide' : ''}`} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={ref}>
+    <div className={`ad-modal ${wide ? 'ad-wide' : ''}`} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={ref} onKeyDown={keys}>
       <div className="ad-modal-h"><h2>{title}</h2>{tools && <div className="ad-modal-tools">{tools}</div>}<button className="ad-x" onClick={onClose} aria-label="Close">✕</button></div><div className="ad-modal-b">{children}</div></div></div>);
 }
 export function Confirm({ children, onYes, label, icon: iconProp, className = '', ...p }) {
@@ -117,7 +147,13 @@ export function Sortable({ items, getId = (x) => x.id, onReorder, render, classN
     });
     prev.current = offsets();
   }, [list]);
-  const grip = (id) => ({ className: 'ad-grip', 'aria-label': 'Drag to reorder', style: { touchAction: 'none', cursor: 'grab' }, onPointerDown: (e) => {
+  const move = (id, d) => {                                                                 // keyboard: arrow keys on the handle move the item one place
+    const a = cur.current.findIndex((x) => String(getId(x)) === String(id)), b = a + d; if (a < 0 || b < 0 || b >= cur.current.length) return;
+    prev.current = offsets(); const n = [...cur.current]; const [m] = n.splice(a, 1); n.splice(b, 0, m); cur.current = n; setList(n); onReorder(n);
+    requestAnimationFrame(() => ref.current?.querySelector(`[data-sid="${id}"] .ad-grip`)?.focus());
+  };
+  const grip = (id) => ({ className: 'ad-grip', role: 'button', tabIndex: 0, 'aria-label': 'Reorder. Use the arrow keys to move', style: { touchAction: 'none', cursor: 'grab' },
+    onKeyDown: (e) => { const d = e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : 0; if (d) { e.preventDefault(); e.stopPropagation(); move(id, d); } }, onPointerDown: (e) => {
     if (e.button > 0) return; const el = e.currentTarget.closest('[data-sid]'); if (!el || !ref.current?.contains(el)) return; e.preventDefault();
     live.current = true; setDrag(String(id)); prev.current = offsets(); let changed = false;
     const s = { id: String(id), sx: e.clientX, sy: e.clientY, px: e.clientX, py: e.clientY, ox: el.offsetLeft, oy: el.offsetTop, el }; st.current = s; place(el, s);

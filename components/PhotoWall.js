@@ -38,9 +38,10 @@ function Viewer({ list, start, onClose }) {
   const go = useCallback((d) => { setI((c) => (c + d + n) % n); }, [n]);
   useEffect(() => {
     const prev = document.body.style.overflow; document.body.style.overflow = 'hidden'; box.current?.focus();
-    const k = (e) => { if (e.key === 'Escape') onClose(); else if (e.key === 'ArrowLeft') go(-1); else if (e.key === 'ArrowRight') go(1); };
+    const k = (e) => { if (e.key === 'Escape') onClose(); else if (e.key === 'ArrowLeft') go(-1); else if (e.key === 'ArrowRight') go(1); else if (e.key === 'Home') setI(0); else if (e.key === 'End') setI(n - 1); };
     document.addEventListener('keydown', k); return () => { document.body.style.overflow = prev; document.removeEventListener('keydown', k); };
-  }, [go, onClose]);
+  }, [go, onClose, n]);
+  useEffect(() => { const before = document.activeElement; return () => { try { if (before?.isConnected) before.focus({ preventScroll: true }); } catch {} }; }, []);       // focus returns to the photo that was opened
   useEffect(() => { [1, -1].forEach((d) => { const p = list[(i + d + n) % n]; if (p) { const im = new Image(); im.src = src(p.id); } }); }, [i, list, n]);
   // two-finger swipe on a trackpad arrives as sideways wheel movement
   useEffect(() => {

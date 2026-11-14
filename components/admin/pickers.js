@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { sb, must, every, useLoad, Modal, Btn, useAction } from './kit';
 import { RULES } from '@/lib/format';
 
@@ -22,18 +22,35 @@ export async function ensureCustomer(c, source = 'manual') {
   return must(await sb().from('customers').insert({ name: name || email || c.phone, email, phone: c.phone || null, ...extra, source }).select().single());
 }
 
-/** Name box that suggests customers while you type. onPick fills the other fields; onAddNew saves the typed name as a new customer. */
+/** Name box that suggests customers while you type. onPick fills the other fields; onAddNew saves the typed name as a new customer.
+ *  Keyboard: Down / Up move through the suggestions, Enter picks the highlighted one, Esc closes the list, Tab leaves the box.
+ *  The list is placed with fixed coordinates (opening upwards when there is no room below), so no card, fold or pop-up can clip it. */
 export function CustomerSuggest({ label = 'Customer name', value, onType, onPick, onAddNew, required, customers }) {
-  const [open, setOpen] = useState(false); const box = useRef();
+  const [open, setOpen] = useState(false); const [act, setAct] = useState(-1); const [pos, setPos] = useState(null); const box = useRef(); const inp = useRef(); const list = useRef(); const uid = useId();
   const q = (value || '').trim().toLowerCase();
   const hits = useMemo(() => (q.length < 1 ? [] : (customers || []).filter((c) => `${c.name} ${c.email || ''} ${c.phone || ''}`.toLowerCase().includes(q)).slice(0, 6)), [q, customers]);
   const exact = (customers || []).some((c) => c.name.toLowerCase() === q);
-  useEffect(() => { const h = (e) => { if (box.current && !box.current.contains(e.target)) setOpen(false); }; document.addEventListener('mousedown', h); document.addEventListener('touchstart', h); return () => { document.removeEventListener('mousedown', h); document.removeEventListener('touchstart', h); }; }, []);
+  const items = [...hits.map((c) => ({ c })), ...(!exact && onAddNew && q ? [{ add: true }] : [])];
+  const show = open && !!q && items.length > 0;
+  const place = () => { const r = inp.current?.getBoundingClientRect(); if (!r) return; const below = window.innerHeight - r.bottom, above = r.top; const up = below < 230 && above > below;
+    setPos({ left: r.left, width: r.width, ...(up ? { bottom: window.innerHeight - r.top + 4, maxHeight: Math.max(120, Math.min(300, above - 12)) } : { top: r.bottom + 4, maxHeight: Math.max(120, Math.min(300, below - 12)) }) }); };
+  useLayoutEffect(() => { if (!show) return; place(); window.addEventListener('resize', place); window.addEventListener('scroll', place, true); return () => { window.removeEventListener('resize', place); window.removeEventListener('scroll', place, true); }; /* eslint-disable-next-line */ }, [show, value]);
+  useEffect(() => { const h = (e) => { if (box.current && !box.current.contains(e.target) && !list.current?.contains(e.target)) setOpen(false); }; document.addEventListener('mousedown', h); document.addEventListener('touchstart', h); return () => { document.removeEventListener('mousedown', h); document.removeEventListener('touchstart', h); }; }, []);
+  useEffect(() => { if (show && act >= 0) document.getElementById(`${uid}-${act}`)?.scrollIntoView({ block: 'nearest' }); }, [act, show, uid]);
+  const choose = (i) => { const it = items[i]; if (!it) return; if (it.add) onAddNew(value.trim()); else onPick(it.c); setOpen(false); setAct(-1); };
+  const key = (e) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { if (!items.length || !q) return; e.preventDefault(); if (!show) { setOpen(true); setAct(e.key === 'ArrowDown' ? 0 : items.length - 1); return; } const d = e.key === 'ArrowDown' ? 1 : -1; setAct((a) => (a < 0 ? (d > 0 ? 0 : items.length - 1) : (a + d + items.length) % items.length)); }
+    else if (e.key === 'Enter' && show && act >= 0) { e.preventDefault(); e.stopPropagation(); choose(act); }          // picks the highlighted suggestion instead of submitting the form
+    else if (e.key === 'Escape' && show) { e.preventDefault(); e.stopPropagation(); setOpen(false); setAct(-1); }       // closes the list only, not the window behind it
+    else if (e.key === 'Tab') setOpen(false);
+  };
   return (<div className="ad-field suggest" ref={box}><span>{label}{required ? <i> *</i> : <em> (optional)</em>}</span>
-    <input value={value} required={required} autoComplete="off" data-lpignore="true" onFocus={() => setOpen(true)} onChange={(e) => { onType(RULES.name.typing(e.target.value)); setOpen(true); }} onBlur={(e) => onType(RULES.name.done(e.target.value))} />
-    {open && q && (hits.length > 0 || (!exact && onAddNew)) && <div className="suggest-list" role="listbox">
-      {hits.map((c) => <button type="button" key={c.id} role="option" onMouseDown={(e) => e.preventDefault()} onClick={() => { onPick(c); setOpen(false); }}><b>{c.name}</b><small>{[c.phone, c.email].filter(Boolean).join(' · ')}</small></button>)}
-      {!exact && onAddNew && <button type="button" className="addnew" onMouseDown={(e) => e.preventDefault()} onClick={() => { onAddNew(value.trim()); setOpen(false); }}>+ Add “{value.trim()}” as a new customer</button>}</div>}
+    <input ref={inp} value={value} required={required} autoComplete="off" data-lpignore="true" role="combobox" aria-autocomplete="list" aria-expanded={show} aria-controls={`${uid}-list`} aria-activedescendant={show && act >= 0 ? `${uid}-${act}` : undefined}
+      onFocus={() => setOpen(true)} onKeyDown={key} onChange={(e) => { onType(RULES.name.typing(e.target.value)); setOpen(true); setAct(-1); }} onBlur={(e) => onType(RULES.name.done(e.target.value))} />
+    {show && pos && <div className="suggest-list" id={`${uid}-list`} role="listbox" ref={list} style={pos}>
+      {items.map((it, i) => it.add
+        ? <button type="button" key="add" id={`${uid}-${i}`} role="option" aria-selected={act === i} tabIndex={-1} className={`addnew ${act === i ? 'on' : ''}`} onMouseDown={(e) => e.preventDefault()} onMouseEnter={() => setAct(i)} onClick={() => choose(i)}>+ Add “{value.trim()}” as a new customer</button>
+        : <button type="button" key={it.c.id} id={`${uid}-${i}`} role="option" aria-selected={act === i} tabIndex={-1} className={act === i ? 'on' : ''} onMouseDown={(e) => e.preventDefault()} onMouseEnter={() => setAct(i)} onClick={() => choose(i)}><b>{it.c.name}</b><small>{[it.c.phone, it.c.email].filter(Boolean).join(' · ')}</small></button>)}</div>}
   </div>);
 }
 

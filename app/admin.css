@@ -110,8 +110,8 @@ input[type=checkbox]:focus-visible{outline:2px solid #000;outline-offset:2px}
 @media(max-width:700px){.cal-day,.cal-empty{min-height:52px}.cal-day{padding:4px;align-items:center}.cal-chips{display:none}.cal-dots{display:flex}}
 .todo-row{justify-content:flex-start}.todo-main{background:none;border:0;padding:0;text-align:left;font:inherit;color:inherit;cursor:pointer}
 .todo-add{grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto;align-items:end}.todo-add .ad-actions{margin:0}@media(max-width:700px){.todo-add{grid-template-columns:minmax(0,1fr)}}
-.suggest{position:relative}.suggest-list{position:absolute;left:0;right:0;top:100%;margin-top:4px;background:#fff;border:1px solid #d2d2d7;border-radius:14px;box-shadow:0 12px 30px rgba(0,0,0,.12);z-index:20;overflow:hidden;max-height:300px;overflow-y:auto}
-.suggest-list button{display:grid;gap:1px;width:100%;text-align:left;border:0;background:none;padding:10px 14px;font:inherit;cursor:pointer;border-bottom:1px solid #f0f0f3}.suggest-list button:hover{background:#f5f5f7}.suggest-list small{color:#6e6e73;font-size:12px}.suggest-list .addnew{font-weight:500;color:#000}
+.suggest{position:relative}.suggest-list{position:fixed;background:#fff;border:1px solid #d2d2d7;border-radius:14px;box-shadow:0 12px 30px rgba(0,0,0,.12);z-index:95;overflow:hidden;overflow-y:auto}
+.suggest-list button{display:grid;gap:1px;width:100%;text-align:left;border:0;background:none;padding:10px 14px;font:inherit;cursor:pointer;border-bottom:1px solid #f0f0f3}.suggest-list button:hover,.suggest-list button.on{background:#f5f5f7}.suggest-list small{color:#6e6e73;font-size:12px}.suggest-list .addnew{font-weight:500;color:#000}
 .line-row{display:grid;grid-template-columns:minmax(0,1fr) 70px 40px;gap:8px;margin-top:8px;align-items:center}
 .row-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
 .cls-list{display:grid;gap:10px;padding:10px}.cls-box{display:flex;align-items:center;gap:10px;border-radius:16px;padding:12px 14px;background:#f5f5f7}.cls-box.tone1{background:#e8e8ed}.cls-box.tone2{background:#dcdce1}.cls-box.tone3{background:#d0d0d6}
@@ -372,3 +372,9 @@ i.c-dot{font-style:normal;white-space:pre}
 .ad-row.tx-row{display:grid;grid-template-columns:minmax(0,1fr) 190px auto;column-gap:14px;align-items:center}
 .tx-row .tx-tag{min-width:0}.tx-row .tx-tag .ad-badge{display:block;width:fit-content;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:700px){.ad-row.tx-row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"main end" "tag end";row-gap:8px}.tx-row .main{grid-area:main}.tx-row .tx-tag{grid-area:tag}.tx-row .end{grid-area:end;align-self:start}}
+/* Keyboard: a clear black ring wherever focus lands (only for keyboard use, not for taps or clicks) */
+.ad-app a:focus-visible,.ad-app button:focus-visible,.ad-app select:focus-visible,.ad-app input:focus-visible,.ad-app textarea:focus-visible,.ad-app [tabindex]:focus-visible,.ad-modal-bg a:focus-visible,.ad-modal-bg button:focus-visible,.ad-modal-bg select:focus-visible,.ad-modal-bg input:focus-visible,.ad-modal-bg textarea:focus-visible,.ad-modal-bg [tabindex]:focus-visible{outline:2px solid #000;outline-offset:2px}
+.ad-row:focus-visible,.ad-fold-h:focus-visible,.ad-side nav a:focus-visible,.ad-tabs a:focus-visible,.suggest-list button:focus-visible,.sortmenu-list button:focus-visible{outline-offset:-2px;background:#f5f5f7}
+.ad-modal:focus,.ad-main:focus{outline:none}
+.ad-skip{position:absolute;left:-9999px;top:8px;background:#000;color:#fff;padding:10px 16px;border-radius:980px;z-index:200;font-size:14px;text-decoration:none}.ad-skip:focus{left:8px}
+@media print{.ad-skip{display:none!important}}

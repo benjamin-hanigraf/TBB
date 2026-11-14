@@ -65,7 +65,7 @@ export default function Dashboard() {
       {first}
       <Link href="/manager/invoices?show=unpaid"><Stat label="Receivables" value={moneyR(d.owed)} sub={d.owedN ? `From ${d.owedN} ${d.owedN === 1 ? 'invoice' : 'invoices'}` : 'Nothing owed'} /></Link>
       <Link href="/manager/money"><Stat label="Income this month" value={moneyR(d.month.moneyIn)} sub={`Expense: ${moneyR(d.month.moneyOut)}`} /></Link>
-      <Link href="/manager/money?view=report"><Stat label="Profit this month" value={moneyR(d.month.profit)} tone={d.month.profit < 0 ? 'bad' : 'good'} sub={`This year: ${moneyR(d.sum.profit)}`} /></Link>
+      <Link href="/manager/money?view=report"><Stat label="Profit this month" value={moneyR(d.month.profit)} tone={d.month.profit < 0 ? 'bad' : ''} sub={`This year: ${moneyR(d.sum.profit)}`} /></Link>
     </div>
     <div className="ad-quick">
       {[['/manager/money?new=in', 'Add Transaction', 'qin'], ['/manager/planner', 'Planner', 'qplanner'], ['/manager/calculator', 'Calculator', 'qcalc'], ['/manager/labels', 'Label Printer', 'qprint']].map(([h, t, i]) => <Link key={h} href={h}><Icon n={i} size={26} /><span>{t}</span></Link>)}

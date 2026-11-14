@@ -7,6 +7,7 @@ import { adminClient } from '@/lib/supabase-admin';
 import { ToastProvider, Dots, clearCache, backStack } from './kit';
 import PinGate from './PinGate';
 import ErrorBoundary from './ErrorBoundary';
+import { useAdminKeys } from './Keys';
 import { pinApi, getToken, setToken, applySession, lockDevice } from '@/lib/adminApi';
 
 export const NAV = [
@@ -34,6 +35,7 @@ export default function AdminShell({ children }) {
 }
 function Inner({ children }) {
   const path = usePathname(); const router = useRouter(); const here = useRef(path); const [state, setState] = useState('loading'); const [unread, setUnread] = useState(0); const [why, setWhy] = useState('');
+  useAdminKeys();
   useEffect(() => { here.current = path; }, [path]);
   // Swipe left to right = go up one level (close the window on top, or go to the page that holds this one), never to the page visited before.
   // On phones and tablets the app never adds pages to the browser history (every move replaces the current entry). With nothing to go back to, the
@@ -101,7 +103,7 @@ function Inner({ children }) {
   if (state === 'error') return <div className="ad-center"><div className="ad-login"><h1>Could not open the app</h1><p>Please check your internet connection and try again.</p>{why && <p className="ad-help">{why}</p>}<button className="ad-btn" onClick={() => location.reload()}>Try again</button></div></div>;
   if (state === 'pin' || state === 'pin-setup') return <PinGate notConfigured={state === 'pin-setup'} onDone={(def) => { setDefFlag(def); setState('ok'); }} />;
   return (
-    <ToastProvider><div className="ad-app">
+    <ToastProvider><a className="ad-skip" href="#main" onClick={(e) => { e.preventDefault(); const m = document.getElementById("main"); m?.setAttribute("tabindex", "-1"); m?.focus(); }}>Skip to content</a><div className="ad-app">
       <aside className="ad-side"><Link href="/manager" className="ad-brand"><img src="/brand/logo-stacked-light.svg" alt="Thin Black Brush" height="40" /><span>Manager</span></Link>
         <nav aria-label="Main">{NAV.map(([h, t, ic]) => <Link key={h} href={h} className={active(path, h) ? 'on' : ''}><AIcon n={ic} />{h === '/manager/inbox' ? withCount(t, unread) : t}</Link>)}</nav>
         <div className="ad-side-f"><a href="/" target="_blank" rel="noopener">View website ↗</a><button onClick={async () => { await lockDevice(); clearCache(); location.reload(); }}><Icon n="logout" size={15} /> Log out</button></div></aside>

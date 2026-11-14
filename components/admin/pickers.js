@@ -40,7 +40,7 @@ export function CustomerSuggest({ label = 'Customer name', value, onType, onPick
 /** Merge several customer rows into one. Used from the Customers page and when a duplicate is noticed. */
 export async function mergeCustomers(rows) {
   const sorted = [...rows].sort((a, b) => (a.created_at || '').localeCompare(b.created_at || '')); const [keep, ...rest] = sorted; const patch = {};
-  for (const k of [...FIELDS, 'user_id']) { const v = [keep, ...rest].map((x) => x[k]).find(Boolean); if (v && v !== keep[k]) patch[k] = v; }
+  for (const k of [...FIELDS, 'gstin', 'user_id']) { const v = [keep, ...rest].map((x) => x[k]).find(Boolean); if (v && v !== keep[k]) patch[k] = v; }
   if ([keep, ...rest].some((x) => x.marketing_opt_in) && !keep.marketing_opt_in) patch.marketing_opt_in = true;
   const notes = [...new Set([keep, ...rest].map((x) => x.notes).filter(Boolean))].join('\n'); if (notes && notes !== keep.notes) patch.notes = notes;
   for (const r of rest) must(await sb().from('customers').delete().eq('id', r.id));          // remove the copies first so a shared email can move onto the kept row

@@ -360,3 +360,15 @@ i.c-dot{font-style:normal;white-space:pre}
  .sess-head .main>b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
  .sess-head .c-no,.sess-head .c-when{display:inline;font-size:inherit;font-weight:inherit;color:inherit;white-space:nowrap}
  .sess-head .ad-badge{grid-column:2}.sess-actions{grid-column:3;width:auto}}
+/* Modal header tools (customer: Call, WhatsApp, Email): same 36px round size as Close; Close stays the filled grey one, tools are white with an outline */
+.ad-modal-h h2{min-width:0;overflow-wrap:anywhere}.ad-modal-tools{display:flex;align-items:center;gap:8px;flex:none;margin-left:12px}.ad-modal-tools+.ad-x{margin-left:8px}
+.ad-x.tool{background:#fff;border:1px solid #c7c7cc;color:#1d1d1f;text-decoration:none}.ad-x.tool:hover{background:#f5f5f7}
+.ad-modal-tools .ad-x{margin-left:0}
+/* Inbox: a message just marked attended slides and fades away after 2 seconds (like ticked tasks) */
+.mail-row{transition:opacity .26s ease,transform .26s ease,max-height .3s ease .1s,padding .3s ease .1s;max-height:140px;overflow:hidden}
+.mail-row.leaving{opacity:0;transform:translateX(24px);max-height:0;padding-top:0;padding-bottom:0}
+@media(prefers-reduced-motion:reduce){.mail-row{transition:none}}
+/* Accounts list: payer or payee first, what it was for below, category tag in its own fixed column (tags line up), amount with the date under it */
+.ad-row.tx-row{display:grid;grid-template-columns:minmax(0,1fr) 190px auto;column-gap:14px;align-items:center}
+.tx-row .tx-tag{min-width:0}.tx-row .tx-tag .ad-badge{display:block;width:fit-content;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:700px){.ad-row.tx-row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"main end" "tag end";row-gap:8px}.tx-row .main{grid-area:main}.tx-row .tx-tag{grid-area:tag}.tx-row .end{grid-area:end;align-self:start}}

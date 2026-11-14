@@ -31,7 +31,7 @@ sql = ["""-- ============ DUMMY TEST DATA (made by tools/make_dummy_sql.py, do n
 -- Fills every table with at least 10 varied rows so every screen of the website and the Manager app can be tried.
 -- Run AFTER supabase/database.sql. Run it once; to take everything out again run supabase/dummy-remove.sql.
 -- Every dummy row has an id starting with dededede- and every dummy person uses an @example.com email.
--- Dummy workshops, products and classes are named "Demo ..." and DO show on the public website while they are in the database.
+-- Dummy workshops, products and classes are named like real ones and DO show on the public website while they are in the database.
 -- Website receipt numbers are not used up: dummy orders, bookings and enrolments use numbers 9001 and up.
 -- Not touched on purpose: settings, site_images, admin_security (the PIN) and profiles (real logins only).
 begin;
@@ -43,18 +43,18 @@ def w(n, **k): k['id'] = did(1, n); W.append(k)
 img = ['/img/16cc08c542.webp', '/img/26928ebd04.webp', '/img/31648a2db3.webp', '/img/cb028c51a9.webp', '/img/5c8f647552.webp', '/img/a399441366.webp']
 studio = ('Thin Black Brush Studio', '2nd Floor, Berachah Building, 13/7, 1st Cross St, Trustpuram, Kodambakkam, Chennai - 600024')
 blr = ('The Bangalore Local', '1st Cross Road, 1st Block Koramangala, Bengaluru, Karnataka')
-w(1, slug='demo-brush-lettering-basics', title='Demo: Brush Lettering Basics', kind='workshop', at=21, price=180000, friend=160000, cap=12, gst='none', status='published', venue=studio, early=150000, early_until=7)
-w(2, slug='demo-watercolour-florals', title='Demo: Watercolour Florals', kind='workshop', at=10, price=250000, cap=6, gst='included', status='published', venue=studio)   # sold out
-w(3, slug='demo-copperplate-course', title='Demo: Copperplate Calligraphy Course', kind='course', at=30, end=58, price=1200000, cap=8, gst='add', status='published', venue=studio)
-w(4, slug='demo-gouache-landscapes', title='Demo: Gouache Landscapes', kind='workshop', at=-20, price=220000, cap=10, gst='none', status='published', venue=blr)    # already happened
-w(5, slug='demo-kids-doodle-camp', title='Demo: Kids Doodle Camp (ages 6 to 12)', kind='course', at=40, end=44, price=350000, cap=15, gst='none', status='published', venue=studio, early=300000, early_until=20)
-w(6, slug='demo-ink-and-wash', title='Demo: Ink and Wash Painting', kind='workshop', at=50, price=200000, cap=10, gst='none', status='draft', venue=studio)        # not public yet
-w(7, slug='demo-gift-tag-lettering', title='Demo: Gift Tag Lettering', kind='workshop', at=15, price=150000, cap=12, gst='none', status='cancelled', venue=blr)
-w(8, slug='demo-free-open-studio', title='Demo: Free Open Studio Evening', kind='workshop', at=5, hm='17:30', price=0, cap=20, gst='none', status='published', venue=studio)
-w(9, slug='demo-gothic-blackletter', title='Demo: Gothic Blackletter', kind='workshop', at=-60, price=230000, cap=12, gst='included', status='published', venue=studio)
-w(10, slug='demo-wedding-envelope-addressing', title='Demo: Wedding Envelope Addressing', kind='workshop', at=70, price=280000, friend=250000, cap=8, gst='add', status='published', venue=blr)
-w(11, slug='demo-pointed-pen-flourishing', title='Demo: Pointed Pen Flourishing', kind='workshop', at=2, hm='11:00', price=240000, cap=4, gst='none', status='published', venue=studio)   # almost full
-w(12, slug='demo-corporate-team-session', title='Demo: Corporate Team Lettering Session', kind='workshop', at=90, price=150000, cap=30, gst='add', status='draft', venue=blr)
+w(1, slug='demo-brush-lettering-basics', title='Brush Lettering Basics', kind='workshop', at=21, price=180000, friend=160000, cap=12, gst='none', status='published', venue=studio, early=150000, early_until=7)
+w(2, slug='demo-watercolour-florals', title='Watercolour Florals', kind='workshop', at=10, price=250000, cap=6, gst='included', status='published', venue=studio)   # sold out
+w(3, slug='demo-copperplate-course', title='Copperplate Calligraphy Course', kind='course', at=30, end=58, price=1200000, cap=8, gst='add', status='published', venue=studio)
+w(4, slug='demo-gouache-landscapes', title='Gouache Landscapes', kind='workshop', at=-20, price=220000, cap=10, gst='none', status='published', venue=blr)    # already happened
+w(5, slug='demo-kids-doodle-camp', title='Kids Doodle Camp (ages 6 to 12)', kind='course', at=40, end=44, price=350000, cap=15, gst='none', status='published', venue=studio, early=300000, early_until=20)
+w(6, slug='demo-ink-and-wash', title='Ink and Wash Painting', kind='workshop', at=50, price=200000, cap=10, gst='none', status='draft', venue=studio)        # not public yet
+w(7, slug='demo-gift-tag-lettering', title='Gift Tag Lettering', kind='workshop', at=15, price=150000, cap=12, gst='none', status='cancelled', venue=blr)
+w(8, slug='demo-free-open-studio', title='Free Open Studio Evening', kind='workshop', at=5, hm='17:30', price=0, cap=20, gst='none', status='published', venue=studio)
+w(9, slug='demo-gothic-blackletter', title='Gothic Blackletter', kind='workshop', at=-60, price=230000, cap=12, gst='included', status='published', venue=studio)
+w(10, slug='demo-wedding-envelope-addressing', title='Wedding Envelope Addressing', kind='workshop', at=70, price=280000, friend=250000, cap=8, gst='add', status='published', venue=blr)
+w(11, slug='demo-pointed-pen-flourishing', title='Pointed Pen Flourishing', kind='workshop', at=2, hm='11:00', price=240000, cap=4, gst='none', status='published', venue=studio)   # almost full
+w(12, slug='demo-corporate-team-session', title='Corporate Team Lettering Session', kind='workshop', at=90, price=150000, cap=30, gst='add', status='draft', venue=blr)
 rows = []
 for i, x in enumerate(W):
     rows.append({'id': x['id'], 'slug': x['slug'], 'title': x['title'], 'kind': x['kind'], 'summary': 'A test workshop made for trying out the website. Remove with dummy-remove.sql.',
@@ -68,12 +68,12 @@ sql.append('-- workshops: published, draft, cancelled, past, sold out, almost fu
 sql.append(ins('workshops', list(rows[0].keys()), rows))
 
 # ---------- products (12) ----------
-P = [('demo-sketchbook-a5', 'Demo: A5 Sketchbook', 65000, 25, False, True, 'none'), ('demo-nib-set', 'Demo: Calligraphy Nib Set of 5', 90000, 3, False, True, 'included'),
-     ('demo-sumi-ink', 'Demo: Sumi Ink 60 ml', 45000, 0, False, True, 'none'), ('demo-custom-holder', 'Demo: Custom Engraved Holder (pre-order)', 210000, 0, True, True, 'add'),
-     ('demo-practice-pad', 'Demo: Practice Pad 100 Sheets', 35000, 40, False, True, 'none'), ('demo-gift-box', 'Demo: Lettering Gift Box', 320000, 6, False, True, 'add'),
-     ('demo-brush-pen-trio', 'Demo: Brush Pen Trio', 55000, 1, False, True, 'included'), ('demo-old-planner', 'Demo: Old Planner (hidden)', 80000, 5, False, False, 'none'),
-     ('demo-watercolour-tin', 'Demo: Watercolour Tin of 12', 150000, 12, False, True, 'add'), ('demo-paper-sampler', 'Demo: Handmade Paper Sampler', 25000, 50, False, True, 'none'),
-     ('demo-gold-ink', 'Demo: Gold Pearl Ink', 60000, 8, False, True, 'none'), ('demo-lightbox', 'Demo: A4 LED Lightbox', 280000, 2, True, True, 'included')]
+P = [('demo-sketchbook-a5', 'A5 Sketchbook', 65000, 25, False, True, 'none'), ('demo-nib-set', 'Calligraphy Nib Set of 5', 90000, 3, False, True, 'included'),
+     ('demo-sumi-ink', 'Sumi Ink 60 ml', 45000, 0, False, True, 'none'), ('demo-custom-holder', 'Custom Engraved Holder (pre-order)', 210000, 0, True, True, 'add'),
+     ('demo-practice-pad', 'Practice Pad 100 Sheets', 35000, 40, False, True, 'none'), ('demo-gift-box', 'Lettering Gift Box', 320000, 6, False, True, 'add'),
+     ('demo-brush-pen-trio', 'Brush Pen Trio', 55000, 1, False, True, 'included'), ('demo-old-planner', 'Old Planner (hidden)', 80000, 5, False, False, 'none'),
+     ('demo-watercolour-tin', 'Watercolour Tin of 12', 150000, 12, False, True, 'add'), ('demo-paper-sampler', 'Handmade Paper Sampler', 25000, 50, False, True, 'none'),
+     ('demo-gold-ink', 'Gold Pearl Ink', 60000, 8, False, True, 'none'), ('demo-lightbox', 'A4 LED Lightbox', 280000, 2, True, True, 'included')]
 pimg = ['/img/4aab591127.webp', '/img/33e1b05fd6.webp', '/img/42e66b73f9.webp', '/img/e36ba5ccbd.webp']
 rows = [{'id': did(2, i + 1), 'slug': s, 'title': t, 'description': 'A dummy product for testing the store, the bag and checkout.', 'details': ['Test detail one', 'Test detail two'], 'price_paise': p, 'stock': st,
          'allow_preorder': pre, 'images': [pimg[i % 4], pimg[(i + 1) % 4]], 'shipping_note': 'Ships in 8 days.' if pre else None, 'active': act, 'sort_order': 100 + i, 'gst_mode': g} for i, (s, t, p, st, pre, act, g) in enumerate(P)]
@@ -84,12 +84,12 @@ PRICE = {did(2, i + 1): (t, p, g) for i, (s, t, p, st, pre, act, g) in enumerate
 # ---------- class types (10) and class levels (10) ----------
 sql.append('-- class types (the drop-down on the class form)')
 sql.append(ins('class_types', ['id', 'name', 'sort_order'], [{'id': did(0x12, i + 1), 'name': n, 'sort_order': 100 + i} for i, n in enumerate(
-    ['Demo: Cursive', 'Demo: Brush Lettering', 'Demo: Copperplate', 'Demo: Italic', 'Demo: Gothic', 'Demo: Faux Calligraphy', 'Demo: Print Handwriting', 'Demo: Kids Art', 'Demo: Watercolour', 'Demo: Sketching'])]))
-L = [('demo-cursive-1', 'Demo: Cursive', 'Cursive Writing', 'Level 1', 500000, 8, True, 'none', [2, 4], '4:30 to 5:30 pm'), ('demo-cursive-2', 'Demo: Cursive', 'Cursive Writing', 'Level 2', 550000, 8, True, 'none', [2, 4], '5:30 to 6:30 pm'),
-     ('demo-brush-1', 'Demo: Brush Lettering', 'Brush Lettering', 'Beginner', 650000, 6, True, 'included', [6], '11 am to 12:30 pm'), ('demo-brush-2', 'Demo: Brush Lettering', 'Brush Lettering', 'Intermediate', 700000, 6, True, 'add', [6], '2 to 3:30 pm'),
-     ('demo-copperplate-1', 'Demo: Copperplate', 'Copperplate', 'Foundation', 900000, 10, True, 'add', [1, 3], '7 to 8 pm'), ('demo-italic-1', 'Demo: Italic', 'Italic Hand', 'Level 1', 600000, 8, True, 'none', [5], '4 to 5 pm'),
-     ('demo-kids-art', 'Demo: Kids Art', 'Kids Art Club', 'Ages 5 to 8', 400000, 12, True, 'none', [0], '10 to 11 am'), ('demo-watercolour-1', 'Demo: Watercolour', 'Watercolour', 'Beginner', 800000, 8, True, 'included', [3], '6 to 7:30 pm'),
-     ('demo-gothic-1', 'Demo: Gothic', 'Gothic Script', 'Level 1', 750000, 8, False, 'none', [2], '7 to 8 pm'), ('demo-sketching-1', 'Demo: Sketching', 'Urban Sketching', 'Open level', 450000, 4, True, 'add', [0, 6], '7 to 9 am')]
+    ['Cursive', 'Brush Lettering', 'Copperplate', 'Italic', 'Gothic', 'Faux Calligraphy', 'Print Handwriting', 'Kids Art', 'Watercolour', 'Sketching'])]))
+L = [('demo-cursive-1', 'Cursive', 'Cursive Writing', 'Level 1', 500000, 8, True, 'none', [2, 4], '4:30 to 5:30 pm'), ('demo-cursive-2', 'Cursive', 'Cursive Writing', 'Level 2', 550000, 8, True, 'none', [2, 4], '5:30 to 6:30 pm'),
+     ('demo-brush-1', 'Brush Lettering', 'Brush Lettering', 'Beginner', 650000, 6, True, 'included', [6], '11 am to 12:30 pm'), ('demo-brush-2', 'Brush Lettering', 'Brush Lettering', 'Intermediate', 700000, 6, True, 'add', [6], '2 to 3:30 pm'),
+     ('demo-copperplate-1', 'Copperplate', 'Copperplate', 'Foundation', 900000, 10, True, 'add', [1, 3], '7 to 8 pm'), ('demo-italic-1', 'Italic', 'Italic Hand', 'Level 1', 600000, 8, True, 'none', [5], '4 to 5 pm'),
+     ('demo-kids-art', 'Kids Art', 'Kids Art Club', 'Ages 5 to 8', 400000, 12, True, 'none', [0], '10 to 11 am'), ('demo-watercolour-1', 'Watercolour', 'Watercolour', 'Beginner', 800000, 8, True, 'included', [3], '6 to 7:30 pm'),
+     ('demo-gothic-1', 'Gothic', 'Gothic Script', 'Level 1', 750000, 8, False, 'none', [2], '7 to 8 pm'), ('demo-sketching-1', 'Sketching', 'Urban Sketching', 'Open level', 450000, 4, True, 'add', [0, 6], '7 to 9 am')]
 rows = [{'id': did(3, i + 1), 'slug': s, 'track': tr, 'title': t, 'level': lv, 'description': 'A dummy class level for testing enrolments and one-on-one classes.', 'covers': ['Posture and grip', 'Basic strokes', 'Letters and joins'],
          'price_paise': p, 'sessions': n, 'active': a, 'sort_order': 100 + i, 'gst_mode': g} for i, (s, tr, t, lv, p, n, a, g, d, tm) in enumerate(L)]
 sql.append('-- class levels: several tracks, active and hidden, every GST option')
@@ -205,14 +205,14 @@ sql.append('-- inbox: every kind of enquiry: unread, read but not dealt with, an
 sql.append(ins('enquiries', list(rows[0].keys()), rows))
 
 # ---------- events (10) and to-dos (12) ----------
-EV = [('Demo: Meeting with the printer', 1, None, '3 pm'), ('Demo: Stall at the Sunday market', 6, 7, '9 am to 6 pm'), ('Demo: Diwali holiday, studio closed', 18, 22, None), ('Demo: Photo shoot for new products', -3, None, '11 am'),
-      ('Demo: GST filing due', 8, None, None), ('Demo: Supplier visit', 12, None, '4:30 pm'), ('Demo: School art week', 25, 29, 'Mornings'), ('Demo: Instagram live', 0, None, '7 pm'),
-      ('Demo: Pay studio rent', 19, None, None), ('Demo: Craft fair in Bengaluru', 45, 46, 'All day')]
+EV = [('Meeting with the printer', 1, None, '3 pm'), ('Stall at the Sunday market', 6, 7, '9 am to 6 pm'), ('Diwali holiday, studio closed', 18, 22, None), ('Photo shoot for new products', -3, None, '11 am'),
+      ('GST filing due', 8, None, None), ('Supplier visit', 12, None, '4:30 pm'), ('School art week', 25, 29, 'Mornings'), ('Instagram live', 0, None, '7 pm'),
+      ('Pay studio rent', 19, None, None), ('Craft fair in Bengaluru', 45, 46, 'All day')]
 sql.append('-- calendar events: today, past, upcoming, several days long, with and without a time')
 sql.append(ins('events', ['id', 'title', 'note', 'on_date', 'end_date', 'time_text'], [{'id': did(0xd, i + 1), 'title': t, 'note': 'Dummy event' if i % 2 else None, 'on_date': D(a), 'end_date': D(b) if b else None, 'time_text': tm} for i, (t, a, b, tm) in enumerate(EV)]))
-TD = [('Demo: Order more sumi ink', 2, False), ('Demo: Reply to wedding enquiry', -1, False), ('Demo: Post workshop photos', 0, False), ('Demo: Renew domain', 30, False), ('Demo: Call the framer', None, False),
-      ('Demo: Update class timings', 5, False), ('Demo: Print certificates', -5, True), ('Demo: Pack Rohan order', -2, True), ('Demo: Buy tea for the studio', None, True), ('Demo: Send invoice to Demo Public School', 3, False),
-      ('Demo: Book venue in Bengaluru', 14, False), ('Demo: Clean brushes', -10, True)]
+TD = [('Order more sumi ink', 2, False), ('Reply to wedding enquiry', -1, False), ('Post workshop photos', 0, False), ('Renew domain', 30, False), ('Call the framer', None, False),
+      ('Update class timings', 5, False), ('Print certificates', -5, True), ('Pack Rohan order', -2, True), ('Buy tea for the studio', None, True), ('Send invoice to Demo Public School', 3, False),
+      ('Book venue in Bengaluru', 14, False), ('Clean brushes', -10, True)]
 sql.append('-- to-dos: overdue, due today, upcoming, no date, done')
 sql.append(ins('todos', ['id', 'title', 'note', 'due_on', 'done', 'done_at'], [{'id': did(0xe, i + 1), 'title': t, 'note': 'Dummy to-do' if i % 3 == 0 else None, 'due_on': D(d) if d is not None else None, 'done': dn, 'done_at': TS(-1, '18:00') if dn else None} for i, (t, d, dn) in enumerate(TD)]))
 
@@ -275,13 +275,13 @@ ledger_rent = [{'entry_date': D(a), 'kind': 'in', 'category': 'Studio rent-outs'
                for i, (n_, pu, a, b, t, am, pd, m) in enumerate(RT) if pd]
 
 # ---------- accounts ----------
-MAN = [('in', 'Custom invitations', 'Demo: Name cards paid in cash', 450000, 0, 'cash', 'Walk-in customer', -33), ('in', 'Collaborations', 'Demo: Brand collaboration fee', 2500000, 381356, 'bank', 'Demo Sweets Co.', -18),
-       ('in', 'Other income', 'Demo: Sold old easels', 300000, 0, 'upi', 'Neighbour', -9), ('out', 'Materials and supplies', 'Demo: Paper and ink stock', 1250000, 190678, 'bank', 'Demo Art Supplies', -27),
-       ('out', 'Printing', 'Demo: Workshop handouts', 180000, 0, 'upi', 'Demo Print Shop', -22), ('out', 'Venue rent', 'Demo: Bengaluru venue', 800000, 0, 'bank', 'The Bangalore Local', -21),
-       ('out', 'Teacher or helper pay', 'Demo: Assistant for kids camp', 600000, 0, 'upi', 'Helper', -15), ('out', 'Shipping and courier', 'Demo: India Post charges', 95000, 0, 'cash', 'India Post', -12),
-       ('out', 'Marketing', 'Demo: Instagram ads', 200000, 30508, 'card', 'Meta', -8), ('out', 'Software and subscriptions', 'Demo: Website hosting', 150000, 22881, 'card', 'Hosting company', -6),
-       ('out', 'Equipment', 'Demo: New light box', 450000, 68644, 'upi', 'Demo Electronics', -4), ('out', 'Utilities', 'Demo: Studio electricity', 320000, 0, 'bank', 'TNEB', -2),
-       ('out', 'Travel', 'Demo: Cab to Bengaluru venue', 250000, 0, 'upi', 'Cab', -20), ('out', 'Taxes and fees', 'Demo: Professional tax', 125000, 0, 'bank', 'Corporation', -40)]
+MAN = [('in', 'Custom invitations', 'Name cards paid in cash', 450000, 0, 'cash', 'Walk-in customer', -33), ('in', 'Collaborations', 'Brand collaboration fee', 2500000, 381356, 'bank', 'Demo Sweets Co.', -18),
+       ('in', 'Other income', 'Sold old easels', 300000, 0, 'upi', 'Neighbour', -9), ('out', 'Materials and supplies', 'Paper and ink stock', 1250000, 190678, 'bank', 'Demo Art Supplies', -27),
+       ('out', 'Printing', 'Workshop handouts', 180000, 0, 'upi', 'Demo Print Shop', -22), ('out', 'Venue rent', 'Bengaluru venue', 800000, 0, 'bank', 'The Bangalore Local', -21),
+       ('out', 'Teacher or helper pay', 'Assistant for kids camp', 600000, 0, 'upi', 'Helper', -15), ('out', 'Shipping and courier', 'India Post charges', 95000, 0, 'cash', 'India Post', -12),
+       ('out', 'Marketing', 'Instagram ads', 200000, 30508, 'card', 'Meta', -8), ('out', 'Software and subscriptions', 'Website hosting', 150000, 22881, 'card', 'Hosting company', -6),
+       ('out', 'Equipment', 'New light box', 450000, 68644, 'upi', 'Demo Electronics', -4), ('out', 'Utilities', 'Studio electricity', 320000, 0, 'bank', 'TNEB', -2),
+       ('out', 'Travel', 'Cab to Bengaluru venue', 250000, 0, 'upi', 'Cab', -20), ('out', 'Taxes and fees', 'Professional tax', 125000, 0, 'bank', 'Corporation', -40)]
 ledger = [{'entry_date': D(ago), 'kind': k, 'category': c, 'description': ds, 'amount_paise': a, 'gst_paise': g, 'method': m, 'party': p, 'source': 'manual', 'source_id': None} for (k, c, ds, a, g, m, p, ago) in MAN] + ledger_inv + ledger_rent
 for j, r in enumerate(ledger): r['id'] = did(0x11, j + 1)
 sql.append('-- accounts: money in and out by hand in every main category, plus the invoice payments and the refund above')

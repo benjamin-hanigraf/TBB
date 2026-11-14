@@ -38,11 +38,12 @@ export default function Customers() {
 
 function CustomerModal({ c, all, onClose, onSaved }) {
   const isNew = !!c.isNew; const [run, busy] = useAction(); const [dup, setDup] = useState(null); const [editing, setEditing] = useState(isNew);
-  const f = useForm({ name: c.name || '', email: c.email || '', phone: c.phone || '', address_line1: c.address_line1 || '', address_line2: c.address_line2 || '', city: c.city || '', state: c.state || '', pincode: c.pincode || '', notes: c.notes || '', marketing: !!c.marketing_opt_in });
-  const buildRow = () => { const v = f.v; return { name: v.name, email: v.email || null, phone: v.phone || null, address_line1: v.address_line1 || null, address_line2: v.address_line2 || null, city: v.city || null, state: v.state || null, pincode: v.pincode || null, notes: v.notes || null, marketing_opt_in: v.marketing }; };
+  const f = useForm({ name: c.name || '', email: c.email || '', phone: c.phone || '', address_line1: c.address_line1 || '', address_line2: c.address_line2 || '', city: c.city || '', state: c.state || '', pincode: c.pincode || '', notes: c.notes || '', marketing: !!c.marketing_opt_in, hasGst: !!c.gstin, gstin: c.gstin || '' });
+  const buildRow = () => { const v = f.v; return { name: v.name, email: v.email || null, phone: v.phone || null, address_line1: v.address_line1 || null, address_line2: v.address_line2 || null, city: v.city || null, state: v.state || null, pincode: v.pincode || null, notes: v.notes || null, marketing_opt_in: v.marketing, gstin: v.hasGst ? (v.gstin || '').trim() || null : null }; };
   const write = async () => { const row = buildRow(); const r = isNew ? must(await sb().from('customers').insert({ ...row, source: 'manual' }).select().single()) : (must(await sb().from('customers').update(row).eq('id', c.id)), { ...c, ...row }); return r; };
   const save = (e) => { e.preventDefault(); return run(async () => {
     const v = f.v; if (!v.name.trim()) throw new Error('Please add a name.'); if (v.email && !/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(v.email)) throw new Error('That email does not look right.');
+    if (v.hasGst && !/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test((v.gstin || '').trim())) throw new Error('Please enter the 15-character GSTIN, for example 33ABCDE1234F1Z5.');
     const same = digits10(v.phone).length === 10 ? all.find((x) => x.id !== c.id && digits10(x.phone) === digits10(v.phone)) : null;
     if (same) { setDup(same); return; }
     await write(); onSaved();
@@ -67,16 +68,17 @@ function CustomerModal({ c, all, onClose, onSaved }) {
     return { orders: must(o).map((x) => ({ ...x, no: orderNumber(x, st) })), bookings: must(b), classes: must(en), invoices: invs };
   }, [c.id]);
   const h = hist || { orders: [], bookings: [], classes: [], invoices: [] };
-  return (<Modal title={isNew ? 'Add customer' : c.name} onClose={onClose} wide>
-    {!isNew && <><p style={{ marginTop: 0, marginBottom: 16 }}><Badge>{SRC[c.source] || c.source}</Badge> {c.user_id ? <Badge tone="ok">Has an account</Badge> : null} <span className="ad-help"> Added {fmtD(c.created_at)}</span></p>
-      <div className="ad-actions" style={{ marginTop: 0, marginBottom: 14 }}>{c.phone && <a className="ad-btn ghost sm" href={`tel:${c.phone}`}><Icon n="phone" size={15} /><span>Call</span></a>}{wa.length === 10 && <a className="ad-btn ghost sm" target="_blank" rel="noopener" href={`https://wa.me/91${wa}`}><Icon n="whatsapp" size={15} /><span>WhatsApp</span></a>}{c.email && <a className="ad-btn ghost sm" href={`mailto:${c.email}`}><Icon n="mail" size={15} /><span>Email</span></a>}</div></>}
-    {!editing && <><dl className="ad-view">{[['Email', c.email], ['Phone', c.phone], ['Address', [c.address_line1, c.address_line2, [c.city, c.state].filter(Boolean).join(', '), c.pincode ? `PIN\u00A0-\u00A0${c.pincode}` : ''].filter(Boolean).join('\n')], ['Notes', c.notes], ['News about workshops and products', c.marketing_opt_in ? 'Yes' : '']].filter(([, v]) => v).map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+  const tools = !isNew && <>{c.phone && <a className="ad-x tool" href={`tel:${c.phone}`} aria-label="Call" title="Call"><Icon n="phone" size={17} /></a>}{wa.length === 10 && <a className="ad-x tool" target="_blank" rel="noopener" href={`https://wa.me/91${wa}`} aria-label="WhatsApp" title="WhatsApp"><Icon n="whatsapp" size={17} /></a>}{c.email && <a className="ad-x tool" href={`mailto:${c.email}`} aria-label="Email" title="Email"><Icon n="mail" size={17} /></a>}</>;
+  return (<Modal title={isNew ? 'Add customer' : c.name} onClose={onClose} wide tools={tools || undefined}>
+    {!isNew && <><p style={{ marginTop: 0, marginBottom: 16 }}><Badge>{SRC[c.source] || c.source}</Badge> {c.user_id ? <Badge tone="ok">Has an account</Badge> : null} <span className="ad-help"> Added {fmtD(c.created_at)}</span></p></>}
+    {!editing && <><dl className="ad-view">{[['Email', c.email], ['Phone', c.phone], ['Address', [c.address_line1, c.address_line2, [c.city, c.state].filter(Boolean).join(', '), c.pincode ? `PIN\u00A0-\u00A0${c.pincode}` : ''].filter(Boolean).join('\n')], ['GSTIN', c.gstin], ['Notes', c.notes], ['News about workshops and products', c.marketing_opt_in ? 'Yes' : '']].filter(([, v]) => v).map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
       <div className="ad-actions full"><Btn icon="edit" onClick={() => setEditing(true)}>Edit</Btn></div></>}
     {editing && <form onSubmit={save} className="ad-form">
       <F form={f} k="name" label="Name" rule="name" required /><F form={f} k="email" label="Email" type="email" rule="email" />
       <F form={f} k="phone" label="Phone" type="tel" rule="phone" />
       <F form={f} k="address_line1" label="Address line 1" rule="text" /><F form={f} k="address_line2" label="Address line 2" rule="text" />
       <F form={f} k="city" label="City" rule="text" /><F form={f} k="state" label="State" rule="text" /><F form={f} k="pincode" label="Pincode" rule="pin" inputMode="numeric" />
+      <div className="full"><F form={f} k="hasGst" label="Has a GST number" type="check" /></div>{f.v.hasGst && <div className="full"><F form={f} k="gstin" label="GSTIN" rule="code" required maxLength={15} placeholder="33ABCDE1234F1Z5" /></div>}
       <div className="full"><F form={f} k="notes" label="Notes" type="textarea" rule="sentence" rows={3} /></div>
       <div className="full"><F form={f} k="marketing" label="Happy to receive news about workshops and products" type="check" /></div>
       <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn>{!isNew && <Btn type="button" variant="ghost" onClick={() => { f.reset(); setEditing(false); }}>Cancel</Btn>}{!isNew && <Confirm onYes={del}>Delete</Confirm>}</div></form>}

@@ -84,13 +84,13 @@ const unlockPage = () => { locks = Math.max(0, locks - 1); if (locks === 0) docu
 // Swipe back (left to right) closes the top-most window first, then goes up one level. Windows and views register here.
 export const backStack = [];
 export function useBack(fn) { const f = useRef(fn); f.current = fn; useEffect(() => { const h = { close: () => f.current() }; backStack.push(h); return () => { const i = backStack.indexOf(h); if (i >= 0) backStack.splice(i, 1); }; }, []); }
-export function Modal({ title, onClose, children, wide }) {
+export function Modal({ title, onClose, children, wide, tools }) {
   const ref = useRef(); useBack(onClose);
   useEffect(() => { lockPage(); ref.current?.focus(); return unlockPage; }, []);
   useEffect(() => { const k = (e) => e.key === 'Escape' && onClose(); document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k); }, [onClose]);
   return (<div className="ad-modal-bg" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
     <div className={`ad-modal ${wide ? 'ad-wide' : ''}`} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={ref}>
-      <div className="ad-modal-h"><h2>{title}</h2><button className="ad-x" onClick={onClose} aria-label="Close">✕</button></div><div className="ad-modal-b">{children}</div></div></div>);
+      <div className="ad-modal-h"><h2>{title}</h2>{tools && <div className="ad-modal-tools">{tools}</div>}<button className="ad-x" onClick={onClose} aria-label="Close">✕</button></div><div className="ad-modal-b">{children}</div></div></div>);
 }
 export function Confirm({ children, onYes, label, icon: iconProp, className = '', ...p }) {
   const icon = iconProp === undefined ? autoIcon(children) : iconProp;

@@ -85,7 +85,7 @@ export default function InvoiceTool() {
   useEffect(() => { const id = sp.get('open'); const i = id && data?.list.find((x) => x.id === id); if (i) setEdit(i); }, [data, sp]);
   if (error) return <Page title="Invoices"><Err e={error} /></Page>; if (!data) return <Page title="Invoices"><Spin /></Page>;
   if (edit) return <Editor inv={edit} data={data} onOpen={setEdit} onBack={() => { setEdit(null); reload(); }} />;
-  const owed = data.list.filter((i) => typeOf(i) === 'invoice' && i.status !== 'cancelled').reduce((s, i) => s + balanceOf(i, data.payments).balance, 0);
+  const owed = data.list.filter((i) => typeOf(i) === 'invoice' && i.status !== 'cancelled' && i.status !== 'draft').reduce((s, i) => s + balanceOf(i, data.payments).balance, 0);
   return (<Page title="Invoices" action={<><Btn icon="plus" onClick={() => setEdit({ doc_type: show === 'quotation' ? 'quotation' : 'invoice' })}>New</Btn></>}>
     {owed > 0 && <p className="ad-sub" style={{ margin: "4px 0 18px" }}>Pending from invoices: <b>{money(owed)}</b></p>}
     <div className="ad-filterbar"><div className="ad-tabsbar" style={{ margin: 0 }}>

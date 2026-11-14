@@ -2,7 +2,7 @@
 -- Fills every table with at least 10 varied rows so every screen of the website and the Manager app can be tried.
 -- Run AFTER supabase/database.sql. Run it once; to take everything out again run supabase/dummy-remove.sql.
 -- Every dummy row has an id starting with dededede- and every dummy person uses an @example.com email.
--- Dummy workshops, products and classes are named "Demo ..." and DO show on the public website while they are in the database.
+-- Dummy workshops, products and classes are named like real ones and DO show on the public website while they are in the database.
 -- Website receipt numbers are not used up: dummy orders, bookings and enrolments use numbers 9001 and up.
 -- Not touched on purpose: settings, site_images, admin_security (the PIN) and profiles (real logins only).
 begin;
@@ -11,86 +11,86 @@ begin;
 -- workshops: published, draft, cancelled, past, sold out, almost full, free, early-bird, friend price, courses over several days, every GST option
 
 insert into workshops (id, slug, title, kind, summary, description, venue_name, venue_address, map_link, starts_at, ends_at, price_paise, friend_price_paise, early_price_paise, early_until, capacity, includes, learn, note, image_path, status, gst_mode) values
-('dededede-0001-4000-8000-000000000001', 'demo-brush-lettering-basics', 'Demo: Brush Lettering Basics', 'workshop', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
+('dededede-0001-4000-8000-000000000001', 'demo-brush-lettering-basics', 'Brush Lettering Basics', 'workshop', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
 
 It lets you see how a long description, the list of what is included and what you will learn look on the page.', 'Thin Black Brush Studio', '2nd Floor, Berachah Building, 13/7, 1st Cross St, Trustpuram, Kodambakkam, Chennai - 600024', 'https://maps.app.goo.gl/WMv8SSuAmd6C3mjK7', ((current_date + 21) + time '10:00') at time zone 'Asia/Kolkata', ((current_date + 21) + time '13:00') at time zone 'Asia/Kolkata', 180000, 160000, 150000, (current_date + 7), 12, array['All materials','Practice sheets','Tea and snacks'], array['Basic strokes','Letter shapes','Putting words together'], 'Materials are provided.', '/img/16cc08c542.webp', 'published', 'none'),
-('dededede-0001-4000-8000-000000000002', 'demo-watercolour-florals', 'Demo: Watercolour Florals', 'workshop', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
+('dededede-0001-4000-8000-000000000002', 'demo-watercolour-florals', 'Watercolour Florals', 'workshop', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
 
 It lets you see how a long description, the list of what is included and what you will learn look on the page.', 'Thin Black Brush Studio', '2nd Floor, Berachah Building, 13/7, 1st Cross St, Trustpuram, Kodambakkam, Chennai - 600024', 'https://maps.app.goo.gl/WMv8SSuAmd6C3mjK7', ((current_date + 10) + time '10:00') at time zone 'Asia/Kolkata', ((current_date + 10) + time '13:00') at time zone 'Asia/Kolkata', 250000, null, null, null, 6, array['All materials','Practice sheets','Tea and snacks'], array['Basic strokes','Letter shapes','Putting words together'], null, '/img/26928ebd04.webp', 'published', 'included'),
-('dededede-0001-4000-8000-000000000003', 'demo-copperplate-course', 'Demo: Copperplate Calligraphy Course', 'course', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
+('dededede-0001-4000-8000-000000000003', 'demo-copperplate-course', 'Copperplate Calligraphy Course', 'course', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
 
 It lets you see how a long description, the list of what is included and what you will learn look on the page.', 'Thin Black Brush Studio', '2nd Floor, Berachah Building, 13/7, 1st Cross St, Trustpuram, Kodambakkam, Chennai - 600024', 'https://maps.app.goo.gl/WMv8SSuAmd6C3mjK7', ((current_date + 30) + time '10:00') at time zone 'Asia/Kolkata', ((current_date + 58) + time '13:00') at time zone 'Asia/Kolkata', 1200000, null, null, null, 8, array['All materials','Practice sheets','Tea and snacks'], array['Basic strokes','Letter shapes','Putting words together'], 'Materials are provided.', '/img/31648a2db3.webp', 'published', 'add'),
-('dededede-0001-4000-8000-000000000004', 'demo-gouache-landscapes', 'Demo: Gouache Landscapes', 'workshop', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
+('dededede-0001-4000-8000-000000000004', 'demo-gouache-landscapes', 'Gouache Landscapes', 'workshop', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
 
 It lets you see how a long description, the list of what is included and what you will learn look on the page.', 'The Bangalore Local', '1st Cross Road, 1st Block Koramangala, Bengaluru, Karnataka', 'https://maps.app.goo.gl/WMv8SSuAmd6C3mjK7', ((current_date + -20) + time '10:00') at time zone 'Asia/Kolkata', ((current_date + -20) + time '13:00') at time zone 'Asia/Kolkata', 220000, null, null, null, 10, array['All materials','Practice sheets','Tea and snacks'], array['Basic strokes','Letter shapes','Putting words together'], null, '/img/cb028c51a9.webp', 'published', 'none'),
-('dededede-0001-4000-8000-000000000005', 'demo-kids-doodle-camp', 'Demo: Kids Doodle Camp (ages 6 to 12)', 'course', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
+('dededede-0001-4000-8000-000000000005', 'demo-kids-doodle-camp', 'Kids Doodle Camp (ages 6 to 12)', 'course', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
 
 It lets you see how a long description, the list of what is included and what you will learn look on the page.', 'Thin Black Brush Studio', '2nd Floor, Berachah Building, 13/7, 1st Cross St, Trustpuram, Kodambakkam, Chennai - 600024', 'https://maps.app.goo.gl/WMv8SSuAmd6C3mjK7', ((current_date + 40) + time '10:00') at time zone 'Asia/Kolkata', ((current_date + 44) + time '13:00') at time zone 'Asia/Kolkata', 350000, null, 300000, (current_date + 20), 15, array['All materials','Practice sheets','Tea and snacks'], array['Basic strokes','Letter shapes','Putting words together'], 'Materials are provided.', '/img/5c8f647552.webp', 'published', 'none'),
-('dededede-0001-4000-8000-000000000006', 'demo-ink-and-wash', 'Demo: Ink and Wash Painting', 'workshop', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
+('dededede-0001-4000-8000-000000000006', 'demo-ink-and-wash', 'Ink and Wash Painting', 'workshop', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
 
 It lets you see how a long description, the list of what is included and what you will learn look on the page.', 'Thin Black Brush Studio', '2nd Floor, Berachah Building, 13/7, 1st Cross St, Trustpuram, Kodambakkam, Chennai - 600024', 'https://maps.app.goo.gl/WMv8SSuAmd6C3mjK7', ((current_date + 50) + time '10:00') at time zone 'Asia/Kolkata', ((current_date + 50) + time '13:00') at time zone 'Asia/Kolkata', 200000, null, null, null, 10, array['All materials','Practice sheets','Tea and snacks'], array['Basic strokes','Letter shapes','Putting words together'], null, '/img/a399441366.webp', 'draft', 'none'),
-('dededede-0001-4000-8000-000000000007', 'demo-gift-tag-lettering', 'Demo: Gift Tag Lettering', 'workshop', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
+('dededede-0001-4000-8000-000000000007', 'demo-gift-tag-lettering', 'Gift Tag Lettering', 'workshop', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
 
 It lets you see how a long description, the list of what is included and what you will learn look on the page.', 'The Bangalore Local', '1st Cross Road, 1st Block Koramangala, Bengaluru, Karnataka', 'https://maps.app.goo.gl/WMv8SSuAmd6C3mjK7', ((current_date + 15) + time '10:00') at time zone 'Asia/Kolkata', ((current_date + 15) + time '13:00') at time zone 'Asia/Kolkata', 150000, null, null, null, 12, array['All materials','Practice sheets','Tea and snacks'], array['Basic strokes','Letter shapes','Putting words together'], 'Materials are provided.', '/img/16cc08c542.webp', 'cancelled', 'none'),
-('dededede-0001-4000-8000-000000000008', 'demo-free-open-studio', 'Demo: Free Open Studio Evening', 'workshop', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
+('dededede-0001-4000-8000-000000000008', 'demo-free-open-studio', 'Free Open Studio Evening', 'workshop', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
 
 It lets you see how a long description, the list of what is included and what you will learn look on the page.', 'Thin Black Brush Studio', '2nd Floor, Berachah Building, 13/7, 1st Cross St, Trustpuram, Kodambakkam, Chennai - 600024', 'https://maps.app.goo.gl/WMv8SSuAmd6C3mjK7', ((current_date + 5) + time '17:30') at time zone 'Asia/Kolkata', ((current_date + 5) + time '13:00') at time zone 'Asia/Kolkata', 0, null, null, null, 20, '{}', array['Basic strokes','Letter shapes','Putting words together'], null, '/img/26928ebd04.webp', 'published', 'none'),
-('dededede-0001-4000-8000-000000000009', 'demo-gothic-blackletter', 'Demo: Gothic Blackletter', 'workshop', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
+('dededede-0001-4000-8000-000000000009', 'demo-gothic-blackletter', 'Gothic Blackletter', 'workshop', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
 
 It lets you see how a long description, the list of what is included and what you will learn look on the page.', 'Thin Black Brush Studio', '2nd Floor, Berachah Building, 13/7, 1st Cross St, Trustpuram, Kodambakkam, Chennai - 600024', 'https://maps.app.goo.gl/WMv8SSuAmd6C3mjK7', ((current_date + -60) + time '10:00') at time zone 'Asia/Kolkata', ((current_date + -60) + time '13:00') at time zone 'Asia/Kolkata', 230000, null, null, null, 12, array['All materials','Practice sheets','Tea and snacks'], array['Basic strokes','Letter shapes','Putting words together'], 'Materials are provided.', '/img/31648a2db3.webp', 'published', 'included'),
-('dededede-0001-4000-8000-000000000010', 'demo-wedding-envelope-addressing', 'Demo: Wedding Envelope Addressing', 'workshop', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
+('dededede-0001-4000-8000-000000000010', 'demo-wedding-envelope-addressing', 'Wedding Envelope Addressing', 'workshop', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
 
 It lets you see how a long description, the list of what is included and what you will learn look on the page.', 'The Bangalore Local', '1st Cross Road, 1st Block Koramangala, Bengaluru, Karnataka', 'https://maps.app.goo.gl/WMv8SSuAmd6C3mjK7', ((current_date + 70) + time '10:00') at time zone 'Asia/Kolkata', ((current_date + 70) + time '13:00') at time zone 'Asia/Kolkata', 280000, 250000, null, null, 8, array['All materials','Practice sheets','Tea and snacks'], array['Basic strokes','Letter shapes','Putting words together'], null, '/img/cb028c51a9.webp', 'published', 'add'),
-('dededede-0001-4000-8000-000000000011', 'demo-pointed-pen-flourishing', 'Demo: Pointed Pen Flourishing', 'workshop', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
+('dededede-0001-4000-8000-000000000011', 'demo-pointed-pen-flourishing', 'Pointed Pen Flourishing', 'workshop', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
 
 It lets you see how a long description, the list of what is included and what you will learn look on the page.', 'Thin Black Brush Studio', '2nd Floor, Berachah Building, 13/7, 1st Cross St, Trustpuram, Kodambakkam, Chennai - 600024', 'https://maps.app.goo.gl/WMv8SSuAmd6C3mjK7', ((current_date + 2) + time '11:00') at time zone 'Asia/Kolkata', ((current_date + 2) + time '13:00') at time zone 'Asia/Kolkata', 240000, null, null, null, 4, array['All materials','Practice sheets','Tea and snacks'], array['Basic strokes','Letter shapes','Putting words together'], 'Materials are provided.', '/img/5c8f647552.webp', 'published', 'none'),
-('dededede-0001-4000-8000-000000000012', 'demo-corporate-team-session', 'Demo: Corporate Team Lettering Session', 'workshop', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
+('dededede-0001-4000-8000-000000000012', 'demo-corporate-team-session', 'Corporate Team Lettering Session', 'workshop', 'A test workshop made for trying out the website. Remove with dummy-remove.sql.', 'This is dummy text.
 
 It lets you see how a long description, the list of what is included and what you will learn look on the page.', 'The Bangalore Local', '1st Cross Road, 1st Block Koramangala, Bengaluru, Karnataka', 'https://maps.app.goo.gl/WMv8SSuAmd6C3mjK7', ((current_date + 90) + time '10:00') at time zone 'Asia/Kolkata', ((current_date + 90) + time '13:00') at time zone 'Asia/Kolkata', 150000, null, null, null, 30, array['All materials','Practice sheets','Tea and snacks'], array['Basic strokes','Letter shapes','Putting words together'], null, '/img/a399441366.webp', 'draft', 'add');
 
 -- products: in stock, low stock, out of stock, pre-order, hidden, every GST option
 
 insert into products (id, slug, title, description, details, price_paise, stock, allow_preorder, images, shipping_note, active, sort_order, gst_mode) values
-('dededede-0002-4000-8000-000000000001', 'demo-sketchbook-a5', 'Demo: A5 Sketchbook', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 65000, 25, false, array['/img/4aab591127.webp','/img/33e1b05fd6.webp'], null, true, 100, 'none'),
-('dededede-0002-4000-8000-000000000002', 'demo-nib-set', 'Demo: Calligraphy Nib Set of 5', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 90000, 3, false, array['/img/33e1b05fd6.webp','/img/42e66b73f9.webp'], null, true, 101, 'included'),
-('dededede-0002-4000-8000-000000000003', 'demo-sumi-ink', 'Demo: Sumi Ink 60 ml', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 45000, 0, false, array['/img/42e66b73f9.webp','/img/e36ba5ccbd.webp'], null, true, 102, 'none'),
-('dededede-0002-4000-8000-000000000004', 'demo-custom-holder', 'Demo: Custom Engraved Holder (pre-order)', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 210000, 0, true, array['/img/e36ba5ccbd.webp','/img/4aab591127.webp'], 'Ships in 8 days.', true, 103, 'add'),
-('dededede-0002-4000-8000-000000000005', 'demo-practice-pad', 'Demo: Practice Pad 100 Sheets', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 35000, 40, false, array['/img/4aab591127.webp','/img/33e1b05fd6.webp'], null, true, 104, 'none'),
-('dededede-0002-4000-8000-000000000006', 'demo-gift-box', 'Demo: Lettering Gift Box', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 320000, 6, false, array['/img/33e1b05fd6.webp','/img/42e66b73f9.webp'], null, true, 105, 'add'),
-('dededede-0002-4000-8000-000000000007', 'demo-brush-pen-trio', 'Demo: Brush Pen Trio', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 55000, 1, false, array['/img/42e66b73f9.webp','/img/e36ba5ccbd.webp'], null, true, 106, 'included'),
-('dededede-0002-4000-8000-000000000008', 'demo-old-planner', 'Demo: Old Planner (hidden)', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 80000, 5, false, array['/img/e36ba5ccbd.webp','/img/4aab591127.webp'], null, false, 107, 'none'),
-('dededede-0002-4000-8000-000000000009', 'demo-watercolour-tin', 'Demo: Watercolour Tin of 12', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 150000, 12, false, array['/img/4aab591127.webp','/img/33e1b05fd6.webp'], null, true, 108, 'add'),
-('dededede-0002-4000-8000-000000000010', 'demo-paper-sampler', 'Demo: Handmade Paper Sampler', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 25000, 50, false, array['/img/33e1b05fd6.webp','/img/42e66b73f9.webp'], null, true, 109, 'none'),
-('dededede-0002-4000-8000-000000000011', 'demo-gold-ink', 'Demo: Gold Pearl Ink', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 60000, 8, false, array['/img/42e66b73f9.webp','/img/e36ba5ccbd.webp'], null, true, 110, 'none'),
-('dededede-0002-4000-8000-000000000012', 'demo-lightbox', 'Demo: A4 LED Lightbox', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 280000, 2, true, array['/img/e36ba5ccbd.webp','/img/4aab591127.webp'], 'Ships in 8 days.', true, 111, 'included');
+('dededede-0002-4000-8000-000000000001', 'demo-sketchbook-a5', 'A5 Sketchbook', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 65000, 25, false, array['/img/4aab591127.webp','/img/33e1b05fd6.webp'], null, true, 100, 'none'),
+('dededede-0002-4000-8000-000000000002', 'demo-nib-set', 'Calligraphy Nib Set of 5', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 90000, 3, false, array['/img/33e1b05fd6.webp','/img/42e66b73f9.webp'], null, true, 101, 'included'),
+('dededede-0002-4000-8000-000000000003', 'demo-sumi-ink', 'Sumi Ink 60 ml', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 45000, 0, false, array['/img/42e66b73f9.webp','/img/e36ba5ccbd.webp'], null, true, 102, 'none'),
+('dededede-0002-4000-8000-000000000004', 'demo-custom-holder', 'Custom Engraved Holder (pre-order)', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 210000, 0, true, array['/img/e36ba5ccbd.webp','/img/4aab591127.webp'], 'Ships in 8 days.', true, 103, 'add'),
+('dededede-0002-4000-8000-000000000005', 'demo-practice-pad', 'Practice Pad 100 Sheets', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 35000, 40, false, array['/img/4aab591127.webp','/img/33e1b05fd6.webp'], null, true, 104, 'none'),
+('dededede-0002-4000-8000-000000000006', 'demo-gift-box', 'Lettering Gift Box', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 320000, 6, false, array['/img/33e1b05fd6.webp','/img/42e66b73f9.webp'], null, true, 105, 'add'),
+('dededede-0002-4000-8000-000000000007', 'demo-brush-pen-trio', 'Brush Pen Trio', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 55000, 1, false, array['/img/42e66b73f9.webp','/img/e36ba5ccbd.webp'], null, true, 106, 'included'),
+('dededede-0002-4000-8000-000000000008', 'demo-old-planner', 'Old Planner (hidden)', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 80000, 5, false, array['/img/e36ba5ccbd.webp','/img/4aab591127.webp'], null, false, 107, 'none'),
+('dededede-0002-4000-8000-000000000009', 'demo-watercolour-tin', 'Watercolour Tin of 12', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 150000, 12, false, array['/img/4aab591127.webp','/img/33e1b05fd6.webp'], null, true, 108, 'add'),
+('dededede-0002-4000-8000-000000000010', 'demo-paper-sampler', 'Handmade Paper Sampler', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 25000, 50, false, array['/img/33e1b05fd6.webp','/img/42e66b73f9.webp'], null, true, 109, 'none'),
+('dededede-0002-4000-8000-000000000011', 'demo-gold-ink', 'Gold Pearl Ink', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 60000, 8, false, array['/img/42e66b73f9.webp','/img/e36ba5ccbd.webp'], null, true, 110, 'none'),
+('dededede-0002-4000-8000-000000000012', 'demo-lightbox', 'A4 LED Lightbox', 'A dummy product for testing the store, the bag and checkout.', array['Test detail one','Test detail two'], 280000, 2, true, array['/img/e36ba5ccbd.webp','/img/4aab591127.webp'], 'Ships in 8 days.', true, 111, 'included');
 
 -- class types (the drop-down on the class form)
 
 insert into class_types (id, name, sort_order) values
-('dededede-0012-4000-8000-000000000001', 'Demo: Cursive', 100),
-('dededede-0012-4000-8000-000000000002', 'Demo: Brush Lettering', 101),
-('dededede-0012-4000-8000-000000000003', 'Demo: Copperplate', 102),
-('dededede-0012-4000-8000-000000000004', 'Demo: Italic', 103),
-('dededede-0012-4000-8000-000000000005', 'Demo: Gothic', 104),
-('dededede-0012-4000-8000-000000000006', 'Demo: Faux Calligraphy', 105),
-('dededede-0012-4000-8000-000000000007', 'Demo: Print Handwriting', 106),
-('dededede-0012-4000-8000-000000000008', 'Demo: Kids Art', 107),
-('dededede-0012-4000-8000-000000000009', 'Demo: Watercolour', 108),
-('dededede-0012-4000-8000-000000000010', 'Demo: Sketching', 109);
+('dededede-0012-4000-8000-000000000001', 'Cursive', 100),
+('dededede-0012-4000-8000-000000000002', 'Brush Lettering', 101),
+('dededede-0012-4000-8000-000000000003', 'Copperplate', 102),
+('dededede-0012-4000-8000-000000000004', 'Italic', 103),
+('dededede-0012-4000-8000-000000000005', 'Gothic', 104),
+('dededede-0012-4000-8000-000000000006', 'Faux Calligraphy', 105),
+('dededede-0012-4000-8000-000000000007', 'Print Handwriting', 106),
+('dededede-0012-4000-8000-000000000008', 'Kids Art', 107),
+('dededede-0012-4000-8000-000000000009', 'Watercolour', 108),
+('dededede-0012-4000-8000-000000000010', 'Sketching', 109);
 
 -- class levels: several tracks, active and hidden, every GST option
 
 insert into class_levels (id, slug, track, title, level, description, covers, price_paise, sessions, active, sort_order, gst_mode) values
-('dededede-0003-4000-8000-000000000001', 'demo-cursive-1', 'Demo: Cursive', 'Cursive Writing', 'Level 1', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 500000, 8, true, 100, 'none'),
-('dededede-0003-4000-8000-000000000002', 'demo-cursive-2', 'Demo: Cursive', 'Cursive Writing', 'Level 2', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 550000, 8, true, 101, 'none'),
-('dededede-0003-4000-8000-000000000003', 'demo-brush-1', 'Demo: Brush Lettering', 'Brush Lettering', 'Beginner', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 650000, 6, true, 102, 'included'),
-('dededede-0003-4000-8000-000000000004', 'demo-brush-2', 'Demo: Brush Lettering', 'Brush Lettering', 'Intermediate', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 700000, 6, true, 103, 'add'),
-('dededede-0003-4000-8000-000000000005', 'demo-copperplate-1', 'Demo: Copperplate', 'Copperplate', 'Foundation', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 900000, 10, true, 104, 'add'),
-('dededede-0003-4000-8000-000000000006', 'demo-italic-1', 'Demo: Italic', 'Italic Hand', 'Level 1', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 600000, 8, true, 105, 'none'),
-('dededede-0003-4000-8000-000000000007', 'demo-kids-art', 'Demo: Kids Art', 'Kids Art Club', 'Ages 5 to 8', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 400000, 12, true, 106, 'none'),
-('dededede-0003-4000-8000-000000000008', 'demo-watercolour-1', 'Demo: Watercolour', 'Watercolour', 'Beginner', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 800000, 8, true, 107, 'included'),
-('dededede-0003-4000-8000-000000000009', 'demo-gothic-1', 'Demo: Gothic', 'Gothic Script', 'Level 1', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 750000, 8, false, 108, 'none'),
-('dededede-0003-4000-8000-000000000010', 'demo-sketching-1', 'Demo: Sketching', 'Urban Sketching', 'Open level', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 450000, 4, true, 109, 'add');
+('dededede-0003-4000-8000-000000000001', 'demo-cursive-1', 'Cursive', 'Cursive Writing', 'Level 1', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 500000, 8, true, 100, 'none'),
+('dededede-0003-4000-8000-000000000002', 'demo-cursive-2', 'Cursive', 'Cursive Writing', 'Level 2', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 550000, 8, true, 101, 'none'),
+('dededede-0003-4000-8000-000000000003', 'demo-brush-1', 'Brush Lettering', 'Brush Lettering', 'Beginner', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 650000, 6, true, 102, 'included'),
+('dededede-0003-4000-8000-000000000004', 'demo-brush-2', 'Brush Lettering', 'Brush Lettering', 'Intermediate', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 700000, 6, true, 103, 'add'),
+('dededede-0003-4000-8000-000000000005', 'demo-copperplate-1', 'Copperplate', 'Copperplate', 'Foundation', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 900000, 10, true, 104, 'add'),
+('dededede-0003-4000-8000-000000000006', 'demo-italic-1', 'Italic', 'Italic Hand', 'Level 1', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 600000, 8, true, 105, 'none'),
+('dededede-0003-4000-8000-000000000007', 'demo-kids-art', 'Kids Art', 'Kids Art Club', 'Ages 5 to 8', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 400000, 12, true, 106, 'none'),
+('dededede-0003-4000-8000-000000000008', 'demo-watercolour-1', 'Watercolour', 'Watercolour', 'Beginner', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 800000, 8, true, 107, 'included'),
+('dededede-0003-4000-8000-000000000009', 'demo-gothic-1', 'Gothic', 'Gothic Script', 'Level 1', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 750000, 8, false, 108, 'none'),
+('dededede-0003-4000-8000-000000000010', 'demo-sketching-1', 'Sketching', 'Urban Sketching', 'Open level', 'A dummy class level for testing enrolments and one-on-one classes.', array['Posture and grip','Basic strokes','Letters and joins'], 450000, 4, true, 109, 'add');
 
 -- customers: every source, opted in and out, with and without email, and a duplicate pair (same phone) to try Merge
 
@@ -238,25 +238,25 @@ insert into orders (id, name, email, phone, shipping_address, subtotal_paise, sh
 ('dededede-0009-4000-8000-000000000015', 'Anita Rao', 'anita.rao@example.com', '+91 98765 00001', '{"recipient": "Anita Rao", "phone": "+91 98765 00001", "line1": "10, Test Street", "line2": "", "city": "Chennai", "state": "Tamil Nadu", "pincode": "600024"}'::jsonb, 270000, 6000, 276000, null, 'paid', null, null, 'order_demo_or015', 'pay_demo_or015', 9215, 'website', 'razorpay', null, ((current_date + -12) + time '20:00') at time zone 'Asia/Kolkata', ((current_date + -12) + time '20:03') at time zone 'Asia/Kolkata');
 
 insert into order_items (id, order_id, product_id, title, unit_paise, qty, gst_paise, stock_taken) values
-('dededede-000a-4000-8000-000000000001', 'dededede-0009-4000-8000-000000000001', 'dededede-0002-4000-8000-000000000001', 'Demo: A5 Sketchbook', 65000, 2, 0, 2),
-('dededede-000a-4000-8000-000000000002', 'dededede-0009-4000-8000-000000000002', 'dededede-0002-4000-8000-000000000002', 'Demo: Calligraphy Nib Set of 5', 90000, 1, 13729, 1),
-('dededede-000a-4000-8000-000000000003', 'dededede-0009-4000-8000-000000000002', 'dededede-0002-4000-8000-000000000005', 'Demo: Practice Pad 100 Sheets', 35000, 2, 0, 2),
-('dededede-000a-4000-8000-000000000004', 'dededede-0009-4000-8000-000000000003', 'dededede-0002-4000-8000-000000000006', 'Demo: Lettering Gift Box', 320000, 1, 57600, 1),
-('dededede-000a-4000-8000-000000000005', 'dededede-0009-4000-8000-000000000004', 'dededede-0002-4000-8000-000000000009', 'Demo: Watercolour Tin of 12', 150000, 1, 27000, 1),
-('dededede-000a-4000-8000-000000000006', 'dededede-0009-4000-8000-000000000004', 'dededede-0002-4000-8000-000000000010', 'Demo: Handmade Paper Sampler', 25000, 3, 0, 3),
-('dededede-000a-4000-8000-000000000007', 'dededede-0009-4000-8000-000000000005', 'dededede-0002-4000-8000-000000000011', 'Demo: Gold Pearl Ink', 60000, 1, 0, null),
-('dededede-000a-4000-8000-000000000008', 'dededede-0009-4000-8000-000000000006', 'dededede-0002-4000-8000-000000000001', 'Demo: A5 Sketchbook', 65000, 1, 0, null),
-('dededede-000a-4000-8000-000000000009', 'dededede-0009-4000-8000-000000000007', 'dededede-0002-4000-8000-000000000007', 'Demo: Brush Pen Trio', 55000, 1, 8390, null),
-('dededede-000a-4000-8000-000000000010', 'dededede-0009-4000-8000-000000000008', 'dededede-0002-4000-8000-000000000004', 'Demo: Custom Engraved Holder (pre-order)', 210000, 1, 37800, 1),
-('dededede-000a-4000-8000-000000000011', 'dededede-0009-4000-8000-000000000009', 'dededede-0002-4000-8000-000000000012', 'Demo: A4 LED Lightbox', 280000, 1, 42712, 1),
-('dededede-000a-4000-8000-000000000012', 'dededede-0009-4000-8000-000000000009', 'dededede-0002-4000-8000-000000000002', 'Demo: Calligraphy Nib Set of 5', 90000, 1, 13729, 1),
-('dededede-000a-4000-8000-000000000013', 'dededede-0009-4000-8000-000000000010', 'dededede-0002-4000-8000-000000000005', 'Demo: Practice Pad 100 Sheets', 35000, 5, 0, null),
-('dededede-000a-4000-8000-000000000014', 'dededede-0009-4000-8000-000000000011', 'dededede-0002-4000-8000-000000000001', 'Demo: A5 Sketchbook', 65000, 1, 0, 1),
-('dededede-000a-4000-8000-000000000015', 'dededede-0009-4000-8000-000000000011', 'dededede-0002-4000-8000-000000000003', 'Demo: Sumi Ink 60 ml', 45000, 1, 0, 1),
-('dededede-000a-4000-8000-000000000016', 'dededede-0009-4000-8000-000000000012', 'dededede-0002-4000-8000-000000000010', 'Demo: Handmade Paper Sampler', 25000, 10, 0, 10),
-('dededede-000a-4000-8000-000000000017', 'dededede-0009-4000-8000-000000000013', 'dededede-0002-4000-8000-000000000006', 'Demo: Lettering Gift Box', 320000, 2, 115200, 2),
-('dededede-000a-4000-8000-000000000018', 'dededede-0009-4000-8000-000000000014', 'dededede-0002-4000-8000-000000000009', 'Demo: Watercolour Tin of 12', 150000, 2, 54000, 2),
-('dededede-000a-4000-8000-000000000019', 'dededede-0009-4000-8000-000000000015', 'dededede-0002-4000-8000-000000000002', 'Demo: Calligraphy Nib Set of 5', 90000, 3, 41186, 3);
+('dededede-000a-4000-8000-000000000001', 'dededede-0009-4000-8000-000000000001', 'dededede-0002-4000-8000-000000000001', 'A5 Sketchbook', 65000, 2, 0, 2),
+('dededede-000a-4000-8000-000000000002', 'dededede-0009-4000-8000-000000000002', 'dededede-0002-4000-8000-000000000002', 'Calligraphy Nib Set of 5', 90000, 1, 13729, 1),
+('dededede-000a-4000-8000-000000000003', 'dededede-0009-4000-8000-000000000002', 'dededede-0002-4000-8000-000000000005', 'Practice Pad 100 Sheets', 35000, 2, 0, 2),
+('dededede-000a-4000-8000-000000000004', 'dededede-0009-4000-8000-000000000003', 'dededede-0002-4000-8000-000000000006', 'Lettering Gift Box', 320000, 1, 57600, 1),
+('dededede-000a-4000-8000-000000000005', 'dededede-0009-4000-8000-000000000004', 'dededede-0002-4000-8000-000000000009', 'Watercolour Tin of 12', 150000, 1, 27000, 1),
+('dededede-000a-4000-8000-000000000006', 'dededede-0009-4000-8000-000000000004', 'dededede-0002-4000-8000-000000000010', 'Handmade Paper Sampler', 25000, 3, 0, 3),
+('dededede-000a-4000-8000-000000000007', 'dededede-0009-4000-8000-000000000005', 'dededede-0002-4000-8000-000000000011', 'Gold Pearl Ink', 60000, 1, 0, null),
+('dededede-000a-4000-8000-000000000008', 'dededede-0009-4000-8000-000000000006', 'dededede-0002-4000-8000-000000000001', 'A5 Sketchbook', 65000, 1, 0, null),
+('dededede-000a-4000-8000-000000000009', 'dededede-0009-4000-8000-000000000007', 'dededede-0002-4000-8000-000000000007', 'Brush Pen Trio', 55000, 1, 8390, null),
+('dededede-000a-4000-8000-000000000010', 'dededede-0009-4000-8000-000000000008', 'dededede-0002-4000-8000-000000000004', 'Custom Engraved Holder (pre-order)', 210000, 1, 37800, 1),
+('dededede-000a-4000-8000-000000000011', 'dededede-0009-4000-8000-000000000009', 'dededede-0002-4000-8000-000000000012', 'A4 LED Lightbox', 280000, 1, 42712, 1),
+('dededede-000a-4000-8000-000000000012', 'dededede-0009-4000-8000-000000000009', 'dededede-0002-4000-8000-000000000002', 'Calligraphy Nib Set of 5', 90000, 1, 13729, 1),
+('dededede-000a-4000-8000-000000000013', 'dededede-0009-4000-8000-000000000010', 'dededede-0002-4000-8000-000000000005', 'Practice Pad 100 Sheets', 35000, 5, 0, null),
+('dededede-000a-4000-8000-000000000014', 'dededede-0009-4000-8000-000000000011', 'dededede-0002-4000-8000-000000000001', 'A5 Sketchbook', 65000, 1, 0, 1),
+('dededede-000a-4000-8000-000000000015', 'dededede-0009-4000-8000-000000000011', 'dededede-0002-4000-8000-000000000003', 'Sumi Ink 60 ml', 45000, 1, 0, 1),
+('dededede-000a-4000-8000-000000000016', 'dededede-0009-4000-8000-000000000012', 'dededede-0002-4000-8000-000000000010', 'Handmade Paper Sampler', 25000, 10, 0, 10),
+('dededede-000a-4000-8000-000000000017', 'dededede-0009-4000-8000-000000000013', 'dededede-0002-4000-8000-000000000006', 'Lettering Gift Box', 320000, 2, 115200, 2),
+('dededede-000a-4000-8000-000000000018', 'dededede-0009-4000-8000-000000000014', 'dededede-0002-4000-8000-000000000009', 'Watercolour Tin of 12', 150000, 2, 54000, 2),
+('dededede-000a-4000-8000-000000000019', 'dededede-0009-4000-8000-000000000015', 'dededede-0002-4000-8000-000000000002', 'Calligraphy Nib Set of 5', 90000, 3, 41186, 3);
 
 -- inbox: every kind of enquiry: unread, read but not dealt with, and dealt with
 
@@ -277,32 +277,32 @@ insert into enquiries (id, kind, name, email, phone, message, details, handled, 
 -- calendar events: today, past, upcoming, several days long, with and without a time
 
 insert into events (id, title, note, on_date, end_date, time_text) values
-('dededede-000d-4000-8000-000000000001', 'Demo: Meeting with the printer', null, (current_date + 1), null, '3 pm'),
-('dededede-000d-4000-8000-000000000002', 'Demo: Stall at the Sunday market', 'Dummy event', (current_date + 6), (current_date + 7), '9 am to 6 pm'),
-('dededede-000d-4000-8000-000000000003', 'Demo: Diwali holiday, studio closed', null, (current_date + 18), (current_date + 22), null),
-('dededede-000d-4000-8000-000000000004', 'Demo: Photo shoot for new products', 'Dummy event', (current_date + -3), null, '11 am'),
-('dededede-000d-4000-8000-000000000005', 'Demo: GST filing due', null, (current_date + 8), null, null),
-('dededede-000d-4000-8000-000000000006', 'Demo: Supplier visit', 'Dummy event', (current_date + 12), null, '4:30 pm'),
-('dededede-000d-4000-8000-000000000007', 'Demo: School art week', null, (current_date + 25), (current_date + 29), 'Mornings'),
-('dededede-000d-4000-8000-000000000008', 'Demo: Instagram live', 'Dummy event', (current_date + 0), null, '7 pm'),
-('dededede-000d-4000-8000-000000000009', 'Demo: Pay studio rent', null, (current_date + 19), null, null),
-('dededede-000d-4000-8000-000000000010', 'Demo: Craft fair in Bengaluru', 'Dummy event', (current_date + 45), (current_date + 46), 'All day');
+('dededede-000d-4000-8000-000000000001', 'Meeting with the printer', null, (current_date + 1), null, '3 pm'),
+('dededede-000d-4000-8000-000000000002', 'Stall at the Sunday market', 'Dummy event', (current_date + 6), (current_date + 7), '9 am to 6 pm'),
+('dededede-000d-4000-8000-000000000003', 'Diwali holiday, studio closed', null, (current_date + 18), (current_date + 22), null),
+('dededede-000d-4000-8000-000000000004', 'Photo shoot for new products', 'Dummy event', (current_date + -3), null, '11 am'),
+('dededede-000d-4000-8000-000000000005', 'GST filing due', null, (current_date + 8), null, null),
+('dededede-000d-4000-8000-000000000006', 'Supplier visit', 'Dummy event', (current_date + 12), null, '4:30 pm'),
+('dededede-000d-4000-8000-000000000007', 'School art week', null, (current_date + 25), (current_date + 29), 'Mornings'),
+('dededede-000d-4000-8000-000000000008', 'Instagram live', 'Dummy event', (current_date + 0), null, '7 pm'),
+('dededede-000d-4000-8000-000000000009', 'Pay studio rent', null, (current_date + 19), null, null),
+('dededede-000d-4000-8000-000000000010', 'Craft fair in Bengaluru', 'Dummy event', (current_date + 45), (current_date + 46), 'All day');
 
 -- to-dos: overdue, due today, upcoming, no date, done
 
 insert into todos (id, title, note, due_on, done, done_at) values
-('dededede-000e-4000-8000-000000000001', 'Demo: Order more sumi ink', 'Dummy to-do', (current_date + 2), false, null),
-('dededede-000e-4000-8000-000000000002', 'Demo: Reply to wedding enquiry', null, (current_date + -1), false, null),
-('dededede-000e-4000-8000-000000000003', 'Demo: Post workshop photos', null, (current_date + 0), false, null),
-('dededede-000e-4000-8000-000000000004', 'Demo: Renew domain', 'Dummy to-do', (current_date + 30), false, null),
-('dededede-000e-4000-8000-000000000005', 'Demo: Call the framer', null, null, false, null),
-('dededede-000e-4000-8000-000000000006', 'Demo: Update class timings', null, (current_date + 5), false, null),
-('dededede-000e-4000-8000-000000000007', 'Demo: Print certificates', 'Dummy to-do', (current_date + -5), true, ((current_date + -1) + time '18:00') at time zone 'Asia/Kolkata'),
-('dededede-000e-4000-8000-000000000008', 'Demo: Pack Rohan order', null, (current_date + -2), true, ((current_date + -1) + time '18:00') at time zone 'Asia/Kolkata'),
-('dededede-000e-4000-8000-000000000009', 'Demo: Buy tea for the studio', null, null, true, ((current_date + -1) + time '18:00') at time zone 'Asia/Kolkata'),
-('dededede-000e-4000-8000-000000000010', 'Demo: Send invoice to Demo Public School', 'Dummy to-do', (current_date + 3), false, null),
-('dededede-000e-4000-8000-000000000011', 'Demo: Book venue in Bengaluru', null, (current_date + 14), false, null),
-('dededede-000e-4000-8000-000000000012', 'Demo: Clean brushes', null, (current_date + -10), true, ((current_date + -1) + time '18:00') at time zone 'Asia/Kolkata');
+('dededede-000e-4000-8000-000000000001', 'Order more sumi ink', 'Dummy to-do', (current_date + 2), false, null),
+('dededede-000e-4000-8000-000000000002', 'Reply to wedding enquiry', null, (current_date + -1), false, null),
+('dededede-000e-4000-8000-000000000003', 'Post workshop photos', null, (current_date + 0), false, null),
+('dededede-000e-4000-8000-000000000004', 'Renew domain', 'Dummy to-do', (current_date + 30), false, null),
+('dededede-000e-4000-8000-000000000005', 'Call the framer', null, null, false, null),
+('dededede-000e-4000-8000-000000000006', 'Update class timings', null, (current_date + 5), false, null),
+('dededede-000e-4000-8000-000000000007', 'Print certificates', 'Dummy to-do', (current_date + -5), true, ((current_date + -1) + time '18:00') at time zone 'Asia/Kolkata'),
+('dededede-000e-4000-8000-000000000008', 'Pack Rohan order', null, (current_date + -2), true, ((current_date + -1) + time '18:00') at time zone 'Asia/Kolkata'),
+('dededede-000e-4000-8000-000000000009', 'Buy tea for the studio', null, null, true, ((current_date + -1) + time '18:00') at time zone 'Asia/Kolkata'),
+('dededede-000e-4000-8000-000000000010', 'Send invoice to Demo Public School', 'Dummy to-do', (current_date + 3), false, null),
+('dededede-000e-4000-8000-000000000011', 'Book venue in Bengaluru', null, (current_date + 14), false, null),
+('dededede-000e-4000-8000-000000000012', 'Clean brushes', null, (current_date + -10), true, ((current_date + -1) + time '18:00') at time zone 'Asia/Kolkata');
 
 -- invoices: paid, part paid, paid in three parts, overdue, draft, cancelled, with and without GST and discount; quotations (sent, accepted, draft, cancelled)
 
@@ -388,20 +388,20 @@ insert into rentouts (id, name, phone, email, purpose, on_date, end_date, time_t
 -- accounts: money in and out by hand in every main category, plus the invoice payments and the refund above
 
 insert into ledger_entries (id, entry_date, kind, category, description, amount_paise, gst_paise, method, party, source, source_id) values
-('dededede-0011-4000-8000-000000000001', (current_date + -33), 'in', 'Custom invitations', 'Demo: Name cards paid in cash', 450000, 0, 'cash', 'Walk-in customer', 'manual', null),
-('dededede-0011-4000-8000-000000000002', (current_date + -18), 'in', 'Collaborations', 'Demo: Brand collaboration fee', 2500000, 381356, 'bank', 'Demo Sweets Co.', 'manual', null),
-('dededede-0011-4000-8000-000000000003', (current_date + -9), 'in', 'Other income', 'Demo: Sold old easels', 300000, 0, 'upi', 'Neighbour', 'manual', null),
-('dededede-0011-4000-8000-000000000004', (current_date + -27), 'out', 'Materials and supplies', 'Demo: Paper and ink stock', 1250000, 190678, 'bank', 'Demo Art Supplies', 'manual', null),
-('dededede-0011-4000-8000-000000000005', (current_date + -22), 'out', 'Printing', 'Demo: Workshop handouts', 180000, 0, 'upi', 'Demo Print Shop', 'manual', null),
-('dededede-0011-4000-8000-000000000006', (current_date + -21), 'out', 'Venue rent', 'Demo: Bengaluru venue', 800000, 0, 'bank', 'The Bangalore Local', 'manual', null),
-('dededede-0011-4000-8000-000000000007', (current_date + -15), 'out', 'Teacher or helper pay', 'Demo: Assistant for kids camp', 600000, 0, 'upi', 'Helper', 'manual', null),
-('dededede-0011-4000-8000-000000000008', (current_date + -12), 'out', 'Shipping and courier', 'Demo: India Post charges', 95000, 0, 'cash', 'India Post', 'manual', null),
-('dededede-0011-4000-8000-000000000009', (current_date + -8), 'out', 'Marketing', 'Demo: Instagram ads', 200000, 30508, 'card', 'Meta', 'manual', null),
-('dededede-0011-4000-8000-000000000010', (current_date + -6), 'out', 'Software and subscriptions', 'Demo: Website hosting', 150000, 22881, 'card', 'Hosting company', 'manual', null),
-('dededede-0011-4000-8000-000000000011', (current_date + -4), 'out', 'Equipment', 'Demo: New light box', 450000, 68644, 'upi', 'Demo Electronics', 'manual', null),
-('dededede-0011-4000-8000-000000000012', (current_date + -2), 'out', 'Utilities', 'Demo: Studio electricity', 320000, 0, 'bank', 'TNEB', 'manual', null),
-('dededede-0011-4000-8000-000000000013', (current_date + -20), 'out', 'Travel', 'Demo: Cab to Bengaluru venue', 250000, 0, 'upi', 'Cab', 'manual', null),
-('dededede-0011-4000-8000-000000000014', (current_date + -40), 'out', 'Taxes and fees', 'Demo: Professional tax', 125000, 0, 'bank', 'Corporation', 'manual', null),
+('dededede-0011-4000-8000-000000000001', (current_date + -33), 'in', 'Custom invitations', 'Name cards paid in cash', 450000, 0, 'cash', 'Walk-in customer', 'manual', null),
+('dededede-0011-4000-8000-000000000002', (current_date + -18), 'in', 'Collaborations', 'Brand collaboration fee', 2500000, 381356, 'bank', 'Demo Sweets Co.', 'manual', null),
+('dededede-0011-4000-8000-000000000003', (current_date + -9), 'in', 'Other income', 'Sold old easels', 300000, 0, 'upi', 'Neighbour', 'manual', null),
+('dededede-0011-4000-8000-000000000004', (current_date + -27), 'out', 'Materials and supplies', 'Paper and ink stock', 1250000, 190678, 'bank', 'Demo Art Supplies', 'manual', null),
+('dededede-0011-4000-8000-000000000005', (current_date + -22), 'out', 'Printing', 'Workshop handouts', 180000, 0, 'upi', 'Demo Print Shop', 'manual', null),
+('dededede-0011-4000-8000-000000000006', (current_date + -21), 'out', 'Venue rent', 'Bengaluru venue', 800000, 0, 'bank', 'The Bangalore Local', 'manual', null),
+('dededede-0011-4000-8000-000000000007', (current_date + -15), 'out', 'Teacher or helper pay', 'Assistant for kids camp', 600000, 0, 'upi', 'Helper', 'manual', null),
+('dededede-0011-4000-8000-000000000008', (current_date + -12), 'out', 'Shipping and courier', 'India Post charges', 95000, 0, 'cash', 'India Post', 'manual', null),
+('dededede-0011-4000-8000-000000000009', (current_date + -8), 'out', 'Marketing', 'Instagram ads', 200000, 30508, 'card', 'Meta', 'manual', null),
+('dededede-0011-4000-8000-000000000010', (current_date + -6), 'out', 'Software and subscriptions', 'Website hosting', 150000, 22881, 'card', 'Hosting company', 'manual', null),
+('dededede-0011-4000-8000-000000000011', (current_date + -4), 'out', 'Equipment', 'New light box', 450000, 68644, 'upi', 'Demo Electronics', 'manual', null),
+('dededede-0011-4000-8000-000000000012', (current_date + -2), 'out', 'Utilities', 'Studio electricity', 320000, 0, 'bank', 'TNEB', 'manual', null),
+('dededede-0011-4000-8000-000000000013', (current_date + -20), 'out', 'Travel', 'Cab to Bengaluru venue', 250000, 0, 'upi', 'Cab', 'manual', null),
+('dededede-0011-4000-8000-000000000014', (current_date + -40), 'out', 'Taxes and fees', 'Professional tax', 125000, 0, 'bank', 'Corporation', 'manual', null),
 ('dededede-0011-4000-8000-000000000015', (current_date + -20), 'in', 'Services', 'Invoice DEMO/2026-27/001', 2890000, 390000, 'bank', 'Anita Rao', 'invoice', 'dededede-0010-4000-8000-000000000001'),
 ('dededede-0011-4000-8000-000000000016', (current_date + -10), 'in', 'Services', 'Invoice DEMO/2026-27/002 (part payment)', 2000000, 305085, 'bank', 'Vikram Iyer', 'invoice', 'dededede-0010-4000-8000-000000000002'),
 ('dededede-0011-4000-8000-000000000017', (current_date + -5), 'in', 'Services', 'Invoice DEMO/2026-27/002 (part payment)', 500000, 76271, 'upi', 'Vikram Iyer', 'invoice', 'dededede-0010-4000-8000-000000000003'),

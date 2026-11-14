@@ -294,3 +294,9 @@ Accounts (Money.js):
 
 Orders:
 - Stock check for "not paid yet" orders: the check is now outside the paid=true gate so out-of-stock items cannot be added regardless of payment status
+
+Batch: Demo tags, Inbox animation, customer header buttons, Accounts (owner request)
+- Dummy data: the "Demo: " prefix is removed from every dummy title (workshops, products, class types and levels, events, tasks, accounts entries). Ids, slugs and DEMO invoice numbers are unchanged, so dummy-remove.sql still finds everything. supabase/dummy.sql regenerated from tools/make_dummy_sql.py. Rows already in the live database keep their old names unless dummy-remove.sql and dummy.sql are run again.
+- Inbox: marking a message Attended shows it as attended at once, waits 2 seconds (tap again to undo), then it slides and fades away into the Attended list (same motion as ticked tasks). Works from the row button and from the message window.
+- Customer window: Call, WhatsApp and Email are icon-only round buttons in the header row (right-aligned, before Close). All four are 36 px; the three contact buttons are white with an outline, Close stays the filled grey one.
+- Accounts: customers get a "Has a GST number" tick that reveals a GSTIN field (15-character check, stored in customers.gstin; run supabase/database.sql again). Expense form: "Contains GST?" tick that reveals "GST amount (₹)" (shown even when GST is off in Settings). Draft invoices no longer count in Home Receivables, Needs attention or the Invoices "Pending from invoices" line (Accounts Receivables already excluded them). Transactions list: payer or payee first, what it was for below, category as a tag in its own fixed column (all tags line up), amount on the right with the date under it.

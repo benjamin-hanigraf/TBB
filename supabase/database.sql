@@ -50,6 +50,7 @@ create table if not exists customers (
   user_id uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now()
 );
+alter table customers add column if not exists gstin text;      -- the customer's GST number, when they have one
 create index if not exists customers_phone on customers (phone);
 create or replace function customers_tidy() returns trigger language plpgsql as $$
 begin new.email := nullif(lower(btrim(new.email)), ''); new.name := btrim(new.name); return new; end $$;

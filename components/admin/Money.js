@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Icon from '@/components/Icons';
-import { nb, Segs, useLoad, useToast, sb, must, every, Page, Card, Stat, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, dmyToISO, isoToDMY, fmtD, download } from './kit';
+import { nb, useLoad, useToast, sb, must, every, Page, Card, Stat, Badge, Empty, Spin, Err, Modal, Btn, F, useForm, useAction, Confirm, dmyToISO, isoToDMY, fmtD, download } from './kit';
 import { syncPaymentsToLedger } from '@/lib/ledgerSync';
 import { IN_CATEGORIES, OUT_CATEGORIES, methodChoices, methodLabel, summarise, fyChoices, fyOf, inFY, fyRange, todayISO, money, moneyR, monthLabel, rupeesToPaise, gstInside } from '@/lib/accounting';
 
@@ -42,8 +42,9 @@ export default function Money() {
     {view === 'list' ? (<>
       <input className="ad-search" type="search" placeholder="Search category, name or note" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search entries" />
       <Card tight>{rows.length ? <div className="ad-list">{rows.map((e) => (
-        <button key={e.id} className="ad-row" onClick={() => setEdit(e)}><div className="main"><b>{nb(e.category)}</b><Segs items={[fmtD(e.entry_date), e.party, e.description]} /></div>
-          <div className="end"><b style={{ color: e.kind === 'in' ? '#14532d' : '#9b1c1c' }}>{e.kind === 'in' ? '+' : '−'}{money(e.amount_paise)}</b></div></button>))}</div> : <Empty>No entries in {fy}. Tap "Add Entry" to add one. Online payments are added automatically.</Empty>}</Card></>)
+        <button key={e.id} className="ad-row tx-row" onClick={() => setEdit(e)}><div className="main"><b>{nb(e.party || e.description || e.category)}</b>{e.party && e.description && <small>{nb(e.description)}</small>}</div>
+          <div className="tx-tag"><Badge>{e.category}</Badge></div>
+          <div className="end"><b style={{ color: e.kind === 'in' ? '#14532d' : '#9b1c1c' }}>{e.kind === 'in' ? '+' : '−'}{money(e.amount_paise)}</b><small>{fmtD(e.entry_date)}</small></div></button>))}</div> : <Empty>No entries in {fy}. Tap "Add Entry" to add one. Online payments are added automatically.</Empty>}</Card></>)
     : (<Reports sum={sum} gstOn={gstOn} kind={kind} />)}
     {edit && <Entry e={edit} gst={data.gst} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); reload(); }} />}
   </Page>);
@@ -93,14 +94,14 @@ function Entry({ e, gst, onClose, onSaved }) {
   const save = (ev) => { ev.preventDefault(); return run(async () => {
     const iso = dmyToISO(f.v.date); if (!iso) throw new Error('Please enter the date as DD/MM/YYYY.'); const amt = rupeesToPaise(f.v.amount); if (amt <= 0) throw new Error('Please enter an amount.');
     const out = f.v.kind === 'out'; const g = f.v.hasGst ? rupeesToPaise(out ? f.v.gstAmt : f.v.gstAmt || suggest()) : 0;
-    if (f.v.hasGst && out && g <= 0) throw new Error('Please enter the GST amount you can claim, as shown on the bill.'); if (g > amt) throw new Error(out ? 'The GST amount cannot be more than the amount spent.' : 'GST cannot be more than the amount.');       // on an expense it is the GST credit to claim back
+    if (f.v.hasGst && out && g <= 0) throw new Error('Please enter the GST amount shown on the bill.'); if (g > amt) throw new Error(out ? 'The GST amount cannot be more than the amount spent.' : 'GST cannot be more than the amount.');       // on an expense it is the GST credit to claim back
     const row = { entry_date: iso, kind: f.v.kind, category: f.v.category, amount_paise: amt, gst_paise: g, method: f.v.method, party: f.v.party || null, description: f.v.description || null };
     must(isNew ? await sb().from('ledger_entries').insert({ ...row, source: 'manual' }) : await sb().from('ledger_entries').update(row).eq('id', e.id)); onSaved();
   }, 'Saved'); };
   const del = () => run(async () => { must(await sb().from('ledger_entries').delete().eq('id', e.id)); onSaved(); }, 'Deleted');
   return (<Modal title={isNew ? 'Add Entry' : 'Entry'} onClose={onClose}>
     {link && <p className="ad-help" style={{ marginTop: 0 }}><a className="ad-linkbtn" href={link}>See where it came from</a></p>}
-    {!editing && <><dl className="ad-view">{[['Type', e.kind === 'in' ? 'Income (received)' : 'Expense (spent)'], ['Date', fmtD(e.entry_date)], ['Amount', money(e.amount_paise)], ['Category', e.category], [e.kind === 'in' ? 'Received from' : 'Paid to', e.party], ['Paid by', methodLabel(e.method)], [e.kind === 'out' ? 'GST to claim back' : 'GST included', e.gst_paise > 0 ? money(e.gst_paise) : ''], ['Note', e.description]].filter(([, v]) => v).map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+    {!editing && <><dl className="ad-view">{[['Type', e.kind === 'in' ? 'Income (received)' : 'Expense (spent)'], ['Date', fmtD(e.entry_date)], ['Amount', money(e.amount_paise)], ['Category', e.category], [e.kind === 'in' ? 'Received from' : 'Paid to', e.party], ['Paid by', methodLabel(e.method)], [e.kind === 'out' ? 'GST on the bill' : 'GST included', e.gst_paise > 0 ? money(e.gst_paise) : ''], ['Note', e.description]].filter(([, v]) => v).map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
       <div className="ad-actions full"><Btn icon="edit" onClick={() => setEditing(true)}>Edit</Btn></div></>}
     {editing && <form onSubmit={save} className="ad-form">
       {isNew && <div className="full"><div className="ad-tabsbar" style={{ margin: 0 }}>{[['in', 'Income'], ['out', 'Expense']].map(([k, t]) => <button type="button" key={k} className={f.v.kind === k ? 'on' : ''} onClick={() => { f.set('kind', k); f.set('category', ''); }}>{t}</button>)}</div></div>}
@@ -109,9 +110,9 @@ function Entry({ e, gst, onClose, onSaved }) {
       <F form={f} k="category" label="Category" type="select" required options={cats} />
       <F form={f} k="party" label={f.v.kind === 'in' ? 'Received from' : 'Paid to'} rule="name" />
       <F form={f} k="method" label="Paid by" type="select" required options={methodChoices(e.method)} />
-      {gst.enabled && (f.v.kind === 'out'
-        ? <><div className="full"><F form={f} k="hasGst" label="I can claim the GST on this purchase" type="check" /></div>{f.v.hasGst && <F form={f} k="gstAmt" label="GST amount to claim (₹)" type="money" rule="money" required hint="The GST amount shown on the bill" />}</>
-        : <><div className="full"><F form={f} k="hasGst" label="This amount includes GST" type="check" /></div>{f.v.hasGst && <F form={f} k="gstAmt" label="GST included (₹)" type="money" rule="money" placeholder={suggest()} hint={`Leave empty to use ${gst.rate_percent || 18}% of the amount`} />}</>)}
+      {f.v.kind === 'out'
+        ? <><div className="full"><F form={f} k="hasGst" label="Contains GST?" type="check" /></div>{f.v.hasGst && <F form={f} k="gstAmt" label="GST amount (₹)" type="money" rule="money" required hint="The GST part of the bill" />}</>
+        : gst.enabled && <><div className="full"><F form={f} k="hasGst" label="This amount includes GST" type="check" /></div>{f.v.hasGst && <F form={f} k="gstAmt" label="GST included (₹)" type="money" rule="money" placeholder={suggest()} hint={`Leave empty to use ${gst.rate_percent || 18}% of the amount`} />}</>}
       <div className="full"><F form={f} k="description" label="Note" rule="sentence" /></div>
       <div className="ad-actions full"><Btn busy={busy} icon="check">Save</Btn>{!isNew && <Btn type="button" variant="ghost" onClick={() => { f.reset(); setEditing(false); }}>Cancel</Btn>}{!isNew && <Confirm onYes={del}>Delete</Confirm>}</div>
     </form>}</Modal>);
